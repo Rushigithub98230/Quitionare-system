@@ -2,62 +2,17 @@ using System.ComponentModel.DataAnnotations;
 
 namespace QuestionnaireSystem.Core.DTOs;
 
-public class PatientResponseDto
+public class QuestionOptionResponseDto
 {
-    public Guid QuestionId { get; set; }
-    public string? TextResponse { get; set; }
-    public decimal? NumberResponse { get; set; }
-    public DateTime? DateResponse { get; set; }
-    public DateTime? DatetimeResponse { get; set; }
-    public bool? BooleanResponse { get; set; }
-    public object? JsonResponse { get; set; }
-    public List<SelectedOptionDto> SelectedOptions { get; set; } = new();
-}
-
-public class SelectedOptionDto
-{
+    [Required]
     public Guid OptionId { get; set; }
     public string? CustomText { get; set; }
-}
-
-public class SaveResponsesDto
-{
-    [Required]
-    public Guid AssignmentId { get; set; }
-    
-    public bool IsDraft { get; set; } = true;
-    
-    public List<PatientResponseDto> Responses { get; set; } = new();
-}
-
-public class AssignQuestionnaireDto
-{
-    [Required]
-    public Guid PatientId { get; set; }
-    
-    [Required]
-    public Guid QuestionnaireId { get; set; }
-    
-    public DateTime? DueDate { get; set; }
-}
-
-public class QuestionnaireResponseDto
-{
-    public Guid Id { get; set; }
-    public string Title { get; set; } = string.Empty;
-    public string? Description { get; set; }
-    public Guid CategoryId { get; set; }
-    public string CategoryName { get; set; } = string.Empty;
-    public bool IsMandatory { get; set; }
-    public int Version { get; set; }
-    public List<QuestionDetailDto> Questions { get; set; } = new();
 }
 
 public class ResponseSummaryDto
 {
     public Guid Id { get; set; }
-    public Guid AssignmentId { get; set; }
-    public Guid PatientId { get; set; }
+    public Guid UserId { get; set; }
     public Guid QuestionnaireId { get; set; }
     public string QuestionnaireTitle { get; set; } = string.Empty;
     public string CategoryName { get; set; } = string.Empty;
@@ -67,4 +22,37 @@ public class ResponseSummaryDto
     public bool IsDraft { get; set; }
     public int? TimeTaken { get; set; }
     public DateTime CreatedAt { get; set; }
+}
+
+public class ResponseDetailDto : ResponseSummaryDto
+{
+    public List<QuestionResponseDetailDto> QuestionResponses { get; set; } = new();
+}
+
+public class QuestionResponseDetailDto
+{
+    public Guid Id { get; set; }
+    public Guid QuestionId { get; set; }
+    public string QuestionText { get; set; } = string.Empty;
+    public string QuestionType { get; set; } = string.Empty;
+    public string? TextResponse { get; set; }
+    public decimal? NumberResponse { get; set; }
+    public DateTime? DateResponse { get; set; }
+    public DateTime? DatetimeResponse { get; set; }
+    public bool? BooleanResponse { get; set; }
+    public string? JsonResponse { get; set; }
+    public string? FilePath { get; set; }
+    public string? FileName { get; set; }
+    public int? FileSize { get; set; }
+    public string? FileType { get; set; }
+    public List<QuestionOptionResponseDetailDto> OptionResponses { get; set; } = new();
+}
+
+public class QuestionOptionResponseDetailDto
+{
+    public Guid Id { get; set; }
+    public Guid OptionId { get; set; }
+    public string OptionText { get; set; } = string.Empty;
+    public string OptionValue { get; set; } = string.Empty;
+    public string? CustomText { get; set; }
 } 

@@ -37,6 +37,11 @@ export const routes: Routes = [
     loadComponent: () => import('./features/auth/register/register.component').then(m => m.RegisterComponent)
   },
   {
+    path: 'dashboard',
+    loadComponent: () => import('./features/dashboard/dashboard.component').then(m => m.DashboardComponent),
+    canActivate: [authGuard]
+  },
+  {
     path: 'categories',
     loadComponent: () => import('./features/categories/categories.component').then(m => m.CategoriesComponent),
     canActivate: [authGuard]
@@ -52,17 +57,42 @@ export const routes: Routes = [
     canActivate: [authGuard]
   },
   {
+    path: 'questionnaire/:id/stepper',
+    loadComponent: () => import('./features/questionnaire/questionnaire-stepper/questionnaire-stepper.component').then(m => m.QuestionnaireStepperComponent),
+    canActivate: [authGuard]
+  },
+  {
     path: 'admin',
     loadComponent: () => import('./features/admin/admin.component').then(m => m.AdminComponent),
     canActivate: [adminGuard]
   },
   {
+    path: 'admin/questionnaire-builder',
+    loadComponent: () => import('./features/admin/questionnaire-builder/questionnaire-builder.component').then(m => m.QuestionnaireBuilderComponent),
+    canActivate: [adminGuard]
+  },
+  {
+    path: 'admin/categories',
+    loadComponent: () => import('./features/admin/categories/categories.component').then(m => m.CategoriesComponent),
+    canActivate: [adminGuard]
+  },
+  {
+    path: 'profile',
+    loadComponent: () => import('./features/profile/profile.component').then(m => m.ProfileComponent),
+    canActivate: [authGuard]
+  },
+  {
+    path: 'my-responses',
+    loadComponent: () => import('./features/my-responses/my-responses.component').then(m => m.MyResponsesComponent),
+    canActivate: [authGuard]
+  },
+  {
     path: '',
-    redirectTo: '/categories',
+    redirectTo: '/dashboard',
     pathMatch: 'full'
   },
   {
     path: '**',
-    redirectTo: '/categories'
+    redirectTo: '/dashboard'
   }
 ]; 

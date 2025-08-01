@@ -25,5 +25,5 @@ public class QuestionType
     public bool IsActive { get; set; } = true;
     
     // Navigation properties
-    public virtual ICollection<Question> Questions { get; set; } = new List<Question>();
+    public virtual ICollection<CategoryQuestion> Questions { get; set; } = new List<CategoryQuestion>();
 } 

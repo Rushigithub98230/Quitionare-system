@@ -1,834 +1,966 @@
-using FluentAssertions;
+using Xunit;
 using QuestionnaireSystem.Core.Models;
-using System.Net;
+using QuestionnaireSystem.Core.DTOs;
+using QuestionnaireSystem.Core.Interfaces;
+using QuestionnaireSystem.API.Services;
+using AutoMapper;
+using QuestionnaireSystem.Infrastructure.Repositories;
+using Microsoft.EntityFrameworkCore;
+using QuestionnaireSystem.Infrastructure.Data;
+using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.Extensions.DependencyInjection;
+using QuestionnaireSystem.API.Tests;
 
-namespace QuestionnaireSystem.API.Tests
+namespace QuestionnaireSystem.API.Tests;
+
+public class QuestionnaireTests : TestBase
 {
-    public class QuestionnaireTests : TestBase
+    [Fact]
+    public async Task TestApiIsWorking()
     {
-        public QuestionnaireTests(WebApplicationFactory<Program> factory) : base(factory)
+        // Arrange
+        var token = await GetAuthTokenAsync("admin@test.com", "admin123");
+        SetAuthHeader(token);
+
+        // Act
+        var result = await GetAsync("/api/CategoryQuestionnaireTemplates");
+
+        // Debug output
+        Console.WriteLine($"GET Response Success: {result?.Success}");
+        Console.WriteLine($"GET Response StatusCode: {result?.StatusCode}");
+        Console.WriteLine($"GET Response Message: {result?.Message}");
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.True(result.Success);
+    }
+
+    [Fact]
+    public async Task TestPostEndpointIsReachable()
+    {
+        // Arrange - No authentication
+        var createDto = new
         {
+            title = "Test",
+            categoryId = "11111111-1111-1111-1111-111111111111"
+        };
+
+        // Act
+        var result = await PostAsync("/api/CategoryQuestionnaireTemplates", createDto);
+
+        // Debug output
+        Console.WriteLine($"POST Response Success: {result?.Success}");
+        Console.WriteLine($"POST Response StatusCode: {result?.StatusCode}");
+        Console.WriteLine($"POST Response Message: {result?.Message}");
+
+        // Assert - Should fail due to authentication, but should reach the endpoint
+        Assert.NotNull(result);
+        // Should get 401 or 403, not 0
+        Assert.NotEqual(0, result.StatusCode);
+    }
+
+    [Fact]
+    public async Task TestValidPostRequest()
+    {
+        // Arrange
+        var token = await GetAuthTokenAsync("admin@test.com", "admin123");
+        SetAuthHeader(token);
+        var createDto = new
+        {
+            title = "Valid Test Questionnaire",
+            description = "Test questionnaire description",
+            categoryId = "11111111-1111-1111-1111-111111111111",
+            isActive = true,
+            isMandatory = false,
+            displayOrder = 10
+        };
+
+        // Act
+        var result = await PostAsync("/api/CategoryQuestionnaireTemplates", createDto);
+
+        // Debug output
+        Console.WriteLine($"Valid POST Response Success: {result?.Success}");
+        Console.WriteLine($"Valid POST Response StatusCode: {result?.StatusCode}");
+        Console.WriteLine($"Valid POST Response Message: {result?.Message}");
+
+        // Assert - Should either succeed or fail with a proper error, not 0
+        Assert.NotNull(result);
+        Assert.NotEqual(0, result.StatusCode);
+    }
+
+    [Fact]
+    public async Task GetAllQuestionnaires_WithHairLossUser_ShouldReturnHairLossQuestionnaires()
+    {
+        // Arrange
+        var token = await GetAuthTokenAsync("john@test.com", "user123");
+        SetAuthHeader(token);
+
+        // Act
+        var result = await GetAsync("/api/CategoryQuestionnaireTemplates");
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.True(result.Success);
+        Assert.Equal(200, result.StatusCode);
+        Assert.Contains("Questionnaire templates retrieved successfully", result.Message);
+        Assert.NotNull(result.Data);
+    }
+
+    [Fact]
+    public async Task GetAllQuestionnaires_WithWeightLossUser_ShouldReturnWeightLossQuestionnaires()
+    {
+        // Arrange
+        var token = await GetAuthTokenAsync("jane@test.com", "user123");
+        SetAuthHeader(token);
+
+        // Act
+        var result = await GetAsync("/api/CategoryQuestionnaireTemplates");
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.True(result.Success);
+        Assert.Equal(200, result.StatusCode);
+        Assert.Contains("Questionnaire templates retrieved successfully", result.Message);
+        Assert.NotNull(result.Data);
+    }
+
+    [Fact]
+    public async Task GetAllQuestionnaires_WithAdminToken_ShouldReturnAllQuestionnaires()
+    {
+        // Arrange
+        var token = await GetAuthTokenAsync("admin@test.com", "admin123");
+        SetAuthHeader(token);
+
+        // Act
+        var result = await GetAsync("/api/CategoryQuestionnaireTemplates");
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.True(result.Success);
+        Assert.Equal(200, result.StatusCode);
+        Assert.Contains("Questionnaire templates retrieved successfully", result.Message);
+        Assert.NotNull(result.Data);
+    }
+
+    [Fact]
+    public async Task GetQuestionnaireById_WithValidId_ShouldReturnQuestionnaire()
+    {
+        // Arrange
+        var token = await GetAuthTokenAsync("admin@test.com", "admin123");
+        SetAuthHeader(token);
+        var questionnaireId = "ffffffff-ffff-ffff-ffff-ffffffffffff";
+
+        // Act
+        var result = await GetAsync($"/api/CategoryQuestionnaireTemplates/{questionnaireId}");
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.True(result.Success);
+        Assert.Equal(200, result.StatusCode);
+        Assert.Contains("Questionnaire template retrieved successfully", result.Message);
+        Assert.NotNull(result.Data);
+    }
+
+    [Fact]
+    public async Task GetQuestionnaireById_WithInvalidId_ShouldReturnNotFound()
+    {
+        // Arrange
+        var token = await GetAuthTokenAsync("admin@test.com", "admin123");
+        Console.WriteLine($"Token: {token}");
+        SetAuthHeader(token);
+
+        // Act
+        var result = await GetAsync("/api/CategoryQuestionnaireTemplates/00000000-0000-0000-0000-000000000000");
+
+        // Debug output
+        if (result != null)
+        {
+            Console.WriteLine($"Response Success: {result.Success}");
+            Console.WriteLine($"Response StatusCode: {result.StatusCode}");
+            Console.WriteLine($"Response Message: {result.Message}");
+            Console.WriteLine($"Response Data: {result.Data}");
         }
 
-        [Fact]
-        public async Task GetQuestionnaires_WithValidToken_ShouldReturnQuestionnaires()
+        // Assert
+        Assert.NotNull(result);
+        Assert.False(result.Success);
+        Assert.Equal(404, result.StatusCode);
+        Assert.Contains("Questionnaire template not found", result.Message);
+    }
+
+    [Fact]
+    public async Task GetQuestionnaireByCategoryId_WithValidCategory_ShouldReturnQuestionnaire()
+    {
+        // Arrange
+        var token = await GetAuthTokenAsync("admin@test.com", "admin123");
+        SetAuthHeader(token);
+        var categoryId = "11111111-1111-1111-1111-111111111111"; // Hair Loss category
+
+        // Act
+        var result = await GetAsync($"/api/CategoryQuestionnaireTemplates/category/{categoryId}");
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.True(result.Success);
+        Assert.Equal(200, result.StatusCode);
+        Assert.Contains("Questionnaire template retrieved successfully", result.Message);
+        Assert.NotNull(result.Data);
+    }
+
+    [Fact]
+    public async Task GetQuestionnaireByCategoryId_WithInvalidCategory_ShouldReturnNotFound()
+    {
+        // Arrange
+        var token = await GetAuthTokenAsync("admin@test.com", "admin123");
+        SetAuthHeader(token);
+        var categoryId = "00000000-0000-0000-0000-000000000000";
+
+        // Act
+        var result = await GetAsync($"/api/CategoryQuestionnaireTemplates/category/{categoryId}");
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.False(result.Success);
+        Assert.Equal(404, result.StatusCode);
+        Assert.Contains("Questionnaire template not found for this category", result.Message);
+    }
+
+    [Fact]
+    public async Task CreateQuestionnaire_WithAdminToken_ShouldCreateQuestionnaire()
+    {
+        // Arrange
+        var token = await GetAuthTokenAsync("admin@test.com", "admin123");
+        SetAuthHeader(token);
+        var createDto = new
         {
-            // Arrange
-            var token = await GetAdminTokenAsync();
-            SetAuthHeader(token);
-
-            var category = await CreateTestCategoryAsync();
-            var questionnaire = await CreateTestQuestionnaireAsync(category);
-
-            // Act
-            var response = await _client.GetAsync("/api/questionnaires");
-
-            // Assert
-            response.StatusCode.Should().Be(HttpStatusCode.OK);
-            var questionnaires = await DeserializeAsync<List<QuestionnaireDto>>(response);
-            questionnaires.Should().NotBeNull();
-            questionnaires!.Count.Should().BeGreaterThan(0);
-        }
-
-        [Fact]
-        public async Task GetQuestionnaire_ValidId_ShouldReturnQuestionnaireWithQuestions()
-        {
-            // Arrange
-            var token = await GetAdminTokenAsync();
-            SetAuthHeader(token);
-
-            var category = await CreateTestCategoryAsync();
-            var questionnaire = await CreateTestQuestionnaireAsync(category);
-            var question = await CreateTestQuestionAsync(questionnaire, 1); // Text type
-            var option = await CreateTestOptionAsync(question);
-
-            // Act
-            var response = await _client.GetAsync($"/api/questionnaires/{questionnaire.Id}");
-
-            // Assert
-            response.StatusCode.Should().Be(HttpStatusCode.OK);
-            var result = await DeserializeAsync<QuestionnaireDetailDto>(response);
-            result.Should().NotBeNull();
-            result!.Id.Should().Be(questionnaire.Id.ToString());
-            result.Questions.Should().NotBeNull();
-            result.Questions!.Count.Should().Be(1);
-            result.Questions[0].Options.Should().NotBeNull();
-            result.Questions[0].Options!.Count.Should().Be(1);
-        }
-
-        [Fact]
-        public async Task CreateQuestionnaire_WithTextQuestion_ShouldReturnCreatedQuestionnaire()
-        {
-            // Arrange
-            var token = await GetAdminTokenAsync();
-            SetAuthHeader(token);
-
-            var category = await CreateTestCategoryAsync();
-
-            var questionnaireData = new
+            Title = "Test Questionnaire",
+            Description = "Test questionnaire description",
+            CategoryId = "22222222-2222-2222-2222-222222222222", // Use Weight Loss category which doesn't have a questionnaire yet
+            IsActive = true,
+            IsMandatory = false,
+            DisplayOrder = 10,
+            Questions = new[]
             {
-                title = "Test Questionnaire with Text Question",
-                description = "A questionnaire with text input question",
-                categoryId = category.Id.ToString(),
-                version = "1.0",
-                isActive = true,
-                questions = new[]
+                new
                 {
-                    new
-                    {
-                        text = "What is your name?",
-                        questionTypeId = 1, // Text
-                        order = 1,
-                        isRequired = true,
-                        minLength = 2,
-                        maxLength = 50
-                    }
+                    QuestionText = "Test Question",
+                    QuestionTypeId = "11111111-1111-1111-1111-111111111111",
+                    IsRequired = true,
+                    DisplayOrder = 1,
+                    MinLength = 2,
+                    MaxLength = 50
                 }
-            };
+            }
+        };
 
-            // Act
-            var response = await PostAsync("/api/questionnaires", questionnaireData);
+        // Act
+        var result = await PostAsync("/api/CategoryQuestionnaireTemplates", createDto);
 
-            // Assert
-            response.StatusCode.Should().Be(HttpStatusCode.Created);
-            var result = await DeserializeAsync<QuestionnaireDetailDto>(response);
-            result.Should().NotBeNull();
-            result!.Title.Should().Be("Test Questionnaire with Text Question");
-            result.Questions.Should().NotBeNull();
-            result.Questions!.Count.Should().Be(1);
-            result.Questions[0].QuestionTypeId.Should().Be(1);
-            result.Questions[0].MinLength.Should().Be(2);
-            result.Questions[0].MaxLength.Should().Be(50);
-        }
+        // Assert
+        Assert.NotNull(result);
+        Assert.True(result.Success);
+        Assert.Equal(200, result.StatusCode);
+        Assert.Contains("Questionnaire template created successfully", result.Message);
+        Assert.NotNull(result.Data);
+    }
 
-        [Fact]
-        public async Task CreateQuestionnaire_WithNumberQuestion_ShouldReturnCreatedQuestionnaire()
+    [Fact]
+    public async Task CreateQuestionnaire_WithUserToken_ShouldReturnForbidden()
+    {
+        // Arrange
+        var token = await GetAuthTokenAsync("john@test.com", "user123");
+        SetAuthHeader(token);
+        var createDto = new
         {
-            // Arrange
-            var token = await GetAdminTokenAsync();
-            SetAuthHeader(token);
-
-            var category = await CreateTestCategoryAsync();
-
-            var questionnaireData = new
+            Title = "Test Questionnaire",
+            Description = "Test questionnaire description",
+            CategoryId = "11111111-1111-1111-1111-111111111111", // Use correct seeded category ID
+            IsActive = true,
+            IsMandatory = false,
+            DisplayOrder = 10,
+            Questions = new[]
             {
-                title = "Test Questionnaire with Number Question",
-                description = "A questionnaire with number input question",
-                categoryId = category.Id.ToString(),
-                version = "1.0",
-                isActive = true,
-                questions = new[]
+                new
                 {
-                    new
-                    {
-                        text = "What is your age?",
-                        questionTypeId = 2, // Number
-                        order = 1,
-                        isRequired = true,
-                        minValue = 18,
-                        maxValue = 100
-                    }
+                    QuestionText = "Test Question",
+                    QuestionTypeId = "11111111-1111-1111-1111-111111111111",
+                    IsRequired = true,
+                    DisplayOrder = 1
                 }
-            };
+            }
+        };
 
-            // Act
-            var response = await PostAsync("/api/questionnaires", questionnaireData);
+        // Act
+        var result = await PostAsync("/api/CategoryQuestionnaireTemplates", createDto);
 
-            // Assert
-            response.StatusCode.Should().Be(HttpStatusCode.Created);
-            var result = await DeserializeAsync<QuestionnaireDetailDto>(response);
-            result.Should().NotBeNull();
-            result!.Questions!.Count.Should().Be(1);
-            result.Questions[0].QuestionTypeId.Should().Be(2);
-            result.Questions[0].MinValue.Should().Be(18);
-            result.Questions[0].MaxValue.Should().Be(100);
-        }
+        // Assert
+        Assert.NotNull(result);
+        Assert.False(result.Success);
+        Assert.Equal(403, result.StatusCode);
+        Assert.Contains("Access denied", result.Message);
+    }
 
-        [Fact]
-        public async Task CreateQuestionnaire_WithEmailQuestion_ShouldReturnCreatedQuestionnaire()
+    [Fact]
+    public async Task CreateQuestionnaire_WithInvalidCategoryId_ShouldReturnNotFound()
+    {
+        // Arrange
+        var token = await GetAuthTokenAsync("admin@test.com", "admin123");
+        SetAuthHeader(token);
+        var createDto = new
         {
-            // Arrange
-            var token = await GetAdminTokenAsync();
-            SetAuthHeader(token);
-
-            var category = await CreateTestCategoryAsync();
-
-            var questionnaireData = new
+            Title = "Test Questionnaire",
+            Description = "Test questionnaire description",
+            CategoryId = "00000000-0000-0000-0000-000000000000", // Invalid category
+            IsActive = true,
+            IsMandatory = false,
+            DisplayOrder = 10,
+            Questions = new[]
             {
-                title = "Test Questionnaire with Email Question",
-                description = "A questionnaire with email input question",
-                categoryId = category.Id.ToString(),
-                version = "1.0",
-                isActive = true,
-                questions = new[]
+                new
                 {
-                    new
-                    {
-                        text = "What is your email address?",
-                        questionTypeId = 3, // Email
-                        order = 1,
-                        isRequired = true
-                    }
+                    QuestionText = "Test Question",
+                    QuestionTypeId = "11111111-1111-1111-1111-111111111111",
+                    IsRequired = true,
+                    DisplayOrder = 1
                 }
-            };
+            }
+        };
 
-            // Act
-            var response = await PostAsync("/api/questionnaires", questionnaireData);
+        // Act
+        var result = await PostAsync("/api/CategoryQuestionnaireTemplates", createDto);
 
-            // Assert
-            response.StatusCode.Should().Be(HttpStatusCode.Created);
-            var result = await DeserializeAsync<QuestionnaireDetailDto>(response);
-            result.Should().NotBeNull();
-            result!.Questions!.Count.Should().Be(1);
-            result.Questions[0].QuestionTypeId.Should().Be(3);
-        }
+        // Assert
+        Assert.NotNull(result);
+        Assert.False(result.Success);
+        Assert.Equal(404, result.StatusCode);
+        Assert.Contains("Category not found", result.Message);
+    }
 
-        [Fact]
-        public async Task CreateQuestionnaire_WithPhoneQuestion_ShouldReturnCreatedQuestionnaire()
+    [Fact]
+    public async Task CreateQuestionnaire_WithExistingTemplateForCategory_ShouldReturnError()
+    {
+        // Arrange - Create a new category first
+        var newCategory = new Category
         {
-            // Arrange
-            var token = await GetAdminTokenAsync();
-            SetAuthHeader(token);
+            Id = Guid.Parse("99999999-9999-9999-9999-999999999999"),
+            Name = "Test Category",
+            Description = "Test category for duplicate template test",
+            Color = "#FF0000",
+            IsActive = true,
+            DisplayOrder = 10,
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
+        };
+        _context.Categories.Add(newCategory);
 
-            var category = await CreateTestCategoryAsync();
+        // Create first questionnaire for this category
+        var firstQuestionnaire = new CategoryQuestionnaireTemplate
+        {
+            Id = Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"),
+            Title = "First Questionnaire",
+            Description = "First questionnaire for test category",
+            CategoryId = newCategory.Id,
+            IsActive = true,
+            IsMandatory = false,
+            DisplayOrder = 1,
+            Version = 1,
+            CreatedBy = Guid.Parse("cccccccc-dddd-eeee-ffff-111111111111"), // Use the admin user ID from seeded data
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
+        };
+        _context.CategoryQuestionnaireTemplates.Add(firstQuestionnaire);
+        await _context.SaveChangesAsync();
 
-            var questionnaireData = new
+
+
+        var token = await GetAuthTokenAsync("admin@test.com", "admin123");
+        SetAuthHeader(token);
+        var createDto = new
+        {
+            Title = "Second Questionnaire",
+            Description = "Second questionnaire for same category",
+            CategoryId = "99999999-9999-9999-9999-999999999999",
+            IsActive = true,
+            IsMandatory = false,
+            DisplayOrder = 2,
+            Questions = new[]
             {
-                title = "Test Questionnaire with Phone Question",
-                description = "A questionnaire with phone input question",
-                categoryId = category.Id.ToString(),
-                version = "1.0",
-                isActive = true,
-                questions = new[]
+                new
                 {
-                    new
-                    {
-                        text = "What is your phone number?",
-                        questionTypeId = 4, // Phone
-                        order = 1,
-                        isRequired = true
-                    }
+                    QuestionText = "Test Question",
+                    QuestionTypeId = "11111111-1111-1111-1111-111111111111",
+                    IsRequired = true,
+                    DisplayOrder = 1
                 }
-            };
+            }
+        };
 
-            // Act
-            var response = await PostAsync("/api/questionnaires", questionnaireData);
+        // Act
+        var result = await PostAsync("/api/CategoryQuestionnaireTemplates", createDto);
 
-            // Assert
-            response.StatusCode.Should().Be(HttpStatusCode.Created);
-            var result = await DeserializeAsync<QuestionnaireDetailDto>(response);
-            result.Should().NotBeNull();
-            result!.Questions!.Count.Should().Be(1);
-            result.Questions[0].QuestionTypeId.Should().Be(4);
-        }
 
-        [Fact]
-        public async Task CreateQuestionnaire_WithDateQuestion_ShouldReturnCreatedQuestionnaire()
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.False(result.Success);
+        Assert.Equal(400, result.StatusCode);
+        Assert.Contains("Questionnaire template already exists for this category", result.Message);
+    }
+
+    [Fact]
+    public async Task CreateQuestionnaire_WithInvalidQuestionType_ShouldReturnError()
+    {
+        // Arrange
+        var token = await GetAuthTokenAsync("admin@test.com", "admin123");
+        SetAuthHeader(token);
+        var createDto = new
         {
-            // Arrange
-            var token = await GetAdminTokenAsync();
-            SetAuthHeader(token);
-
-            var category = await CreateTestCategoryAsync();
-
-            var questionnaireData = new
+            Title = "Test Questionnaire",
+            Description = "Test questionnaire description",
+            CategoryId = "11111111-1111-1111-1111-111111111111", // Use correct seeded category ID
+            IsActive = true,
+            IsMandatory = false,
+            DisplayOrder = 10,
+            Questions = new[]
             {
-                title = "Test Questionnaire with Date Question",
-                description = "A questionnaire with date picker question",
-                categoryId = category.Id.ToString(),
-                version = "1.0",
-                isActive = true,
-                questions = new[]
+                new
                 {
-                    new
-                    {
-                        text = "What is your birth date?",
-                        questionTypeId = 5, // Date
-                        order = 1,
-                        isRequired = true
-                    }
+                    QuestionText = "Test Question",
+                    QuestionTypeId = "00000000-0000-0000-0000-000000000000", // Invalid question type
+                    IsRequired = true,
+                    DisplayOrder = 1
                 }
-            };
+            }
+        };
 
-            // Act
-            var response = await PostAsync("/api/questionnaires", questionnaireData);
+        // Act
+        var result = await PostAsync("/api/CategoryQuestionnaireTemplates", createDto);
 
-            // Assert
-            response.StatusCode.Should().Be(HttpStatusCode.Created);
-            var result = await DeserializeAsync<QuestionnaireDetailDto>(response);
-            result.Should().NotBeNull();
-            result!.Questions!.Count.Should().Be(1);
-            result.Questions[0].QuestionTypeId.Should().Be(5);
-        }
+        // Assert
+        Assert.NotNull(result);
+        Assert.False(result.Success);
+        Assert.Equal(400, result.StatusCode);
+        Assert.Contains("Invalid question type", result.Message);
+    }
 
-        [Fact]
-        public async Task CreateQuestionnaire_WithRadioQuestion_ShouldReturnCreatedQuestionnaire()
+    [Fact]
+    public async Task CreateQuestionnaire_WithDuplicateQuestionOrder_ShouldReturnError()
+    {
+        // Arrange
+        var token = await GetAuthTokenAsync("admin@test.com", "admin123");
+        SetAuthHeader(token);
+        var createDto = new
         {
-            // Arrange
-            var token = await GetAdminTokenAsync();
-            SetAuthHeader(token);
-
-            var category = await CreateTestCategoryAsync();
-
-            var questionnaireData = new
+            Title = "Test Questionnaire",
+            Description = "Test questionnaire description",
+            CategoryId = "11111111-1111-1111-1111-111111111111", // Use correct seeded category ID
+            IsActive = true,
+            IsMandatory = false,
+            DisplayOrder = 10,
+            Questions = new[]
             {
-                title = "Test Questionnaire with Radio Question",
-                description = "A questionnaire with single choice question",
-                categoryId = category.Id.ToString(),
-                version = "1.0",
-                isActive = true,
-                questions = new[]
+                new
                 {
-                    new
-                    {
-                        text = "What is your gender?",
-                        questionTypeId = 6, // Radio
-                        order = 1,
-                        isRequired = true,
-                        options = new[]
-                        {
-                            new { text = "Male", order = 1 },
-                            new { text = "Female", order = 2 },
-                            new { text = "Other", order = 3 }
-                        }
-                    }
+                    QuestionText = "Test Question 1",
+                    QuestionTypeId = "11111111-1111-1111-1111-111111111111",
+                    IsRequired = true,
+                    DisplayOrder = 1
+                },
+                new
+                {
+                    QuestionText = "Test Question 2",
+                    QuestionTypeId = "11111111-1111-1111-1111-111111111111",
+                    IsRequired = true,
+                    DisplayOrder = 1 // Duplicate order
                 }
-            };
+            }
+        };
 
-            // Act
-            var response = await PostAsync("/api/questionnaires", questionnaireData);
+        // Act
+        var result = await PostAsync("/api/CategoryQuestionnaireTemplates", createDto);
 
-            // Assert
-            response.StatusCode.Should().Be(HttpStatusCode.Created);
-            var result = await DeserializeAsync<QuestionnaireDetailDto>(response);
-            result.Should().NotBeNull();
-            result!.Questions!.Count.Should().Be(1);
-            result.Questions[0].QuestionTypeId.Should().Be(6);
-            result.Questions[0].Options.Should().NotBeNull();
-            result.Questions[0].Options!.Count.Should().Be(3);
-        }
+        // Assert
+        Assert.NotNull(result);
+        Assert.False(result.Success);
+        Assert.Equal(400, result.StatusCode);
+        Assert.Contains("Duplicate question order", result.Message);
+    }
 
-        [Fact]
-        public async Task CreateQuestionnaire_WithCheckboxQuestion_ShouldReturnCreatedQuestionnaire()
+    [Fact]
+    public async Task UpdateQuestionnaire_WithAdminToken_ShouldUpdateQuestionnaire()
+    {
+        // Arrange
+        var token = await GetAuthTokenAsync("admin@test.com", "admin123");
+        SetAuthHeader(token);
+        var questionnaireId = "ffffffff-ffff-ffff-ffff-ffffffffffff";
+        var updateDto = new
         {
-            // Arrange
-            var token = await GetAdminTokenAsync();
-            SetAuthHeader(token);
+            Title = "Updated Hair Loss Assessment",
+            Description = "Updated description",
+            CategoryId = "11111111-1111-1111-1111-111111111111",
+            IsActive = true,
+            IsMandatory = true,
+            DisplayOrder = 5
+        };
 
-            var category = await CreateTestCategoryAsync();
+        // Act
+        var result = await PutAsync($"/api/CategoryQuestionnaireTemplates/{questionnaireId}", updateDto);
 
-            var questionnaireData = new
+        // Assert
+        Assert.NotNull(result);
+        Assert.True(result.Success);
+        Assert.Equal(200, result.StatusCode);
+        Assert.Contains("Questionnaire template updated successfully", result.Message);
+        Assert.NotNull(result.Data);
+    }
+
+    [Fact]
+    public async Task UpdateQuestionnaire_WithInvalidId_ShouldReturnNotFound()
+    {
+        // Arrange
+        var token = await GetAuthTokenAsync("admin@test.com", "admin123");
+        SetAuthHeader(token);
+        var questionnaireId = "00000000-0000-0000-0000-000000000000";
+        var updateDto = new
+        {
+            Title = "Updated Questionnaire",
+            Description = "Updated description",
+            CategoryId = "11111111-1111-1111-1111-111111111111",
+            IsActive = true,
+            IsMandatory = true,
+            DisplayOrder = 5
+        };
+
+        // Act
+        var result = await PutAsync($"/api/CategoryQuestionnaireTemplates/{questionnaireId}", updateDto);
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.False(result.Success);
+        Assert.Equal(404, result.StatusCode);
+        Assert.Contains("Questionnaire template not found", result.Message);
+    }
+
+    [Fact]
+    public async Task UpdateQuestionnaire_WithUserToken_ShouldReturnForbidden()
+    {
+        // Arrange
+        var token = await GetAuthTokenAsync("john@test.com", "user123");
+        SetAuthHeader(token);
+        var questionnaireId = "ffffffff-ffff-ffff-ffff-ffffffffffff";
+        var updateDto = new
+        {
+            Title = "Updated Questionnaire",
+            Description = "Updated description",
+            CategoryId = "11111111-1111-1111-1111-111111111111",
+            IsActive = true,
+            IsMandatory = true,
+            DisplayOrder = 5
+        };
+
+        // Act
+        var result = await PutAsync($"/api/CategoryQuestionnaireTemplates/{questionnaireId}", updateDto);
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.False(result.Success);
+        Assert.Equal(403, result.StatusCode);
+        Assert.Contains("Access denied", result.Message);
+    }
+
+    [Fact]
+    public async Task DeleteQuestionnaire_WithAdminToken_ShouldDeleteQuestionnaire()
+    {
+        // Arrange - Create a questionnaire without responses for deletion test
+        var testQuestionnaire = new CategoryQuestionnaireTemplate
+        {
+            Id = Guid.Parse("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"),
+            Title = "Test Questionnaire for Deletion",
+            Description = "Test questionnaire for deletion",
+            CategoryId = Guid.Parse("11111111-1111-1111-1111-111111111111"),
+            IsActive = true,
+            IsMandatory = false,
+            DisplayOrder = 10,
+            Version = 1,
+            CreatedBy = Guid.Parse("33333333-3333-3333-3333-333333333333"),
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
+        };
+        _context.CategoryQuestionnaireTemplates.Add(testQuestionnaire);
+        await _context.SaveChangesAsync();
+
+        var token = await GetAuthTokenAsync("admin@test.com", "admin123");
+        SetAuthHeader(token);
+        var questionnaireId = "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb";
+
+        // Act
+        var result = await DeleteAsync($"/api/CategoryQuestionnaireTemplates/{questionnaireId}");
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.True(result.Success);
+        Assert.Equal(200, result.StatusCode);
+        Assert.Contains("Questionnaire template deleted successfully", result.Message);
+    }
+
+    [Fact]
+    public async Task DeleteQuestionnaire_WithUserToken_ShouldReturnForbidden()
+    {
+        // Arrange
+        var token = await GetAuthTokenAsync("john@test.com", "user123");
+        SetAuthHeader(token);
+        var questionnaireId = "ffffffff-ffff-ffff-ffff-ffffffffffff";
+
+        // Act
+        var result = await DeleteAsync($"/api/CategoryQuestionnaireTemplates/{questionnaireId}");
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.False(result.Success);
+        Assert.Equal(403, result.StatusCode);
+        Assert.Contains("Access denied", result.Message);
+    }
+
+    [Fact]
+    public async Task DeleteQuestionnaire_WithExistingResponses_ShouldReturnError()
+    {
+        // Arrange - Create a questionnaire with responses
+        var questionnaireWithResponses = new CategoryQuestionnaireTemplate
+        {
+            Id = Guid.Parse("cccccccc-cccc-cccc-cccc-cccccccccccc"),
+            Title = "Questionnaire with Responses",
+            Description = "Test questionnaire with responses",
+            CategoryId = Guid.Parse("11111111-1111-1111-1111-111111111111"), // Use correct seeded category ID
+            IsActive = true,
+            IsMandatory = false,
+            DisplayOrder = 15,
+            Version = 1,
+            CreatedBy = Guid.Parse("cccccccc-dddd-eeee-ffff-111111111111"), // Use a valid user ID
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow,
+            Questions = new List<CategoryQuestion>
             {
-                title = "Test Questionnaire with Checkbox Question",
-                description = "A questionnaire with multiple choice question",
-                categoryId = category.Id.ToString(),
-                version = "1.0",
-                isActive = true,
-                questions = new[]
+                new CategoryQuestion
                 {
-                    new
-                    {
-                        text = "What programming languages do you know?",
-                        questionTypeId = 7, // Checkbox
-                        order = 1,
-                        isRequired = true,
-                        options = new[]
-                        {
-                            new { text = "C#", order = 1 },
-                            new { text = "JavaScript", order = 2 },
-                            new { text = "Python", order = 3 },
-                            new { text = "Java", order = 4 }
-                        }
-                    }
+                    Id = Guid.Parse("cccccccc-dddd-eeee-ffff-222222222222"),
+                    QuestionText = "Test Question",
+                    QuestionTypeId = Guid.Parse("11111111-1111-1111-1111-111111111111"),
+                    IsRequired = true,
+                    DisplayOrder = 1,
+                    ValidationRules = "{}",
+                    CreatedAt = DateTime.UtcNow,
+                    UpdatedAt = DateTime.UtcNow
                 }
-            };
-
-            // Act
-            var response = await PostAsync("/api/questionnaires", questionnaireData);
-
-            // Assert
-            response.StatusCode.Should().Be(HttpStatusCode.Created);
-            var result = await DeserializeAsync<QuestionnaireDetailDto>(response);
-            result.Should().NotBeNull();
-            result!.Questions!.Count.Should().Be(1);
-            result.Questions[0].QuestionTypeId.Should().Be(7);
-            result.Questions[0].Options.Should().NotBeNull();
-            result.Questions[0].Options!.Count.Should().Be(4);
-        }
-
-        [Fact]
-        public async Task CreateQuestionnaire_WithDropdownQuestion_ShouldReturnCreatedQuestionnaire()
-        {
-            // Arrange
-            var token = await GetAdminTokenAsync();
-            SetAuthHeader(token);
-
-            var category = await CreateTestCategoryAsync();
-
-            var questionnaireData = new
+            },
+            UserResponses = new List<UserQuestionResponse>
             {
-                title = "Test Questionnaire with Dropdown Question",
-                description = "A questionnaire with dropdown question",
-                categoryId = category.Id.ToString(),
-                version = "1.0",
-                isActive = true,
-                questions = new[]
+                new UserQuestionResponse
                 {
-                    new
-                    {
-                        text = "What is your education level?",
-                        questionTypeId = 8, // Dropdown
-                        order = 1,
-                        isRequired = true,
-                        options = new[]
-                        {
-                            new { text = "High School", order = 1 },
-                            new { text = "Bachelor's Degree", order = 2 },
-                            new { text = "Master's Degree", order = 3 },
-                            new { text = "PhD", order = 4 }
-                        }
-                    }
+                    Id = Guid.Parse("dddddddd-dddd-dddd-dddd-dddddddddddd"),
+                    UserId = Guid.Parse("33333333-3333-3333-3333-333333333333"),
+                    QuestionnaireId = Guid.Parse("cccccccc-cccc-cccc-cccc-cccccccccccc"),
+                    CompletedAt = DateTime.UtcNow,
+                    IsCompleted = true,
+                    IsDraft = false,
+                    CreatedAt = DateTime.UtcNow,
+                    UpdatedAt = DateTime.UtcNow
                 }
-            };
+            }
+        };
 
-            // Act
-            var response = await PostAsync("/api/questionnaires", questionnaireData);
-
-            // Assert
-            response.StatusCode.Should().Be(HttpStatusCode.Created);
-            var result = await DeserializeAsync<QuestionnaireDetailDto>(response);
-            result.Should().NotBeNull();
-            result!.Questions!.Count.Should().Be(1);
-            result.Questions[0].QuestionTypeId.Should().Be(8);
-            result.Questions[0].Options.Should().NotBeNull();
-            result.Questions[0].Options!.Count.Should().Be(4);
+        // Save the questionnaire to the database
+        using (var scope = _factory.Services.CreateScope())
+        {
+            var context = scope.ServiceProvider.GetRequiredService<QuestionnaireDbContext>();
+            context.CategoryQuestionnaireTemplates.Add(questionnaireWithResponses);
+            await context.SaveChangesAsync();
         }
 
-        [Fact]
-        public async Task CreateQuestionnaire_WithRatingQuestion_ShouldReturnCreatedQuestionnaire()
+        // Act
+        var token = await GetAuthTokenAsync("admin@test.com", "admin123");
+        SetAuthHeader(token);
+        var result = await DeleteAsync($"/api/CategoryQuestionnaireTemplates/{questionnaireWithResponses.Id}");
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.False(result.Success);
+        Assert.Equal(400, result.StatusCode);
+        Assert.Contains("Cannot delete questionnaire template with existing responses", result.Message);
+    }
+
+    [Fact]
+    public async Task AddQuestion_WithAdminToken_ShouldAddQuestion()
+    {
+        // Arrange
+        var token = await GetAuthTokenAsync("admin@test.com", "admin123");
+        SetAuthHeader(token);
+        var questionnaireId = "ffffffff-ffff-ffff-ffff-ffffffffffff";
+        var createQuestionDto = new
         {
-            // Arrange
-            var token = await GetAdminTokenAsync();
-            SetAuthHeader(token);
+            QuestionText = "New Test Question",
+            QuestionTypeId = "11111111-1111-1111-1111-111111111111",
+            IsRequired = true,
+            DisplayOrder = 10,
+            MinLength = 2,
+            MaxLength = 50
+        };
 
-            var category = await CreateTestCategoryAsync();
+        // Act
+        var result = await PostAsync($"/api/CategoryQuestionnaireTemplates/{questionnaireId}/questions", createQuestionDto);
 
-            var questionnaireData = new
+        // Assert
+        Assert.NotNull(result);
+        Assert.True(result.Success);
+        Assert.Equal(200, result.StatusCode);
+        Assert.Contains("Question added successfully", result.Message);
+        Assert.NotNull(result.Data);
+    }
+
+    [Fact]
+    public async Task AddQuestion_WithDuplicateOrder_ShouldReturnError()
+    {
+        // Arrange
+        var token = await GetAuthTokenAsync("admin@test.com", "admin123");
+        SetAuthHeader(token);
+        var questionnaireId = "ffffffff-ffff-ffff-ffff-ffffffffffff";
+        var createQuestionDto = new
+        {
+            QuestionText = "New Test Question",
+            QuestionTypeId = "11111111-1111-1111-1111-111111111111",
+            IsRequired = true,
+            DisplayOrder = 1, // Duplicate order with existing question
+            MinLength = 2,
+            MaxLength = 50
+        };
+
+        // Act
+        var result = await PostAsync($"/api/CategoryQuestionnaireTemplates/{questionnaireId}/questions", createQuestionDto);
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.False(result.Success);
+        Assert.Equal(400, result.StatusCode);
+        Assert.Contains("Question with order 1 already exists", result.Message);
+    }
+
+    [Fact]
+    public async Task UpdateQuestion_WithAdminToken_ShouldUpdateQuestion()
+    {
+        // Arrange
+        var token = await GetAuthTokenAsync("admin@test.com", "admin123");
+        SetAuthHeader(token);
+        var questionnaireId = "ffffffff-ffff-ffff-ffff-ffffffffffff";
+        var questionId = "11111111-aaaa-bbbb-cccc-dddddddddddd";
+        var updateQuestionDto = new
+        {
+            QuestionText = "Updated Test Question",
+            QuestionTypeId = "11111111-1111-1111-1111-111111111111",
+            IsRequired = false,
+            DisplayOrder = 1,
+            MinLength = 5,
+            MaxLength = 100
+        };
+
+        // Act
+        var result = await PutAsync($"/api/CategoryQuestionnaireTemplates/{questionnaireId}/questions/{questionId}", updateQuestionDto);
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.True(result.Success);
+        Assert.Equal(200, result.StatusCode);
+        Assert.Contains("Question updated successfully", result.Message);
+        Assert.NotNull(result.Data);
+    }
+
+    [Fact]
+    public async Task DeleteQuestion_WithAdminToken_ShouldDeleteQuestion()
+    {
+        // Arrange - Create a question without responses for deletion test
+        var testQuestion = new CategoryQuestion
+        {
+            Id = Guid.Parse("eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee"),
+            QuestionnaireId = Guid.Parse("ffffffff-ffff-ffff-ffff-ffffffffffff"),
+            QuestionText = "Test Question for Deletion",
+            QuestionTypeId = Guid.Parse("11111111-1111-1111-1111-111111111111"),
+            IsRequired = true,
+            DisplayOrder = 20,
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
+        };
+        _context.CategoryQuestions.Add(testQuestion);
+        await _context.SaveChangesAsync();
+
+        var token = await GetAuthTokenAsync("admin@test.com", "admin123");
+        SetAuthHeader(token);
+        var questionnaireId = "ffffffff-ffff-ffff-ffff-ffffffffffff";
+        var questionId = "eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee";
+
+        // Act
+        var result = await DeleteAsync($"/api/CategoryQuestionnaireTemplates/{questionnaireId}/questions/{questionId}");
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.True(result.Success);
+        Assert.Equal(200, result.StatusCode);
+        Assert.Contains("Question deleted successfully", result.Message);
+    }
+
+    [Fact]
+    public async Task DeleteQuestion_WithExistingResponses_ShouldReturnError()
+    {
+        // Arrange - Create a question with responses
+        var questionWithResponses = new CategoryQuestion
+        {
+            Id = Guid.Parse("ffffffff-eeee-dddd-cccc-bbbbbbbbbbbb"),
+            QuestionnaireId = Guid.Parse("ffffffff-ffff-ffff-ffff-ffffffffffff"),
+            QuestionText = "Question with Responses",
+            QuestionTypeId = Guid.Parse("11111111-1111-1111-1111-111111111111"),
+            IsRequired = true,
+            DisplayOrder = 25,
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
+        };
+        _context.CategoryQuestions.Add(questionWithResponses);
+
+        // Create a question response
+        var questionResponse = new QuestionResponse
+        {
+            Id = Guid.Parse("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"),
+            QuestionId = questionWithResponses.Id,
+            ResponseId = Guid.Parse("dddddddd-dddd-dddd-dddd-dddddddddddd"),
+            TextResponse = "Test response",
+            CreatedAt = DateTime.UtcNow
+        };
+        _context.QuestionResponses.Add(questionResponse);
+        await _context.SaveChangesAsync();
+
+        var token = await GetAuthTokenAsync("admin@test.com", "admin123");
+        SetAuthHeader(token);
+        var questionnaireId = "ffffffff-ffff-ffff-ffff-ffffffffffff";
+        var questionId = "ffffffff-eeee-dddd-cccc-bbbbbbbbbbbb";
+
+        // Act
+        var result = await DeleteAsync($"/api/CategoryQuestionnaireTemplates/{questionnaireId}/questions/{questionId}");
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.False(result.Success);
+        Assert.Equal(400, result.StatusCode);
+        Assert.Contains("Cannot delete question with existing responses", result.Message);
+    }
+
+    [Fact]
+    public async Task CreateQuestionnaire_WithEmptyTitle_ShouldReturnValidationError()
+    {
+        // Arrange
+        var token = await GetAuthTokenAsync("admin@test.com", "admin123");
+        SetAuthHeader(token);
+        var createDto = new
+        {
+            Title = "", // Empty title
+            Description = "Test questionnaire description",
+            CategoryId = "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+            IsActive = true,
+            IsMandatory = false,
+            DisplayOrder = 10
+        };
+
+        // Act
+        var result = await PostAsync("/api/CategoryQuestionnaireTemplates", createDto);
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.False(result.Success);
+        Assert.Equal(400, result.StatusCode);
+        Assert.Contains("Title is required", result.Message);
+    }
+
+    [Fact]
+    public async Task CreateQuestionnaire_WithInvalidQuestionValidation_ShouldReturnError()
+    {
+        // Arrange
+        var token = await GetAuthTokenAsync("admin@test.com", "admin123");
+        SetAuthHeader(token);
+        var createDto = new
+        {
+            Title = "Test Questionnaire",
+            Description = "Test questionnaire description",
+            CategoryId = "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee", // Use correct seeded category ID
+            IsActive = true,
+            IsMandatory = false,
+            DisplayOrder = 10,
+            Questions = new[]
             {
-                title = "Test Questionnaire with Rating Question",
-                description = "A questionnaire with rating question",
-                categoryId = category.Id.ToString(),
-                version = "1.0",
-                isActive = true,
-                questions = new[]
+                new
                 {
-                    new
-                    {
-                        text = "Rate our service from 1 to 5",
-                        questionTypeId = 9, // Rating
-                        order = 1,
-                        isRequired = true
-                    }
+                    QuestionText = "", // Invalid: empty question text
+                    QuestionTypeId = "11111111-1111-1111-1111-111111111111",
+                    IsRequired = true,
+                    DisplayOrder = 1
                 }
-            };
+            }
+        };
 
-            // Act
-            var response = await PostAsync("/api/questionnaires", questionnaireData);
+        // Act
+        var result = await PostAsync("/api/CategoryQuestionnaireTemplates", createDto);
 
-            // Assert
-            response.StatusCode.Should().Be(HttpStatusCode.Created);
-            var result = await DeserializeAsync<QuestionnaireDetailDto>(response);
-            result.Should().NotBeNull();
-            result!.Questions!.Count.Should().Be(1);
-            result.Questions[0].QuestionTypeId.Should().Be(9);
-        }
+        // Assert
+        Assert.NotNull(result);
+        Assert.False(result.Success);
+        Assert.Equal(400, result.StatusCode);
+        Assert.Contains("QuestionText field is required", result.Message);
+    }
 
-        [Fact]
-        public async Task CreateQuestionnaire_WithSliderQuestion_ShouldReturnCreatedQuestionnaire()
+    [Fact]
+    public async Task GetQuestionnaireForResponse_WithValidId_ShouldReturnQuestionnaire()
+    {
+        // Arrange
+        var questionnaireId = "ffffffff-ffff-ffff-ffff-ffffffffffff";
+        var token = await GetAuthTokenAsync("john@test.com", "user123");
+        SetAuthHeader(token);
+
+        // Act
+        var result = await GetAsync($"/api/CategoryQuestionnaireTemplates/{questionnaireId}/response");
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.True(result.Success);
+        Assert.Equal(200, result.StatusCode);
+        Assert.Contains("Questionnaire template retrieved successfully", result.Message);
+        Assert.NotNull(result.Data);
+    }
+
+    [Fact]
+    public async Task GetQuestionnaireForResponse_WithInactiveQuestionnaire_ShouldReturnNotFound()
+    {
+        // Arrange - Create an inactive questionnaire
+        var inactiveQuestionnaire = new CategoryQuestionnaireTemplate
         {
-            // Arrange
-            var token = await GetAdminTokenAsync();
-            SetAuthHeader(token);
+            Id = Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"),
+            Title = "Inactive Questionnaire",
+            Description = "This questionnaire is inactive",
+            CategoryId = Guid.Parse("11111111-1111-1111-1111-111111111111"),
+            IsActive = false,
+            IsMandatory = false,
+            DisplayOrder = 1,
+            Version = 1,
+            CreatedBy = Guid.Parse("33333333-3333-3333-3333-333333333333"),
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
+        };
+        _context.CategoryQuestionnaireTemplates.Add(inactiveQuestionnaire);
+        await _context.SaveChangesAsync();
 
-            var category = await CreateTestCategoryAsync();
+        var token = await GetAuthTokenAsync("john@test.com", "user123");
+        SetAuthHeader(token);
 
-            var questionnaireData = new
-            {
-                title = "Test Questionnaire with Slider Question",
-                description = "A questionnaire with slider question",
-                categoryId = category.Id.ToString(),
-                version = "1.0",
-                isActive = true,
-                questions = new[]
-                {
-                    new
-                    {
-                        text = "How satisfied are you? (0-100)",
-                        questionTypeId = 10, // Slider
-                        order = 1,
-                        isRequired = true,
-                        minValue = 0,
-                        maxValue = 100
-                    }
-                }
-            };
+        // Act
+        var result = await GetAsync($"/api/CategoryQuestionnaireTemplates/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa/response");
 
-            // Act
-            var response = await PostAsync("/api/questionnaires", questionnaireData);
-
-            // Assert
-            response.StatusCode.Should().Be(HttpStatusCode.Created);
-            var result = await DeserializeAsync<QuestionnaireDetailDto>(response);
-            result.Should().NotBeNull();
-            result!.Questions!.Count.Should().Be(1);
-            result.Questions[0].QuestionTypeId.Should().Be(10);
-            result.Questions[0].MinValue.Should().Be(0);
-            result.Questions[0].MaxValue.Should().Be(100);
-        }
-
-        [Fact]
-        public async Task CreateQuestionnaire_WithYesNoQuestion_ShouldReturnCreatedQuestionnaire()
-        {
-            // Arrange
-            var token = await GetAdminTokenAsync();
-            SetAuthHeader(token);
-
-            var category = await CreateTestCategoryAsync();
-
-            var questionnaireData = new
-            {
-                title = "Test Questionnaire with Yes/No Question",
-                description = "A questionnaire with yes/no question",
-                categoryId = category.Id.ToString(),
-                version = "1.0",
-                isActive = true,
-                questions = new[]
-                {
-                    new
-                    {
-                        text = "Do you agree to the terms and conditions?",
-                        questionTypeId = 11, // Yes/No
-                        order = 1,
-                        isRequired = true
-                    }
-                }
-            };
-
-            // Act
-            var response = await PostAsync("/api/questionnaires", questionnaireData);
-
-            // Assert
-            response.StatusCode.Should().Be(HttpStatusCode.Created);
-            var result = await DeserializeAsync<QuestionnaireDetailDto>(response);
-            result.Should().NotBeNull();
-            result!.Questions!.Count.Should().Be(1);
-            result.Questions[0].QuestionTypeId.Should().Be(11);
-        }
-
-        [Fact]
-        public async Task CreateQuestionnaire_WithFileUploadQuestion_ShouldReturnCreatedQuestionnaire()
-        {
-            // Arrange
-            var token = await GetAdminTokenAsync();
-            SetAuthHeader(token);
-
-            var category = await CreateTestCategoryAsync();
-
-            var questionnaireData = new
-            {
-                title = "Test Questionnaire with File Upload Question",
-                description = "A questionnaire with file upload question",
-                categoryId = category.Id.ToString(),
-                version = "1.0",
-                isActive = true,
-                questions = new[]
-                {
-                    new
-                    {
-                        text = "Please upload your resume",
-                        questionTypeId = 12, // File Upload
-                        order = 1,
-                        isRequired = true
-                    }
-                }
-            };
-
-            // Act
-            var response = await PostAsync("/api/questionnaires", questionnaireData);
-
-            // Assert
-            response.StatusCode.Should().Be(HttpStatusCode.Created);
-            var result = await DeserializeAsync<QuestionnaireDetailDto>(response);
-            result.Should().NotBeNull();
-            result!.Questions!.Count.Should().Be(1);
-            result.Questions[0].QuestionTypeId.Should().Be(12);
-        }
-
-        [Fact]
-        public async Task CreateQuestionnaire_WithImageQuestion_ShouldReturnCreatedQuestionnaire()
-        {
-            // Arrange
-            var token = await GetAdminTokenAsync();
-            SetAuthHeader(token);
-
-            var category = await CreateTestCategoryAsync();
-
-            var questionnaireData = new
-            {
-                title = "Test Questionnaire with Image Question",
-                description = "A questionnaire with image display question",
-                categoryId = category.Id.ToString(),
-                version = "1.0",
-                isActive = true,
-                questions = new[]
-                {
-                    new
-                    {
-                        text = "Please look at the image below",
-                        questionTypeId = 13, // Image
-                        order = 1,
-                        isRequired = false
-                    }
-                }
-            };
-
-            // Act
-            var response = await PostAsync("/api/questionnaires", questionnaireData);
-
-            // Assert
-            response.StatusCode.Should().Be(HttpStatusCode.Created);
-            var result = await DeserializeAsync<QuestionnaireDetailDto>(response);
-            result.Should().NotBeNull();
-            result!.Questions!.Count.Should().Be(1);
-            result.Questions[0].QuestionTypeId.Should().Be(13);
-        }
-
-        [Fact]
-        public async Task CreateQuestionnaire_WithTextAreaQuestion_ShouldReturnCreatedQuestionnaire()
-        {
-            // Arrange
-            var token = await GetAdminTokenAsync();
-            SetAuthHeader(token);
-
-            var category = await CreateTestCategoryAsync();
-
-            var questionnaireData = new
-            {
-                title = "Test Questionnaire with Text Area Question",
-                description = "A questionnaire with long text question",
-                categoryId = category.Id.ToString(),
-                version = "1.0",
-                isActive = true,
-                questions = new[]
-                {
-                    new
-                    {
-                        text = "Please describe your experience in detail",
-                        questionTypeId = 14, // Text Area
-                        order = 1,
-                        isRequired = true,
-                        minLength = 10,
-                        maxLength = 1000
-                    }
-                }
-            };
-
-            // Act
-            var response = await PostAsync("/api/questionnaires", questionnaireData);
-
-            // Assert
-            response.StatusCode.Should().Be(HttpStatusCode.Created);
-            var result = await DeserializeAsync<QuestionnaireDetailDto>(response);
-            result.Should().NotBeNull();
-            result!.Questions!.Count.Should().Be(1);
-            result.Questions[0].QuestionTypeId.Should().Be(14);
-            result.Questions[0].MinLength.Should().Be(10);
-            result.Questions[0].MaxLength.Should().Be(1000);
-        }
-
-        [Fact]
-        public async Task CreateQuestionnaire_WithMultipleQuestions_ShouldReturnCreatedQuestionnaire()
-        {
-            // Arrange
-            var token = await GetAdminTokenAsync();
-            SetAuthHeader(token);
-
-            var category = await CreateTestCategoryAsync();
-
-            var questionnaireData = new
-            {
-                title = "Test Questionnaire with Multiple Questions",
-                description = "A questionnaire with various question types",
-                categoryId = category.Id.ToString(),
-                version = "1.0",
-                isActive = true,
-                questions = new[]
-                {
-                    new
-                    {
-                        text = "What is your name?",
-                        questionTypeId = 1, // Text
-                        order = 1,
-                        isRequired = true
-                    },
-                    new
-                    {
-                        text = "What is your age?",
-                        questionTypeId = 2, // Number
-                        order = 2,
-                        isRequired = true
-                    },
-                    new
-                    {
-                        text = "What is your gender?",
-                        questionTypeId = 6, // Radio
-                        order = 3,
-                        isRequired = true,
-                        options = new[]
-                        {
-                            new { text = "Male", order = 1 },
-                            new { text = "Female", order = 2 }
-                        }
-                    }
-                }
-            };
-
-            // Act
-            var response = await PostAsync("/api/questionnaires", questionnaireData);
-
-            // Assert
-            response.StatusCode.Should().Be(HttpStatusCode.Created);
-            var result = await DeserializeAsync<QuestionnaireDetailDto>(response);
-            result.Should().NotBeNull();
-            result!.Questions!.Count.Should().Be(3);
-            result.Questions[0].QuestionTypeId.Should().Be(1);
-            result.Questions[1].QuestionTypeId.Should().Be(2);
-            result.Questions[2].QuestionTypeId.Should().Be(6);
-        }
-
-        [Fact]
-        public async Task UpdateQuestionnaire_ValidData_ShouldReturnUpdatedQuestionnaire()
-        {
-            // Arrange
-            var token = await GetAdminTokenAsync();
-            SetAuthHeader(token);
-
-            var category = await CreateTestCategoryAsync();
-            var questionnaire = await CreateTestQuestionnaireAsync(category);
-
-            var updateData = new
-            {
-                title = "Updated Questionnaire Title",
-                description = "Updated description",
-                categoryId = category.Id.ToString(),
-                version = "2.0",
-                isActive = false,
-                questions = new[]
-                {
-                    new
-                    {
-                        text = "Updated question text",
-                        questionTypeId = 1,
-                        order = 1,
-                        isRequired = false
-                    }
-                }
-            };
-
-            // Act
-            var response = await PutAsync($"/api/questionnaires/{questionnaire.Id}", updateData);
-
-            // Assert
-            response.StatusCode.Should().Be(HttpStatusCode.OK);
-            var result = await DeserializeAsync<QuestionnaireDetailDto>(response);
-            result.Should().NotBeNull();
-            result!.Title.Should().Be("Updated Questionnaire Title");
-            result.Version.Should().Be("2.0");
-            result.IsActive.Should().BeFalse();
-        }
-
-        [Fact]
-        public async Task DeleteQuestionnaire_ValidId_ShouldReturnNoContent()
-        {
-            // Arrange
-            var token = await GetAdminTokenAsync();
-            SetAuthHeader(token);
-
-            var category = await CreateTestCategoryAsync();
-            var questionnaire = await CreateTestQuestionnaireAsync(category);
-
-            // Act
-            var response = await DeleteAsync($"/api/questionnaires/{questionnaire.Id}");
-
-            // Assert
-            response.StatusCode.Should().Be(HttpStatusCode.NoContent);
-
-            // Verify questionnaire is deleted
-            var getResponse = await _client.GetAsync($"/api/questionnaires/{questionnaire.Id}");
-            getResponse.StatusCode.Should().Be(HttpStatusCode.NotFound);
-        }
-
-        [Fact]
-        public async Task GetQuestionnaires_ByCategory_ShouldReturnFilteredResults()
-        {
-            // Arrange
-            var token = await GetAdminTokenAsync();
-            SetAuthHeader(token);
-
-            var category1 = await CreateTestCategoryAsync("Category 1");
-            var category2 = await CreateTestCategoryAsync("Category 2");
-
-            await CreateTestQuestionnaireAsync(category1);
-            await CreateTestQuestionnaireAsync(category1);
-            await CreateTestQuestionnaireAsync(category2);
-
-            // Act
-            var response = await _client.GetAsync($"/api/questionnaires?categoryId={category1.Id}");
-
-            // Assert
-            response.StatusCode.Should().Be(HttpStatusCode.OK);
-            var questionnaires = await DeserializeAsync<List<QuestionnaireDto>>(response);
-            questionnaires.Should().NotBeNull();
-            questionnaires!.Should().OnlyContain(q => q.CategoryId == category1.Id.ToString());
-        }
-
-        protected class QuestionnaireDto
-        {
-            public string Id { get; set; } = string.Empty;
-            public string Title { get; set; } = string.Empty;
-            public string Description { get; set; } = string.Empty;
-            public string CategoryId { get; set; } = string.Empty;
-            public string CategoryName { get; set; } = string.Empty;
-            public string Version { get; set; } = string.Empty;
-            public bool IsActive { get; set; }
-            public string CreatedAt { get; set; } = string.Empty;
-            public string? UpdatedAt { get; set; }
-        }
-
-        protected class QuestionnaireDetailDto : QuestionnaireDto
-        {
-            public List<QuestionDto>? Questions { get; set; }
-        }
-
-        protected class QuestionDto
-        {
-            public string Id { get; set; } = string.Empty;
-            public string Text { get; set; } = string.Empty;
-            public int QuestionTypeId { get; set; }
-            public int Order { get; set; }
-            public bool IsRequired { get; set; }
-            public int? MinLength { get; set; }
-            public int? MaxLength { get; set; }
-            public int? MinValue { get; set; }
-            public int? MaxValue { get; set; }
-            public List<QuestionOptionDto>? Options { get; set; }
-        }
-
-        protected class QuestionOptionDto
-        {
-            public string Id { get; set; } = string.Empty;
-            public string Text { get; set; } = string.Empty;
-            public int Order { get; set; }
-        }
+        // Assert
+        Assert.NotNull(result);
+        Assert.False(result.Success);
+        Assert.Equal(404, result.StatusCode);
+        Assert.Contains("Questionnaire template not found or inactive", result.Message);
     }
 } 

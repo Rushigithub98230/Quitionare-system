@@ -24,6 +24,8 @@ namespace QuestionnaireSystem.Core.Models
         [Required]
         public string Role { get; set; } = "User"; // User, Admin
         
+        public string? Category { get; set; } // e.g., "Hair Loss", "Weight Loss"
+        
         public bool IsActive { get; set; } = true;
         
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
@@ -33,7 +35,9 @@ namespace QuestionnaireSystem.Core.Models
         public DateTime? LastLoginAt { get; set; }
         
         // Navigation properties
-        public virtual ICollection<PatientQuestionnaireAssignment> Assignments { get; set; } = new List<PatientQuestionnaireAssignment>();
-        public virtual ICollection<PatientResponse> Responses { get; set; } = new List<PatientResponse>();
+        [System.Text.Json.Serialization.JsonIgnore]
+        public virtual ICollection<UserQuestionResponse> Responses { get; set; } = new List<UserQuestionResponse>();
+        [System.Text.Json.Serialization.JsonIgnore]
+        public virtual ICollection<CategoryQuestionnaireTemplate> CreatedQuestionnaires { get; set; } = new List<CategoryQuestionnaireTemplate>();
     }
 } 

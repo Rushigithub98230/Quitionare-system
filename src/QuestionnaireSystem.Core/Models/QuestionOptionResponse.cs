@@ -18,6 +18,8 @@ public class QuestionOptionResponse
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     
     // Navigation properties
+    [System.Text.Json.Serialization.JsonIgnore]
     public virtual QuestionResponse QuestionResponse { get; set; } = null!;
+    [System.Text.Json.Serialization.JsonIgnore]
     public virtual QuestionOption Option { get; set; } = null!;
 } 

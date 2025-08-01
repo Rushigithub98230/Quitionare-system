@@ -28,9 +28,22 @@ namespace QuestionnaireSystem.API.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<bool>("AllowsFollowUpMessaging")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("AllowsMedicationDelivery")
+                        .HasColumnType("bit");
+
+                    b.Property<decimal>("BasePrice")
+                        .HasColumnType("decimal(18,2)");
+
                     b.Property<string>("Color")
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("ConsultationDescription")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
@@ -45,13 +58,33 @@ namespace QuestionnaireSystem.API.Migrations
                     b.Property<int>("DisplayOrder")
                         .HasColumnType("int");
 
+                    b.Property<string>("Features")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<string>("Icon")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
                     b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsMostPopular")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsTrending")
                         .HasColumnType("bit");
 
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
+
+                    b.Property<int>("OneTimeConsultationDurationMinutes")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("RequiresQuestionnaireAssessment")
+                        .HasColumnType("bit");
 
                     b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("datetime2");
@@ -64,114 +97,6 @@ namespace QuestionnaireSystem.API.Migrations
                         .IsUnique();
 
                     b.ToTable("Categories");
-                });
-
-            modelBuilder.Entity("QuestionnaireSystem.Core.Models.PatientQuestionnaireAssignment", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<DateTime>("AssignedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<Guid>("AssignedBy")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<DateTime?>("DueDate")
-                        .HasColumnType("datetime2");
-
-                    b.Property<bool>("NotificationSent")
-                        .HasColumnType("bit");
-
-                    b.Property<Guid>("PatientId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<Guid>("QuestionnaireId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<int>("ReminderCount")
-                        .HasColumnType("int");
-
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
-
-                    b.Property<Guid?>("UserId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("PatientId");
-
-                    b.HasIndex("QuestionnaireId");
-
-                    b.HasIndex("Status");
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("PatientQuestionnaireAssignments");
-                });
-
-            modelBuilder.Entity("QuestionnaireSystem.Core.Models.PatientResponse", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<Guid>("AssignmentId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<DateTime?>("CompletedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<bool>("IsCompleted")
-                        .HasColumnType("bit");
-
-                    b.Property<bool>("IsDraft")
-                        .HasColumnType("bit");
-
-                    b.Property<Guid>("PatientId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<Guid>("QuestionnaireId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<DateTime>("StartedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("SubmissionIp")
-                        .HasMaxLength(45)
-                        .HasColumnType("nvarchar(45)");
-
-                    b.Property<int?>("TimeTaken")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("UpdatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("UserAgent")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<Guid?>("UserId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("AssignmentId");
-
-                    b.HasIndex("QuestionnaireId");
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("PatientResponses");
                 });
 
             modelBuilder.Entity("QuestionnaireSystem.Core.Models.Question", b =>
@@ -204,6 +129,18 @@ namespace QuestionnaireSystem.API.Migrations
                     b.Property<bool>("IsRequired")
                         .HasColumnType("bit");
 
+                    b.Property<int?>("MaxLength")
+                        .HasColumnType("int");
+
+                    b.Property<decimal?>("MaxValue")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<int?>("MinLength")
+                        .HasColumnType("int");
+
+                    b.Property<decimal?>("MinValue")
+                        .HasColumnType("decimal(18,2)");
+
                     b.Property<string>("Placeholder")
                         .HasMaxLength(255)
                         .HasColumnType("nvarchar(255)");
@@ -235,7 +172,7 @@ namespace QuestionnaireSystem.API.Migrations
 
                     b.HasIndex("QuestionTypeId");
 
-                    b.HasIndex("QuestionnaireId", "DisplayOrder");
+                    b.HasIndex("QuestionnaireId");
 
                     b.ToTable("Questions");
                 });
@@ -590,7 +527,10 @@ namespace QuestionnaireSystem.API.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("CategoryId");
+                    b.HasIndex("CategoryId")
+                        .IsUnique();
+
+                    b.HasIndex("CreatedBy");
 
                     b.HasIndex("IsActive");
 
@@ -602,6 +542,9 @@ namespace QuestionnaireSystem.API.Migrations
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Category")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
@@ -642,42 +585,53 @@ namespace QuestionnaireSystem.API.Migrations
                     b.ToTable("Users");
                 });
 
-            modelBuilder.Entity("QuestionnaireSystem.Core.Models.PatientQuestionnaireAssignment", b =>
+            modelBuilder.Entity("QuestionnaireSystem.Core.Models.UserQuestionResponse", b =>
                 {
-                    b.HasOne("QuestionnaireSystem.Core.Models.QuestionnaireTemplate", "Questionnaire")
-                        .WithMany("Assignments")
-                        .HasForeignKey("QuestionnaireId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
 
-                    b.HasOne("QuestionnaireSystem.Core.Models.User", null)
-                        .WithMany("Assignments")
-                        .HasForeignKey("UserId");
+                    b.Property<DateTime?>("CompletedAt")
+                        .HasColumnType("datetime2");
 
-                    b.Navigation("Questionnaire");
-                });
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
 
-            modelBuilder.Entity("QuestionnaireSystem.Core.Models.PatientResponse", b =>
-                {
-                    b.HasOne("QuestionnaireSystem.Core.Models.PatientQuestionnaireAssignment", "Assignment")
-                        .WithMany("PatientResponses")
-                        .HasForeignKey("AssignmentId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                    b.Property<bool>("IsCompleted")
+                        .HasColumnType("bit");
 
-                    b.HasOne("QuestionnaireSystem.Core.Models.QuestionnaireTemplate", "Questionnaire")
-                        .WithMany()
-                        .HasForeignKey("QuestionnaireId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                    b.Property<bool>("IsDraft")
+                        .HasColumnType("bit");
 
-                    b.HasOne("QuestionnaireSystem.Core.Models.User", null)
-                        .WithMany("Responses")
-                        .HasForeignKey("UserId");
+                    b.Property<Guid>("QuestionnaireId")
+                        .HasColumnType("uniqueidentifier");
 
-                    b.Navigation("Assignment");
+                    b.Property<DateTime>("StartedAt")
+                        .HasColumnType("datetime2");
 
-                    b.Navigation("Questionnaire");
+                    b.Property<string>("SubmissionIp")
+                        .HasMaxLength(45)
+                        .HasColumnType("nvarchar(45)");
+
+                    b.Property<int?>("TimeTaken")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UserAgent")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("QuestionnaireId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("UserQuestionResponses");
                 });
 
             modelBuilder.Entity("QuestionnaireSystem.Core.Models.Question", b =>
@@ -737,7 +691,7 @@ namespace QuestionnaireSystem.API.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("QuestionnaireSystem.Core.Models.PatientResponse", "Response")
+                    b.HasOne("QuestionnaireSystem.Core.Models.UserQuestionResponse", "Response")
                         .WithMany("QuestionResponses")
                         .HasForeignKey("ResponseId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -751,27 +705,44 @@ namespace QuestionnaireSystem.API.Migrations
             modelBuilder.Entity("QuestionnaireSystem.Core.Models.QuestionnaireTemplate", b =>
                 {
                     b.HasOne("QuestionnaireSystem.Core.Models.Category", "Category")
-                        .WithMany("Questionnaires")
-                        .HasForeignKey("CategoryId")
+                        .WithOne("QuestionnaireTemplate")
+                        .HasForeignKey("QuestionnaireSystem.Core.Models.QuestionnaireTemplate", "CategoryId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("QuestionnaireSystem.Core.Models.User", "CreatedByUser")
+                        .WithMany("CreatedQuestionnaires")
+                        .HasForeignKey("CreatedBy")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("Category");
+
+                    b.Navigation("CreatedByUser");
+                });
+
+            modelBuilder.Entity("QuestionnaireSystem.Core.Models.UserQuestionResponse", b =>
+                {
+                    b.HasOne("QuestionnaireSystem.Core.Models.QuestionnaireTemplate", "Questionnaire")
+                        .WithMany("UserResponses")
+                        .HasForeignKey("QuestionnaireId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("QuestionnaireSystem.Core.Models.User", "User")
+                        .WithMany("Responses")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Questionnaire");
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("QuestionnaireSystem.Core.Models.Category", b =>
                 {
-                    b.Navigation("Questionnaires");
-                });
-
-            modelBuilder.Entity("QuestionnaireSystem.Core.Models.PatientQuestionnaireAssignment", b =>
-                {
-                    b.Navigation("PatientResponses");
-                });
-
-            modelBuilder.Entity("QuestionnaireSystem.Core.Models.PatientResponse", b =>
-                {
-                    b.Navigation("QuestionResponses");
+                    b.Navigation("QuestionnaireTemplate");
                 });
 
             modelBuilder.Entity("QuestionnaireSystem.Core.Models.Question", b =>
@@ -798,16 +769,21 @@ namespace QuestionnaireSystem.API.Migrations
 
             modelBuilder.Entity("QuestionnaireSystem.Core.Models.QuestionnaireTemplate", b =>
                 {
-                    b.Navigation("Assignments");
-
                     b.Navigation("Questions");
+
+                    b.Navigation("UserResponses");
                 });
 
             modelBuilder.Entity("QuestionnaireSystem.Core.Models.User", b =>
                 {
-                    b.Navigation("Assignments");
+                    b.Navigation("CreatedQuestionnaires");
 
                     b.Navigation("Responses");
+                });
+
+            modelBuilder.Entity("QuestionnaireSystem.Core.Models.UserQuestionResponse", b =>
+                {
+                    b.Navigation("QuestionResponses");
                 });
 #pragma warning restore 612, 618
         }

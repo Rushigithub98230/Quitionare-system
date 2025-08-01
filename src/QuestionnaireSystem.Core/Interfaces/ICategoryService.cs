@@ -1,0 +1,13 @@
+using QuestionnaireSystem.Core.DTOs;
+using QuestionnaireSystem.Core.Models;
+
+namespace QuestionnaireSystem.Core.Interfaces;
+
+public interface ICategoryService
+{
+    Task<JsonModel> GetAllAsync(TokenModel tokenModel);
+    Task<JsonModel> GetByIdAsync(Guid id, TokenModel tokenModel);
+    Task<JsonModel> CreateAsync(CreateCategoryDto dto, TokenModel tokenModel);
+    Task<JsonModel> UpdateAsync(Guid id, UpdateCategoryDto dto, TokenModel tokenModel);
+    Task<JsonModel> DeleteAsync(Guid id, TokenModel tokenModel);
+} 

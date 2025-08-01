@@ -1,7 +1,10 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using QuestionnaireSystem.API.Services;
+using QuestionnaireSystem.API.Helpers;
 using QuestionnaireSystem.Core.DTOs;
+using QuestionnaireSystem.Core.Interfaces;
+using QuestionnaireSystem.Core.Models;
+using System.Linq;
 
 namespace QuestionnaireSystem.API.Controllers;
 
@@ -18,49 +21,53 @@ public class CategoriesController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<CategoryDto>>> GetAll([FromQuery] bool includeInactive = false)
+    public async Task<ActionResult<JsonModel>> GetAll()
     {
-        var categories = await _categoryService.GetAllAsync(includeInactive);
-        return Ok(categories);
+        return await _categoryService.GetAllAsync(TokenHelper.GetToken(HttpContext));
     }
 
     [HttpGet("{id:guid}")]
-    public async Task<ActionResult<CategoryDto>> GetById(Guid id)
+    public async Task<ActionResult<JsonModel>> GetById(Guid id)
     {
-        var category = await _categoryService.GetByIdAsync(id);
-        if (category == null)
-            return NotFound();
-
-        return Ok(category);
+        return await _categoryService.GetByIdAsync(id, TokenHelper.GetToken(HttpContext));
     }
 
     [HttpPost]
     [Authorize(Roles = "Admin")]
-    public async Task<ActionResult<CategoryDto>> Create(CreateCategoryDto dto)
+    public async Task<ActionResult<JsonModel>> Create(CreateCategoryDto dto)
     {
-        // TODO: Get actual user ID from JWT token
-        var createdBy = Guid.NewGuid(); // Placeholder
-
-        var category = await _categoryService.CreateAsync(dto, createdBy);
-        return CreatedAtAction(nameof(GetById), new { id = category.Id }, category);
+        if (!ModelState.IsValid)
+        {
+            var errors = ModelState.Values
+                .SelectMany(v => v.Errors)
+                .Select(e => e.ErrorMessage)
+                .ToList();
+            return BadRequest(JsonModel.ErrorResult($"Validation failed: {string.Join(", ", errors)}", HttpStatusCodes.BadRequest));
+        }
+        
+        return await _categoryService.CreateAsync(dto, TokenHelper.GetToken(HttpContext));
     }
 
     [HttpPut("{id:guid}")]
     [Authorize(Roles = "Admin")]
-    public async Task<ActionResult<CategoryDto>> Update(Guid id, UpdateCategoryDto dto)
+    public async Task<ActionResult<JsonModel>> Update(Guid id, UpdateCategoryDto dto)
     {
-        var category = await _categoryService.UpdateAsync(id, dto);
-        return Ok(category);
+        if (!ModelState.IsValid)
+        {
+            var errors = ModelState.Values
+                .SelectMany(v => v.Errors)
+                .Select(e => e.ErrorMessage)
+                .ToList();
+            return BadRequest(JsonModel.ErrorResult($"Validation failed: {string.Join(", ", errors)}", HttpStatusCodes.BadRequest));
+        }
+        
+        return await _categoryService.UpdateAsync(id, dto, TokenHelper.GetToken(HttpContext));
     }
 
     [HttpDelete("{id:guid}")]
     [Authorize(Roles = "Admin")]
-    public async Task<ActionResult> Delete(Guid id)
+    public async Task<ActionResult<JsonModel>> Delete(Guid id)
     {
-        var deleted = await _categoryService.DeleteAsync(id);
-        if (!deleted)
-            return NotFound();
-
-        return NoContent();
+        return await _categoryService.DeleteAsync(id, TokenHelper.GetToken(HttpContext));
     }
 } 

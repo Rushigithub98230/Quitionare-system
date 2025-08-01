@@ -1,7 +1,10 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using QuestionnaireSystem.API.Services;
+using QuestionnaireSystem.API.Helpers;
 using QuestionnaireSystem.Core.DTOs;
+using QuestionnaireSystem.Core.Interfaces;
+using QuestionnaireSystem.Core.Models;
+using System.Linq;
 
 namespace QuestionnaireSystem.API.Controllers;
 
@@ -10,45 +13,63 @@ namespace QuestionnaireSystem.API.Controllers;
 [Authorize]
 public class ResponsesController : ControllerBase
 {
-    private readonly IPatientResponseService _responseService;
+    private readonly IUserQuestionResponseService _responseService;
 
-    public ResponsesController(IPatientResponseService responseService)
+    public ResponsesController(IUserQuestionResponseService responseService)
     {
         _responseService = responseService;
     }
 
-    [HttpGet("assignment/{assignmentId:guid}")]
-    public async Task<ActionResult<ResponseSummaryDto>> GetByAssignmentId(Guid assignmentId)
+    [HttpGet]
+    public async Task<ActionResult<JsonModel>> GetUserResponses()
     {
-        var response = await _responseService.GetByAssignmentIdAsync(assignmentId);
-        if (response == null)
-            return NotFound();
-
-        return Ok(response);
+        return await _responseService.GetUserResponsesAsync(TokenHelper.GetToken(HttpContext));
     }
 
-    [HttpGet("patient/{patientId:guid}")]
-    public async Task<ActionResult<IEnumerable<ResponseSummaryDto>>> GetByPatientId(Guid patientId)
+    [HttpGet("{id:guid}")]
+    public async Task<ActionResult<JsonModel>> GetResponseById(Guid id)
     {
-        var responses = await _responseService.GetByPatientIdAsync(patientId);
-        return Ok(responses);
+        var result = await _responseService.GetResponseByIdAsync(id, TokenHelper.GetToken(HttpContext));
+        
+        if (!result.Success && result.StatusCode == 404)
+            return NotFound(result);
+        
+        return Ok(result);
+    }
+
+    [HttpGet("questionnaire/{questionnaireId:guid}")]
+    public async Task<ActionResult<JsonModel>> GetResponsesByQuestionnaire(Guid questionnaireId)
+    {
+        return await _responseService.GetResponsesByQuestionnaireAsync(questionnaireId, TokenHelper.GetToken(HttpContext));
     }
 
     [HttpPost]
-    [AllowAnonymous]
-    public async Task<ActionResult<ResponseSummaryDto>> SaveResponses(SaveResponsesDto dto)
+    public async Task<ActionResult<JsonModel>> SubmitResponse(SubmitResponseDto dto)
     {
-        var response = await _responseService.SaveResponsesAsync(dto);
-        return CreatedAtAction(nameof(GetByAssignmentId), new { assignmentId = response.AssignmentId }, response);
+        if (!ModelState.IsValid)
+        {
+            var errors = ModelState.Values
+                .SelectMany(v => v.Errors)
+                .Select(e => e.ErrorMessage)
+                .ToList();
+            return BadRequest(JsonModel.ErrorResult($"Validation failed: {string.Join(", ", errors)}", HttpStatusCodes.BadRequest));
+        }
+        
+        return await _responseService.SubmitResponseAsync(dto, TokenHelper.GetToken(HttpContext));
     }
 
-    [HttpDelete("{id:guid}")]
-    public async Task<ActionResult> Delete(Guid id)
+    [HttpPost("validate")]
+    public async Task<ActionResult<JsonModel>> ValidateResponses(SubmitResponseDto dto)
     {
-        var deleted = await _responseService.DeleteAsync(id);
-        if (!deleted)
-            return NotFound();
-
-        return NoContent();
+        if (!ModelState.IsValid)
+        {
+            var errors = ModelState.Values
+                .SelectMany(v => v.Errors)
+                .Select(e => e.ErrorMessage)
+                .ToList();
+            return BadRequest(JsonModel.ErrorResult($"Validation failed: {string.Join(", ", errors)}", HttpStatusCodes.BadRequest));
+        }
+        
+        return await _responseService.ValidateResponsesAsync(dto, TokenHelper.GetToken(HttpContext));
     }
 } 

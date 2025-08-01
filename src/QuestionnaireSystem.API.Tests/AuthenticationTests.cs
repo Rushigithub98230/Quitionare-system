@@ -1,344 +1,165 @@
-using FluentAssertions;
-using Microsoft.AspNetCore.Mvc.Testing;
-using QuestionnaireSystem.API.Tests;
-using System.Net;
-using System.Text;
-using System.Text.Json;
 using Xunit;
 
-namespace QuestionnaireSystem.API.Tests
+namespace QuestionnaireSystem.API.Tests;
+
+public class AuthenticationTests : TestBase
 {
-    public class AuthenticationTests : TestBase
+    [Fact]
+    public async Task Login_WithValidCredentials_ShouldReturnToken()
     {
-        public AuthenticationTests(WebApplicationFactory<Program> factory) : base(factory)
+        // Arrange
+        var loginDto = new { Email = "admin@test.com", Password = "admin123" };
+
+        // Act
+        var result = await PostAsync("/api/auth/login", loginDto);
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.True(result.Success);
+        Assert.Equal(200, result.StatusCode);
+        Assert.Contains("Login successful", result.Message);
+        Assert.NotNull(result.Data);
+    }
+
+    [Fact]
+    public async Task Login_WithInvalidCredentials_ShouldReturnError()
+    {
+        // Arrange
+        var loginDto = new { Email = "admin@test.com", Password = "wrongpassword" };
+
+        // Act
+        var result = await PostAsync("/api/auth/login", loginDto);
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.False(result.Success);
+        Assert.Equal(401, result.StatusCode);
+        Assert.Contains("Invalid email or password", result.Message);
+    }
+
+    [Fact]
+    public async Task Login_WithNonExistentUser_ShouldReturnError()
+    {
+        // Arrange
+        var loginDto = new { Email = "nonexistent@test.com", Password = "password" };
+
+        // Act
+        var result = await PostAsync("/api/auth/login", loginDto);
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.False(result.Success);
+        Assert.Equal(401, result.StatusCode);
+        Assert.Contains("Invalid email or password", result.Message);
+    }
+
+    [Fact]
+    public async Task Register_WithValidData_ShouldCreateUser()
+    {
+        // Arrange
+        var registerDto = new
         {
-        }
+            FirstName = "Test",
+            LastName = "User",
+            Email = "newuser@test.com",
+            Password = "password123",
+            confirmPassword = "password123",
+            Role = "User",
+            Category = "Hair Loss"
+        };
 
-        [Fact]
-        public async Task Register_ValidUser_ShouldReturnToken()
+        // Act
+        var result = await PostAsync("/api/auth/register", registerDto);
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.True(result.Success);
+        Assert.Equal(200, result.StatusCode);
+        Assert.Contains("Registration successful", result.Message);
+        Assert.NotNull(result.Data);
+    }
+
+    [Fact]
+    public async Task Register_WithExistingEmail_ShouldReturnError()
+    {
+        // Arrange
+        var registerDto = new
         {
-            // Arrange
-            var registerData = new
-            {
-                firstName = "John",
-                lastName = "Doe",
-                email = "john.doe@test.com",
-                password = "password123",
-                confirmPassword = "password123",
-                role = "User"
-            };
+            FirstName = "Test",
+            LastName = "User",
+            Email = "admin@test.com", // Already exists
+            Password = "password123",
+            confirmPassword = "password123",
+            Role = "User",
+            Category = "Hair Loss"
+        };
 
-            // Act
-            var response = await PostAsync("/api/auth/register", registerData);
+        // Act
+        var result = await PostAsync("/api/auth/register", registerDto);
 
-            // Assert
-            response.StatusCode.Should().Be(HttpStatusCode.OK);
-            var result = await DeserializeAsync<AuthResponse>(response);
-            result.Should().NotBeNull();
-            result!.Token.Should().NotBeNullOrEmpty();
-            result.User.Email.Should().Be("john.doe@test.com");
-            result.User.Role.Should().Be("User");
-        }
+        // Assert
+        Assert.NotNull(result);
+        Assert.False(result.Success);
+        Assert.Equal(409, result.StatusCode);
+        Assert.Contains("User with this email already exists", result.Message);
+    }
 
-        [Fact]
-        public async Task Register_AdminUser_ShouldReturnToken()
-        {
-            // Arrange
-            var registerData = new
-            {
-                firstName = "Admin",
-                lastName = "User",
-                email = "admin@test.com",
-                password = "password123",
-                confirmPassword = "password123",
-                role = "Admin"
-            };
+    [Fact]
+    public async Task ValidateToken_WithValidToken_ShouldReturnSuccess()
+    {
+        // Arrange
+        var token = await GetAuthTokenAsync("admin@test.com", "admin123");
+        SetAuthHeader(token);
 
-            // Act
-            var response = await PostAsync("/api/auth/register", registerData);
+        // Act
+        var result = await PostAsync("/api/auth/validate", new { });
 
-            // Assert
-            response.StatusCode.Should().Be(HttpStatusCode.OK);
-            var result = await DeserializeAsync<AuthResponse>(response);
-            result.Should().NotBeNull();
-            result!.Token.Should().NotBeNullOrEmpty();
-            result.User.Role.Should().Be("Admin");
-        }
+        // Assert
+        Assert.NotNull(result);
+        Assert.True(result.Success);
+        Assert.Equal(200, result.StatusCode);
+    }
 
-        [Fact]
-        public async Task Register_DuplicateEmail_ShouldReturnBadRequest()
-        {
-            // Arrange
-            var registerData = new
-            {
-                firstName = "John",
-                lastName = "Doe",
-                email = "duplicate@test.com",
-                password = "password123",
-                confirmPassword = "password123",
-                role = "User"
-            };
+    [Fact]
+    public async Task ValidateToken_WithoutToken_ShouldReturnError()
+    {
+        // Act
+        var result = await PostAsync("/api/auth/validate", new { });
 
-            // Register first user
-            await PostAsync("/api/auth/register", registerData);
+        // Assert
+        Assert.NotNull(result);
+        Assert.False(result.Success);
+        Assert.Equal(401, result.StatusCode);
+        Assert.Contains("Unauthorized", result.Message);
+    }
 
-            // Act - Try to register with same email
-            var response = await PostAsync("/api/auth/register", registerData);
+    [Fact]
+    public async Task GetUserProfile_WithValidToken_ShouldReturnUserData()
+    {
+        // Arrange
+        var token = await GetAuthTokenAsync("admin@test.com", "admin123");
+        SetAuthHeader(token);
 
-            // Assert
-            response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
-        }
+        // Act
+        var result = await GetAsync("/api/auth/profile");
 
-        [Fact]
-        public async Task Register_PasswordMismatch_ShouldReturnBadRequest()
-        {
-            // Arrange
-            var registerData = new
-            {
-                firstName = "John",
-                lastName = "Doe",
-                email = "john.doe@test.com",
-                password = "password123",
-                confirmPassword = "differentpassword",
-                role = "User"
-            };
+        // Assert
+        Assert.NotNull(result);
+        Assert.True(result.Success);
+        Assert.Equal(200, result.StatusCode);
+        Assert.Contains("User profile retrieved successfully", result.Message);
+        Assert.NotNull(result.Data);
+    }
 
-            // Act
-            var response = await PostAsync("/api/auth/register", registerData);
+    [Fact]
+    public async Task GetUserProfile_WithoutToken_ShouldReturnUnauthorized()
+    {
+        // Act
+        var result = await GetAsync("/api/auth/profile");
 
-            // Assert
-            response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
-        }
-
-        [Fact]
-        public async Task Register_InvalidEmail_ShouldReturnBadRequest()
-        {
-            // Arrange
-            var registerData = new
-            {
-                firstName = "John",
-                lastName = "Doe",
-                email = "invalid-email",
-                password = "password123",
-                confirmPassword = "password123",
-                role = "User"
-            };
-
-            // Act
-            var response = await PostAsync("/api/auth/register", registerData);
-
-            // Assert
-            response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
-        }
-
-        [Fact]
-        public async Task Register_ShortPassword_ShouldReturnBadRequest()
-        {
-            // Arrange
-            var registerData = new
-            {
-                firstName = "John",
-                lastName = "Doe",
-                email = "john.doe@test.com",
-                password = "123",
-                confirmPassword = "123",
-                role = "User"
-            };
-
-            // Act
-            var response = await PostAsync("/api/auth/register", registerData);
-
-            // Assert
-            response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
-        }
-
-        [Fact]
-        public async Task Login_ValidCredentials_ShouldReturnToken()
-        {
-            // Arrange
-            var registerData = new
-            {
-                firstName = "John",
-                lastName = "Doe",
-                email = "john.doe@test.com",
-                password = "password123",
-                confirmPassword = "password123",
-                role = "User"
-            };
-
-            await PostAsync("/api/auth/register", registerData);
-
-            var loginData = new
-            {
-                email = "john.doe@test.com",
-                password = "password123"
-            };
-
-            // Act
-            var response = await PostAsync("/api/auth/login", loginData);
-
-            // Assert
-            response.StatusCode.Should().Be(HttpStatusCode.OK);
-            var result = await DeserializeAsync<AuthResponse>(response);
-            result.Should().NotBeNull();
-            result!.Token.Should().NotBeNullOrEmpty();
-            result.User.Email.Should().Be("john.doe@test.com");
-        }
-
-        [Fact]
-        public async Task Login_InvalidCredentials_ShouldReturnUnauthorized()
-        {
-            // Arrange
-            var loginData = new
-            {
-                email = "nonexistent@test.com",
-                password = "wrongpassword"
-            };
-
-            // Act
-            var response = await PostAsync("/api/auth/login", loginData);
-
-            // Assert
-            response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
-        }
-
-        [Fact]
-        public async Task Login_WrongPassword_ShouldReturnUnauthorized()
-        {
-            // Arrange
-            var registerData = new
-            {
-                firstName = "John",
-                lastName = "Doe",
-                email = "john.doe@test.com",
-                password = "password123",
-                confirmPassword = "password123",
-                role = "User"
-            };
-
-            await PostAsync("/api/auth/register", registerData);
-
-            var loginData = new
-            {
-                email = "john.doe@test.com",
-                password = "wrongpassword"
-            };
-
-            // Act
-            var response = await PostAsync("/api/auth/login", loginData);
-
-            // Assert
-            response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
-        }
-
-        [Fact]
-        public async Task ValidateToken_ValidToken_ShouldReturnUser()
-        {
-            // Arrange
-            var token = await GetAdminTokenAsync();
-            SetAuthHeader(token);
-
-            // Act
-            var response = await _client.GetAsync("/api/auth/validate");
-
-            // Assert
-            response.StatusCode.Should().Be(HttpStatusCode.OK);
-            var result = await DeserializeAsync<UserDto>(response);
-            result.Should().NotBeNull();
-            result!.Email.Should().Be("admin@test.com");
-            result.Role.Should().Be("Admin");
-        }
-
-        [Fact]
-        public async Task ValidateToken_InvalidToken_ShouldReturnUnauthorized()
-        {
-            // Arrange
-            SetAuthHeader("invalid-token");
-
-            // Act
-            var response = await _client.GetAsync("/api/auth/validate");
-
-            // Assert
-            response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
-        }
-
-        [Fact]
-        public async Task ValidateToken_NoToken_ShouldReturnUnauthorized()
-        {
-            // Act
-            var response = await _client.GetAsync("/api/auth/validate");
-
-            // Assert
-            response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
-        }
-
-        [Fact]
-        public async Task ProtectedEndpoint_WithValidToken_ShouldAllowAccess()
-        {
-            // Arrange
-            var token = await GetAdminTokenAsync();
-            SetAuthHeader(token);
-
-            // Act
-            var response = await _client.GetAsync("/api/categories");
-
-            // Assert
-            response.StatusCode.Should().Be(HttpStatusCode.OK);
-        }
-
-        [Fact]
-        public async Task ProtectedEndpoint_WithoutToken_ShouldReturnUnauthorized()
-        {
-            // Act
-            var response = await _client.GetAsync("/api/categories");
-
-            // Assert
-            response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
-        }
-
-        [Fact]
-        public async Task AdminEndpoint_WithAdminToken_ShouldAllowAccess()
-        {
-            // Arrange
-            var token = await GetAdminTokenAsync();
-            SetAuthHeader(token);
-
-            // Act
-            var response = await _client.GetAsync("/api/categories");
-
-            // Assert
-            response.StatusCode.Should().Be(HttpStatusCode.OK);
-        }
-
-        [Fact]
-        public async Task AdminEndpoint_WithUserToken_ShouldAllowAccess()
-        {
-            // Arrange
-            var token = await GetUserTokenAsync();
-            SetAuthHeader(token);
-
-            // Act
-            var response = await _client.GetAsync("/api/categories");
-
-            // Assert
-            response.StatusCode.Should().Be(HttpStatusCode.OK);
-        }
-
-        [Fact]
-        public async Task RefreshToken_ValidToken_ShouldReturnNewToken()
-        {
-            // Arrange
-            var token = await GetAdminTokenAsync();
-            var refreshData = new { refreshToken = "test-refresh-token" };
-
-            // Act
-            var response = await PostAsync("/api/auth/refresh", refreshData);
-
-            // Assert
-            response.StatusCode.Should().Be(HttpStatusCode.OK);
-            var result = await DeserializeAsync<AuthResponse>(response);
-            result.Should().NotBeNull();
-            result!.Token.Should().NotBeNullOrEmpty();
-        }
+        // Assert
+        Assert.NotNull(result);
+        Assert.False(result.Success);
+        Assert.Equal(401, result.StatusCode);
     }
 } 

@@ -1,30 +1,22 @@
-export interface QuestionOption {
+import { Category } from './category.model';
+
+export interface QuestionType {
   id: string;
-  optionText: string;
-  optionValue: string;
-  displayOrder: number;
-  hasTextInput: boolean;
+  typeName: string;
+  displayName: string;
+  description?: string;
+  hasOptions: boolean;
+  supportsFileUpload: boolean;
+  supportsImage: boolean;
+  validationRules?: string;
+  isActive: boolean;
 }
 
-export interface Question {
-  id: string;
-  questionText: string;
-  questionType: string;
-  questionTypeDisplayName: string;
-  isRequired: boolean;
-  displayOrder: number;
-  sectionName?: string;
-  helpText?: string;
-  placeholder?: string;
-  imageUrl?: string;
-  imageAltText?: string;
-  validationRules?: any;
-  conditionalLogic?: any;
-  settings?: any;
-  options: QuestionOption[];
-}
+// Legacy interfaces for backward compatibility
+export interface QuestionnaireTemplate extends CategoryQuestionnaireTemplate {}
+export interface Question extends CategoryQuestion {}
 
-export interface Questionnaire {
+export interface CategoryQuestionnaireTemplate {
   id: string;
   title: string;
   description?: string;
@@ -33,21 +25,76 @@ export interface Questionnaire {
   isActive: boolean;
   isMandatory: boolean;
   displayOrder: number;
-  version: string;
+  version: number;
+  createdBy: string;
+  createdByUserName: string;
   createdAt: string;
-  questions: Question[];
+  updatedAt: string;
+  questionCount: number;
+  questions: CategoryQuestion[];
 }
 
-export interface CreateQuestionnaireDto {
+export interface CategoryQuestion {
+  id: string;
+  questionnaireId: string;
+  questionText: string;
+  questionTypeId: string;
+  questionTypeName: string;
+  isRequired: boolean;
+  displayOrder: number;
+  sectionName?: string;
+  helpText?: string;
+  placeholder?: string;
+  minLength?: number;
+  maxLength?: number;
+  minValue?: number;
+  maxValue?: number;
+  imageUrl?: string;
+  imageAltText?: string;
+  validationRules?: string;
+  conditionalLogic?: string;
+  settings?: string;
+  createdAt: string;
+  updatedAt: string;
+  options: QuestionOption[];
+}
+
+export interface QuestionOption {
+  id: string;
+  questionId: string;
+  optionText: string;
+  displayOrder: number;
+  value?: string;
+  isCorrect: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateCategoryQuestionnaireTemplateRequest {
   title: string;
   description?: string;
   categoryId: string;
+  isActive: boolean;
   isMandatory: boolean;
   displayOrder: number;
-  questions: CreateQuestionDto[];
+  version: number;
+  createdBy: string; // Added to match backend DTO
+  questions: CreateCategoryQuestionRequest[]; // Added to match backend DTO
 }
 
-export interface CreateQuestionDto {
+export interface UpdateCategoryQuestionnaireTemplateRequest {
+  title: string;
+  description?: string;
+  categoryId: string; // Added to match backend DTO
+  isActive: boolean;
+  isMandatory: boolean;
+  displayOrder: number;
+  version: number;
+  questions: CreateCategoryQuestionRequest[]; // Added to match backend DTO
+}
+
+export interface CreateCategoryQuestionRequest {
+  questionnaireId: string; // Added to match backend DTO
   questionText: string;
   questionTypeId: string;
   isRequired: boolean;
@@ -55,25 +102,63 @@ export interface CreateQuestionDto {
   sectionName?: string;
   helpText?: string;
   placeholder?: string;
+  minLength?: number;
+  maxLength?: number;
+  minValue?: number;
+  maxValue?: number;
   imageUrl?: string;
   imageAltText?: string;
-  validationRules?: any;
-  conditionalLogic?: any;
-  settings?: any;
-  options: CreateQuestionOptionDto[];
+  validationRules?: string;
+  conditionalLogic?: string;
+  settings?: string;
+  options: CreateQuestionOptionRequest[]; // Added to match backend DTO
 }
 
-export interface CreateQuestionOptionDto {
-  optionText: string;
-  optionValue: string;
+export interface UpdateCategoryQuestionRequest {
+  questionText: string;
+  questionTypeId: string;
+  isRequired: boolean;
   displayOrder: number;
-  hasTextInput: boolean;
+  sectionName?: string;
+  helpText?: string;
+  placeholder?: string;
+  minLength?: number;
+  maxLength?: number;
+  minValue?: number;
+  maxValue?: number;
+  imageUrl?: string;
+  imageAltText?: string;
+  validationRules?: string;
+  conditionalLogic?: string;
+  settings?: string;
+  options: CreateQuestionOptionRequest[]; // Added to match backend DTO
 }
 
-export interface UpdateQuestionnaireDto extends CreateQuestionnaireDto {
-  isActive: boolean;
+export interface CreateQuestionOptionRequest {
+  optionText: string;
+  displayOrder: number;
+  value?: string;
+  isCorrect: boolean;
 }
 
-export interface UpdateQuestionDto extends CreateQuestionDto {
-  id?: string;
+export interface UpdateQuestionOptionRequest {
+  optionText: string;
+  displayOrder: number;
+  value?: string;
+  isCorrect: boolean;
+}
+
+export interface SubmitResponseRequest {
+  questionnaireId: string;
+  responses: QuestionResponse[];
+}
+
+export interface QuestionResponse {
+  questionId: string;
+  textResponse?: string;
+  numberResponse?: number;
+  dateResponse?: string;
+  selectedOptionIds: string[];
+  fileUrl?: string;
+  imageUrl?: string;
 } 

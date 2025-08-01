@@ -24,6 +24,8 @@ public class QuestionOption
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     
     // Navigation properties
-    public virtual Question Question { get; set; } = null!;
+    [System.Text.Json.Serialization.JsonIgnore]
+    public virtual CategoryQuestion Question { get; set; } = null!;
+    [System.Text.Json.Serialization.JsonIgnore]
     public virtual ICollection<QuestionOptionResponse> OptionResponses { get; set; } = new List<QuestionOptionResponse>();
 } 

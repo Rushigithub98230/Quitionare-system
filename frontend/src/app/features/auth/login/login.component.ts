@@ -1,11 +1,13 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
-import { MatCardModule } from '@angular/material/card';
+import { Router } from '@angular/router';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
+import { MatCardModule } from '@angular/material/card';
+import { MatIconModule } from '@angular/material/icon';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { AuthService } from '../../../services/auth.service';
 
@@ -15,24 +17,27 @@ import { AuthService } from '../../../services/auth.service';
   imports: [
     CommonModule,
     ReactiveFormsModule,
-    RouterLink,
-    MatCardModule,
     MatFormFieldModule,
     MatInputModule,
-    MatButtonModule
+    MatButtonModule,
+    MatCardModule,
+    MatIconModule,
+    MatProgressSpinnerModule
   ],
   template: `
     <div class="login-container">
       <mat-card class="login-card">
         <mat-card-header>
           <mat-card-title>Login</mat-card-title>
+          <mat-card-subtitle>Enter your credentials to access the questionnaire system</mat-card-subtitle>
         </mat-card-header>
         
         <mat-card-content>
           <form [formGroup]="loginForm" (ngSubmit)="onSubmit()">
             <mat-form-field appearance="outline" class="full-width">
               <mat-label>Email</mat-label>
-              <input matInput formControlName="email" type="email" placeholder="Enter your email">
+              <input matInput type="email" formControlName="email" placeholder="Enter your email">
+              <mat-icon matSuffix>email</mat-icon>
               <mat-error *ngIf="loginForm.get('email')?.hasError('required')">
                 Email is required
               </mat-error>
@@ -43,19 +48,25 @@ import { AuthService } from '../../../services/auth.service';
 
             <mat-form-field appearance="outline" class="full-width">
               <mat-label>Password</mat-label>
-              <input matInput formControlName="password" type="password" placeholder="Enter your password">
+              <input matInput [type]="hidePassword ? 'password' : 'text'" formControlName="password" placeholder="Enter your password">
+              <button mat-icon-button matSuffix (click)="hidePassword = !hidePassword" type="button">
+                <mat-icon>{{hidePassword ? 'visibility_off' : 'visibility'}}</mat-icon>
+              </button>
               <mat-error *ngIf="loginForm.get('password')?.hasError('required')">
                 Password is required
               </mat-error>
             </mat-form-field>
 
-            <button mat-raised-button color="primary" type="submit" 
-                    [disabled]="loginForm.invalid || isLoading" class="full-width">
-              {{ isLoading ? 'Logging in...' : 'Login' }}
-            </button>
+            <div class="button-container">
+              <button mat-raised-button color="primary" type="submit" [disabled]="loginForm.invalid || isLoading" class="full-width">
+                <mat-icon *ngIf="!isLoading">login</mat-icon>
+                <mat-spinner diameter="20" *ngIf="isLoading"></mat-spinner>
+                {{ isLoading ? 'Logging in...' : 'Login' }}
+              </button>
+            </div>
           </form>
         </mat-card-content>
-
+        
         <mat-card-actions>
           <button mat-button routerLink="/register">Don't have an account? Register</button>
         </mat-card-actions>
@@ -69,12 +80,14 @@ import { AuthService } from '../../../services/auth.service';
       align-items: center;
       min-height: 100vh;
       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      padding: 20px;
     }
 
     .login-card {
       max-width: 400px;
       width: 100%;
-      margin: 20px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+      border-radius: 16px;
     }
 
     .full-width {
@@ -82,14 +95,24 @@ import { AuthService } from '../../../services/auth.service';
       margin-bottom: 16px;
     }
 
+    .button-container {
+      margin-top: 24px;
+    }
+
     mat-card-header {
-      justify-content: center;
-      margin-bottom: 20px;
+      text-align: center;
+      margin-bottom: 24px;
     }
 
     mat-card-title {
       font-size: 24px;
-      font-weight: 500;
+      font-weight: 600;
+      color: #333;
+    }
+
+    mat-card-subtitle {
+      color: #666;
+      margin-top: 8px;
     }
 
     mat-card-actions {
@@ -102,6 +125,7 @@ import { AuthService } from '../../../services/auth.service';
 export class LoginComponent {
   loginForm: FormGroup;
   isLoading = false;
+  hidePassword = true;
 
   constructor(
     private fb: FormBuilder,
@@ -118,22 +142,22 @@ export class LoginComponent {
   onSubmit(): void {
     if (this.loginForm.valid) {
       this.isLoading = true;
-      this.authService.login(this.loginForm.value).subscribe({
+      const credentials = this.loginForm.value;
+
+      this.authService.login(credentials).subscribe({
         next: (response) => {
-          this.isLoading = false;
-          this.snackBar.open('Login successful!', 'Close', { duration: 3000 });
-          
-          // Redirect based on user role
-          if (response.user.role === 'Admin') {
-            this.router.navigate(['/admin']);
-          } else {
+          if (response.success) {
+            this.snackBar.open('Login successful!', 'Close', { duration: 3000 });
             this.router.navigate(['/categories']);
+          } else {
+            this.snackBar.open(response.message || 'Login failed', 'Close', { duration: 5000 });
           }
         },
         error: (error) => {
+          this.snackBar.open(error.message || 'Login failed. Please try again.', 'Close', { duration: 5000 });
+        },
+        complete: () => {
           this.isLoading = false;
-          const message = error.error?.message || 'Login failed. Please try again.';
-          this.snackBar.open(message, 'Close', { duration: 5000 });
         }
       });
     }

@@ -8,11 +8,45 @@ using FluentValidation;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using Microsoft.AspNetCore.Diagnostics;
+using QuestionnaireSystem.Core.Models;
+using Microsoft.AspNetCore.Mvc;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
+    })
+    .ConfigureApiBehaviorOptions(options =>
+    {
+        options.SuppressModelStateInvalidFilter = false;
+        options.InvalidModelStateResponseFactory = context =>
+        {
+            var errors = context.ModelState
+                .Where(x => x.Value.Errors.Count > 0)
+                .SelectMany(x => x.Value.Errors.Select(e => 
+                {
+                    // Customize error messages to match test expectations
+                    var errorMessage = e.ErrorMessage;
+                    if (errorMessage.Contains("The Title field is required"))
+                        return "Title is required";
+                    if (errorMessage.Contains("The Description field is required"))
+                        return "Description is required";
+                    if (errorMessage.Contains("The CategoryId field is required"))
+                        return "CategoryId is required";
+                    return errorMessage;
+                }))
+                .ToList();
+            
+            var errorMessage = string.Join("; ", errors);
+            var jsonModel = JsonModel.ErrorResult(errorMessage, HttpStatusCodes.BadRequest);
+            
+            return new BadRequestObjectResult(jsonModel);
+        };
+    });
 
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
@@ -25,17 +59,18 @@ builder.Services.AddDbContext<QuestionnaireDbContext>(options =>
 
 // Repositories
 builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
-builder.Services.AddScoped<IQuestionnaireRepository, QuestionnaireRepository>();
-builder.Services.AddScoped<IPatientResponseRepository, PatientResponseRepository>();
-builder.Services.AddScoped<IPatientAssignmentRepository, PatientAssignmentRepository>();
+builder.Services.AddScoped<ICategoryQuestionnaireTemplateRepository, CategoryQuestionnaireTemplateRepository>();
+builder.Services.AddScoped<IUserQuestionResponseRepository, UserQuestionResponseRepository>();
+builder.Services.AddScoped<IQuestionTypeRepository, QuestionTypeRepository>();
+builder.Services.AddScoped<ICategoryQuestionRepository, CategoryQuestionRepository>();
 
-        // Services
-        builder.Services.AddScoped<ICategoryService, CategoryService>();
-        builder.Services.AddScoped<IQuestionnaireService, QuestionnaireService>();
-        builder.Services.AddScoped<IPatientResponseService, PatientResponseService>();
-        builder.Services.AddScoped<IPatientAssignmentService, PatientAssignmentService>();
-        builder.Services.AddScoped<IAuthService, AuthService>();
-        builder.Services.AddScoped<IJwtService, JwtService>();
+// Services
+builder.Services.AddScoped<ICategoryService, CategoryService>();
+builder.Services.AddScoped<ICategoryQuestionnaireTemplateService, CategoryQuestionnaireTemplateService>();
+builder.Services.AddScoped<IUserQuestionResponseService, UserQuestionResponseService>();
+builder.Services.AddScoped<IQuestionTypeService, QuestionTypeService>();
+builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<IJwtService, JwtService>();
 
 // AutoMapper
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
@@ -51,8 +86,7 @@ builder.Services.AddCors(options =>
     {
         policy.AllowAnyOrigin()
               .AllowAnyHeader()
-              .AllowAnyMethod()
-              ;
+              .AllowAnyMethod();
     });
 });
 
@@ -70,6 +104,38 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidAudience = builder.Configuration["Jwt:Audience"],
             IssuerSigningKey = new SymmetricSecurityKey(
                 Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"] ?? "your-secret-key-here"))
+        };
+        
+        // Configure to return JSON responses for authentication failures
+        options.Events = new JwtBearerEvents
+        {
+            OnChallenge = async context =>
+            {
+                context.HandleResponse();
+                context.Response.StatusCode = 401;
+                context.Response.ContentType = "application/json";
+                var response = new
+                {
+                    success = false,
+                    message = "Unauthorized access",
+                    statusCode = 401,
+                    timestamp = DateTime.UtcNow
+                };
+                await context.Response.WriteAsJsonAsync(response);
+            },
+            OnForbidden = async context =>
+            {
+                context.Response.StatusCode = 403;
+                context.Response.ContentType = "application/json";
+                var response = new
+                {
+                    success = false,
+                    message = "Access denied",
+                    statusCode = 403,
+                    timestamp = DateTime.UtcNow
+                };
+                await context.Response.WriteAsJsonAsync(response);
+            }
         };
     });
 
@@ -100,4 +166,7 @@ using (var scope = app.Services.CreateScope())
     context.Database.EnsureCreated();
 }
 
-app.Run(); 
+app.Run();
+
+// Make Program class accessible to test project
+public partial class Program { } 

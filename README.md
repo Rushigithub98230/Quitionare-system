@@ -1,253 +1,572 @@
-# Category-Based Questionnaire System
+# 📋 Questionnaire System - Comprehensive Guide
 
-A complete implementation of a Category-Based Questionnaire System using .NET 8 for the backend and Angular 18 with Angular Material for the frontend.
+## 🎯 System Overview
 
-## Features
+This is a **subscription-based healthcare questionnaire system** that allows dynamic question creation and response collection. Users are assigned to categories (like "Hair Loss", "Weight Loss") and can access questionnaires based on their subscription category.
 
-### Backend (.NET 8)
-- **Category Management**: CRUD operations for questionnaire categories
-- **Dynamic Questionnaire Builder**: Admin can create questionnaires with various question types
-- **Question Types**: Text input, textarea, radio buttons, checkboxes, dropdown, multi-select, number, date, email, phone, file upload, rating scale, slider, yes/no
-- **Image Support**: Questions can include images with alt text
-- **Validation Rules**: Configurable validation per question
-- **Versioning**: Questionnaire versioning to maintain data integrity
-- **JWT Authentication**: Secure API with JWT token authentication
-- **Entity Framework Core**: Code-first approach with migrations
-- **AutoMapper**: Clean mapping between models and DTOs
-- **FluentValidation**: Comprehensive input validation
-- **Soft Deletes**: Data preservation with soft delete functionality
+## 🏗️ Architecture
 
-### Frontend (Angular 18 + Angular Material)
-- **Responsive Design**: Modern, mobile-friendly UI
-- **Admin Portal**: Dynamic form builder for questionnaires
-- **User Portal**: Dynamic questionnaire rendering based on category selection
-- **Material Design**: Consistent UI using Angular Material components
-- **Form Validation**: Real-time validation with user-friendly error messages
-- **Accessibility**: WCAG compliant components
-- **Lazy Loading**: Optimized performance with route-based code splitting
+### **Technology Stack:**
+- **Backend:** .NET 8 Web API with Entity Framework Core
+- **Frontend:** Angular 17 with Material Design
+- **Database:** SQL Server with Entity Framework migrations
+- **Authentication:** JWT-based authentication
 
-## Architecture
+### **Core Principles:**
+- **Clean Architecture** - Separation of concerns
+- **Consistent Response Format** - All APIs return JsonModel
+- **Token-Based Authentication** - Every service method includes TokenModel
+- **Dynamic Question Creation** - Admin can create any type of question
+- **Category-Based Access** - Users see questionnaires based on their category
 
-### Backend Structure
-```
-src/
-├── QuestionnaireSystem.Core/           # Domain models and interfaces
-│   ├── Models/                         # Entity models
-│   ├── DTOs/                          # Data transfer objects
-│   └── Interfaces/                    # Repository interfaces
-├── QuestionnaireSystem.Infrastructure/ # Data access and external services
-│   ├── Data/                          # DbContext and configurations
-│   └── Repositories/                  # Repository implementations
-└── QuestionnaireSystem.API/           # Web API layer
-    ├── Controllers/                   # API endpoints
-    ├── Services/                      # Business logic services
-    ├── Validators/                    # FluentValidation rules
-    └── Mapping/                       # AutoMapper profiles
+## 📊 Database Schema
+
+### **Core Entities:**
+
+#### **1. Categories (Subscription Categories)**
+```sql
+CREATE TABLE Categories (
+    Id UNIQUEIDENTIFIER PRIMARY KEY DEFAULT NEWID(),
+    Name NVARCHAR(100) NOT NULL, -- e.g., "Hair Loss", "Weight Loss"
+    Description NVARCHAR(500),
+    Color NVARCHAR(50),
+    IsActive BIT DEFAULT 1,
+    DisplayOrder INT DEFAULT 0,
+    CreatedAt DATETIME2 DEFAULT GETUTCDATE(),
+    UpdatedAt DATETIME2 DEFAULT GETUTCDATE(),
+    DeletedAt DATETIME2 NULL
+);
 ```
 
-### Frontend Structure
+#### **2. Users**
+```sql
+CREATE TABLE Users (
+    Id UNIQUEIDENTIFIER PRIMARY KEY DEFAULT NEWID(),
+    FirstName NVARCHAR(100) NOT NULL,
+    LastName NVARCHAR(100) NOT NULL,
+    Email NVARCHAR(255) NOT NULL UNIQUE,
+    PasswordHash NVARCHAR(MAX) NOT NULL,
+    Role NVARCHAR(50) DEFAULT 'User',
+    Category NVARCHAR(100), -- e.g., "Hair Loss", "Weight Loss"
+    IsActive BIT DEFAULT 1,
+    CreatedAt DATETIME2 DEFAULT GETUTCDATE(),
+    UpdatedAt DATETIME2 NULL,
+    LastLoginAt DATETIME2 NULL
+);
 ```
-frontend/src/app/
-├── models/                            # TypeScript interfaces
-├── services/                          # API service classes
-├── features/                          # Feature modules
-│   ├── categories/                    # Category management
-│   ├── questionnaires/                # Questionnaire management
-│   ├── questionnaire-detail/          # Questionnaire builder
-│   └── admin/                         # Admin dashboard
-└── shared/                            # Shared components and utilities
+
+#### **3. QuestionTypes (Predefined)**
+```sql
+CREATE TABLE QuestionTypes (
+    Id UNIQUEIDENTIFIER PRIMARY KEY DEFAULT NEWID(),
+    TypeName NVARCHAR(50) NOT NULL,
+    DisplayName NVARCHAR(100) NOT NULL,
+    Description NVARCHAR(500),
+    HasOptions BIT DEFAULT 0,
+    SupportsFileUpload BIT DEFAULT 0,
+    SupportsImage BIT DEFAULT 0,
+    IsActive BIT DEFAULT 1
+);
 ```
 
-## Database Schema
+#### **4. QuestionnaireTemplates**
+```sql
+CREATE TABLE QuestionnaireTemplates (
+    Id UNIQUEIDENTIFIER PRIMARY KEY DEFAULT NEWID(),
+    Title NVARCHAR(255) NOT NULL,
+    Description NVARCHAR(MAX),
+    CategoryId UNIQUEIDENTIFIER NOT NULL,
+    IsActive BIT DEFAULT 1,
+    IsMandatory BIT DEFAULT 0,
+    DisplayOrder INT DEFAULT 0,
+    Version INT DEFAULT 1,
+    CreatedBy UNIQUEIDENTIFIER NOT NULL,
+    CreatedAt DATETIME2 DEFAULT GETUTCDATE(),
+    UpdatedAt DATETIME2 DEFAULT GETUTCDATE(),
+    DeletedAt DATETIME2 NULL,
+    FOREIGN KEY (CategoryId) REFERENCES Categories(Id),
+    FOREIGN KEY (CreatedBy) REFERENCES Users(Id)
+);
+```
 
-### Core Entities
-- **Category**: Questionnaire categories with display order and color
-- **QuestionnaireTemplate**: Questionnaire definitions with versioning
-- **QuestionType**: Supported question types with metadata
-- **Question**: Individual questions with validation rules and options
-- **QuestionOption**: Options for choice-based questions
-- **PatientQuestionnaireAssignment**: Assignment of questionnaires to patients
-- **PatientResponse**: Patient responses to questionnaires
-- **QuestionResponse**: Individual question responses
-- **QuestionOptionResponse**: Option-based responses
+#### **5. Questions**
+```sql
+CREATE TABLE Questions (
+    Id UNIQUEIDENTIFIER PRIMARY KEY DEFAULT NEWID(),
+    QuestionnaireId UNIQUEIDENTIFIER NOT NULL,
+    QuestionText NVARCHAR(MAX) NOT NULL,
+    QuestionTypeId UNIQUEIDENTIFIER NOT NULL,
+    IsRequired BIT DEFAULT 0,
+    DisplayOrder INT NOT NULL,
+    SectionName NVARCHAR(100),
+    HelpText NVARCHAR(MAX),
+    Placeholder NVARCHAR(255),
+    MinLength INT,
+    MaxLength INT,
+    MinValue DECIMAL(18,2),
+    MaxValue DECIMAL(18,2),
+    ImageUrl NVARCHAR(MAX),
+    ImageAltText NVARCHAR(255),
+    CreatedAt DATETIME2 DEFAULT GETUTCDATE(),
+    UpdatedAt DATETIME2 DEFAULT GETUTCDATE(),
+    DeletedAt DATETIME2 NULL,
+    FOREIGN KEY (QuestionnaireId) REFERENCES QuestionnaireTemplates(Id),
+    FOREIGN KEY (QuestionTypeId) REFERENCES QuestionTypes(Id)
+);
+```
 
-### Key Features
-- **Soft Deletes**: All entities support soft deletion
-- **Audit Trail**: Created/Updated timestamps on all entities
-- **Versioning**: Questionnaire versioning for data integrity
-- **Relationships**: Proper foreign key relationships with cascade rules
-- **Indexes**: Optimized database performance with strategic indexes
+#### **6. QuestionOptions**
+```sql
+CREATE TABLE QuestionOptions (
+    Id UNIQUEIDENTIFIER PRIMARY KEY DEFAULT NEWID(),
+    QuestionId UNIQUEIDENTIFIER NOT NULL,
+    OptionText NVARCHAR(500) NOT NULL,
+    OptionValue NVARCHAR(255) NOT NULL,
+    DisplayOrder INT DEFAULT 0,
+    IsActive BIT DEFAULT 1,
+    HasTextInput BIT DEFAULT 0,
+    CreatedAt DATETIME2 DEFAULT GETUTCDATE(),
+    FOREIGN KEY (QuestionId) REFERENCES Questions(Id)
+);
+```
 
-## API Endpoints
+#### **7. UserQuestionResponses**
+```sql
+CREATE TABLE UserQuestionResponses (
+    Id UNIQUEIDENTIFIER PRIMARY KEY DEFAULT NEWID(),
+    UserId UNIQUEIDENTIFIER NOT NULL,
+    QuestionnaireId UNIQUEIDENTIFIER NOT NULL,
+    StartedAt DATETIME2 DEFAULT GETUTCDATE(),
+    CompletedAt DATETIME2 NULL,
+    IsCompleted BIT DEFAULT 0,
+    IsDraft BIT DEFAULT 1,
+    SubmissionIp NVARCHAR(45),
+    UserAgent NVARCHAR(MAX),
+    TimeTaken INT,
+    CreatedAt DATETIME2 DEFAULT GETUTCDATE(),
+    UpdatedAt DATETIME2 DEFAULT GETUTCDATE(),
+    FOREIGN KEY (UserId) REFERENCES Users(Id),
+    FOREIGN KEY (QuestionnaireId) REFERENCES QuestionnaireTemplates(Id)
+);
+```
 
-### Categories
-- `GET /api/categories` - Get all categories
-- `GET /api/categories/{id}` - Get category by ID
-- `POST /api/categories` - Create new category
-- `PUT /api/categories/{id}` - Update category
-- `DELETE /api/categories/{id}` - Delete category
+#### **8. QuestionResponses**
+```sql
+CREATE TABLE QuestionResponses (
+    Id UNIQUEIDENTIFIER PRIMARY KEY DEFAULT NEWID(),
+    ResponseId UNIQUEIDENTIFIER NOT NULL,
+    QuestionId UNIQUEIDENTIFIER NOT NULL,
+    TextResponse NVARCHAR(MAX),
+    NumberResponse DECIMAL(18,2),
+    DateResponse DATETIME2,
+    DatetimeResponse DATETIME2,
+    BooleanResponse BIT,
+    JsonResponse NVARCHAR(MAX),
+    FilePath NVARCHAR(500),
+    FileName NVARCHAR(255),
+    FileSize INT,
+    FileType NVARCHAR(100),
+    CreatedAt DATETIME2 DEFAULT GETUTCDATE(),
+    UpdatedAt DATETIME2 DEFAULT GETUTCDATE(),
+    FOREIGN KEY (ResponseId) REFERENCES UserQuestionResponses(Id),
+    FOREIGN KEY (QuestionId) REFERENCES Questions(Id)
+);
+```
 
-### Questionnaires
-- `GET /api/questionnaires` - Get all questionnaires
-- `GET /api/questionnaires/category/{categoryId}` - Get questionnaires by category
-- `GET /api/questionnaires/{id}` - Get questionnaire details
-- `GET /api/questionnaires/{id}/response` - Get questionnaire for response (public)
-- `POST /api/questionnaires` - Create new questionnaire
-- `PUT /api/questionnaires/{id}` - Update questionnaire
-- `DELETE /api/questionnaires/{id}` - Delete questionnaire
+#### **9. QuestionOptionResponses**
+```sql
+CREATE TABLE QuestionOptionResponses (
+    Id UNIQUEIDENTIFIER PRIMARY KEY DEFAULT NEWID(),
+    QuestionResponseId UNIQUEIDENTIFIER NOT NULL,
+    OptionId UNIQUEIDENTIFIER NOT NULL,
+    CustomText NVARCHAR(1000),
+    CreatedAt DATETIME2 DEFAULT GETUTCDATE(),
+    FOREIGN KEY (QuestionResponseId) REFERENCES QuestionResponses(Id),
+    FOREIGN KEY (OptionId) REFERENCES QuestionOptions(Id)
+);
+```
 
-### Patient Responses
-- `POST /api/responses` - Save patient responses
-- `GET /api/responses/patient/{patientId}` - Get patient responses
-- `GET /api/responses/questionnaire/{questionnaireId}` - Get responses by questionnaire
+## 🎯 Supported Question Types
 
-## Question Types Supported
+| ID | Type Name | Display Name | Has Options | File Upload | Description |
+|----|-----------|--------------|-------------|-------------|-------------|
+| 1 | `text` | Text Input | ❌ | ❌ | Single line text input |
+| 2 | `textarea` | Text Area | ❌ | ❌ | Multi-line text input |
+| 3 | `radio` | Radio Button | ✅ | ❌ | Single choice selection |
+| 4 | `checkbox` | Checkbox | ✅ | ❌ | Multiple choice selection |
+| 5 | `select` | Dropdown | ✅ | ❌ | Single choice dropdown |
+| 6 | `multiselect` | Multi-Select | ✅ | ❌ | Multiple choice dropdown |
+| 7 | `number` | Number | ❌ | ❌ | Numeric input |
+| 8 | `date` | Date | ❌ | ❌ | Date picker |
+| 9 | `email` | Email | ❌ | ❌ | Email input with validation |
+| 10 | `phone` | Phone | ❌ | ❌ | Phone number input |
+| 11 | `file` | File Upload | ❌ | ✅ | File/document upload |
+| 12 | `rating` | Rating Scale | ❌ | ❌ | Star rating (1-5) |
+| 13 | `slider` | Slider | ❌ | ❌ | Range slider input |
+| 14 | `yes_no` | Yes/No | ✅ | ❌ | Boolean choice |
 
-1. **Text Input**: Single line text input
-2. **Text Area**: Multi-line text input
-3. **Radio Button**: Single choice from options
-4. **Checkbox**: Multiple choice from options
-5. **Dropdown**: Single choice dropdown
-6. **Multi-Select**: Multiple choice dropdown
-7. **Number**: Numeric input with validation
-8. **Date**: Date picker
-9. **Email**: Email input with validation
-10. **Phone**: Phone number input
-11. **File Upload**: File upload with type restrictions
-12. **Rating Scale**: Numeric rating input
-13. **Slider**: Range slider input
-14. **Yes/No**: Boolean choice
+## 🔄 Data Flow
 
-## Validation Features
+### **1. Question Creation Flow:**
+```
+Admin → Creates Category → Creates Questionnaire → Adds Questions → Adds Options (if needed)
+```
 
-### Question-Level Validation
-- Required field validation
-- Minimum/maximum length
-- Numeric range validation
-- Email format validation
-- Phone number format validation
-- File type restrictions
-- File size limits
+### **2. User Response Flow:**
+```
+User Login → Select Category → View Questionnaires → Start Response → Submit Answers → Store in Database
+```
 
-### Form-Level Validation
-- All required questions must be answered
-- Conditional logic support
-- Cross-field validation
-- Real-time validation feedback
+### **3. Data Storage Examples:**
 
-## Security Features
+#### **A. Text Question Creation:**
+```sql
+-- Create question
+INSERT INTO Questions (QuestionnaireId, QuestionText, QuestionTypeId, IsRequired, MinLength, MaxLength)
+VALUES ('questionnaire-id', 'What is your name?', 'text-type-id', 1, 2, 50);
 
-- **JWT Authentication**: Secure token-based authentication
-- **Role-Based Authorization**: Admin and user role separation
-- **Input Validation**: Comprehensive server-side validation
-- **CORS Configuration**: Secure cross-origin resource sharing
-- **SQL Injection Prevention**: Parameterized queries with EF Core
-- **XSS Prevention**: Input sanitization and output encoding
+-- User response
+INSERT INTO QuestionResponses (ResponseId, QuestionId, TextResponse)
+VALUES ('response-id', 'question-id', 'John Doe');
+```
 
-## Getting Started
+#### **B. Radio Question Creation:**
+```sql
+-- Create question
+INSERT INTO Questions (QuestionnaireId, QuestionText, QuestionTypeId, IsRequired)
+VALUES ('questionnaire-id', 'What is your gender?', 'radio-type-id', 1);
 
-### Prerequisites
-- .NET 8 SDK
-- SQL Server (LocalDB or full instance)
-- Node.js 18+ and npm
-- Angular CLI 18+
+-- Create options
+INSERT INTO QuestionOptions (QuestionId, OptionText, OptionValue, DisplayOrder)
+VALUES 
+('question-id', 'Male', 'male', 1),
+('question-id', 'Female', 'female', 2),
+('question-id', 'Other', 'other', 3);
 
-### Backend Setup
-1. Clone the repository
-2. Navigate to the backend directory: `cd src/QuestionnaireSystem.API`
-3. Update connection string in `appsettings.json`
-4. Run the application: `dotnet run`
-5. The API will be available at `https://localhost:7001`
+-- User response
+INSERT INTO QuestionResponses (ResponseId, QuestionId, TextResponse)
+VALUES ('response-id', 'question-id', 'male');
+INSERT INTO QuestionOptionResponses (QuestionResponseId, OptionId)
+VALUES ('question-response-id', 'male-option-id');
+```
 
-### Frontend Setup
-1. Navigate to the frontend directory: `cd frontend`
-2. Install dependencies: `npm install`
-3. Start the development server: `npm start`
-4. The application will be available at `http://localhost:4200`
+#### **C. File Upload Question:**
+```sql
+-- Create question
+INSERT INTO Questions (QuestionnaireId, QuestionText, QuestionTypeId, IsRequired)
+VALUES ('questionnaire-id', 'Upload your photo', 'file-type-id', 1);
 
-### Database Setup
-The application uses Entity Framework Core with code-first migrations. The database will be created automatically on first run.
+-- User response
+INSERT INTO QuestionResponses (ResponseId, QuestionId, FilePath, FileName, FileSize, FileType)
+VALUES ('response-id', 'question-id', '/uploads/photo.jpg', 'photo.jpg', 1024000, 'image/jpeg');
+```
 
-## Configuration
+## 🏛️ Architecture Components
 
-### Backend Configuration
-```json
+### **1. Controllers (Clean & Simple)**
+```csharp
+[ApiController]
+[Route("api/[controller]")]
+[Authorize]
+public class QuestionnairesController : ControllerBase
 {
-  "ConnectionStrings": {
-    "DefaultConnection": "Server=(localdb)\\mssqllocaldb;Database=QuestionnaireSystem;Trusted_Connection=true;MultipleActiveResultSets=true"
-  },
-  "Jwt": {
-    "Key": "your-super-secret-key-with-at-least-32-characters",
-    "Issuer": "QuestionnaireSystem",
-    "Audience": "QuestionnaireSystemUsers",
-    "ExpiryInMinutes": 60
-  }
+    private readonly IQuestionnaireService _questionnaireService;
+
+    public QuestionnairesController(IQuestionnaireService questionnaireService)
+    {
+        _questionnaireService = questionnaireService;
+    }
+
+    [HttpGet]
+    public async Task<ActionResult<JsonModel>> GetAll()
+    {
+        return await _questionnaireService.GetAllAsync(GetToken(HttpContext));
+    }
+
+    [HttpPost]
+    public async Task<ActionResult<JsonModel>> Create(CreateQuestionnaireDto dto)
+    {
+        return await _questionnaireService.CreateAsync(dto, GetToken(HttpContext));
+    }
 }
 ```
 
-### Frontend Configuration
-Update the API base URL in `src/app/services/api.service.ts`:
-```typescript
-private baseUrl = 'https://localhost:7001/api';
+### **2. Services (Business Logic)**
+```csharp
+public class QuestionnaireService : IQuestionnaireService
+{
+    private readonly IQuestionnaireRepository _repository;
+    private readonly IMapper _mapper;
+
+    public QuestionnaireService(IQuestionnaireRepository repository, IMapper mapper)
+    {
+        _repository = repository;
+        _mapper = mapper;
+    }
+
+    public async Task<JsonModel> GetAllAsync(TokenModel tokenModel)
+    {
+        try
+        {
+            var questionnaires = await _repository.GetAllAsync();
+            return JsonModel.SuccessResult(questionnaires, "Questionnaires retrieved successfully");
+        }
+        catch (Exception ex)
+        {
+            return JsonModel.ErrorResult($"Error retrieving questionnaires: {ex.Message}");
+        }
+    }
+
+    public async Task<JsonModel> CreateAsync(CreateQuestionnaireDto dto, TokenModel tokenModel)
+    {
+        try
+        {
+            // Validate user permissions
+            if (tokenModel.Role != "Admin")
+                return JsonModel.ErrorResult("Access denied", HttpStatusCodes.Forbidden);
+
+            var questionnaire = _mapper.Map<QuestionnaireTemplate>(dto);
+            questionnaire.CreatedBy = tokenModel.UserId;
+            
+            var result = await _repository.CreateAsync(questionnaire);
+            return JsonModel.SuccessResult(result, "Questionnaire created successfully");
+        }
+        catch (Exception ex)
+        {
+            return JsonModel.ErrorResult($"Error creating questionnaire: {ex.Message}");
+        }
+    }
+}
 ```
 
-## Usage
+### **3. Repositories (Data Access)**
+```csharp
+public class QuestionnaireRepository : IQuestionnaireRepository
+{
+    private readonly QuestionnaireDbContext _context;
 
-### Admin Workflow
-1. Create categories for organizing questionnaires
-2. Build questionnaires using the dynamic form builder
-3. Add questions with various types and validation rules
-4. Configure conditional logic and settings
-5. Assign questionnaires to categories
-6. Monitor responses and analytics
+    public QuestionnaireRepository(QuestionnaireDbContext context)
+    {
+        _context = context;
+    }
 
-### User Workflow
-1. Select a category to view available questionnaires
-2. Fill out questionnaires with real-time validation
-3. Save responses as draft or submit completed forms
-4. View response history and status
+    public async Task<List<QuestionnaireTemplate>> GetAllAsync()
+    {
+        return await _context.QuestionnaireTemplates
+            .Include(qt => qt.Category)
+            .Include(qt => qt.Questions.OrderBy(q => q.DisplayOrder))
+                .ThenInclude(q => q.QuestionType)
+            .Include(qt => qt.Questions)
+                .ThenInclude(q => q.Options.OrderBy(o => o.DisplayOrder))
+            .Where(qt => qt.IsActive && qt.DeletedAt == null)
+            .ToListAsync();
+    }
 
-## Production Deployment
+    public async Task<QuestionnaireTemplate> CreateAsync(QuestionnaireTemplate questionnaire)
+    {
+        _context.QuestionnaireTemplates.Add(questionnaire);
+        await _context.SaveChangesAsync();
+        return questionnaire;
+    }
+}
+```
 
-### Backend Deployment
-1. Build the application: `dotnet publish -c Release`
-2. Deploy to Azure App Service, AWS, or on-premises
-3. Configure production connection string
-4. Set up SSL certificates
-5. Configure CORS for production domain
+## 🔐 Authentication & Authorization
 
-### Frontend Deployment
-1. Build the application: `ng build --configuration production`
-2. Deploy to Azure Static Web Apps, AWS S3, or any static hosting
-3. Update API base URL for production
-4. Configure CDN for optimal performance
+### **TokenModel Structure:**
+```csharp
+public class TokenModel
+{
+    public Guid UserId { get; set; }
+    public string Email { get; set; } = string.Empty;
+    public string Role { get; set; } = string.Empty;
+    public string Category { get; set; } = string.Empty;
+}
+```
 
-## Testing
+### **JWT Token Helper:**
+```csharp
+public static class TokenHelper
+{
+    public static TokenModel GetToken(HttpContext httpContext)
+    {
+        var user = httpContext.User;
+        return new TokenModel
+        {
+            UserId = Guid.Parse(user.FindFirst("UserId")?.Value ?? Guid.Empty.ToString()),
+            Email = user.FindFirst(ClaimTypes.Email)?.Value ?? string.Empty,
+            Role = user.FindFirst(ClaimTypes.Role)?.Value ?? string.Empty,
+            Category = user.FindFirst("Category")?.Value ?? string.Empty
+        };
+    }
+}
+```
 
-### Backend Testing
-- Unit tests for services and repositories
-- Integration tests for API endpoints
-- Database migration tests
-- Validation tests
+## 📋 API Endpoints
 
-### Frontend Testing
-- Unit tests for components and services
-- Integration tests for user workflows
-- E2E tests with Cypress or Playwright
-- Accessibility tests
+### **Categories:**
+- `GET /api/categories` - Get all categories
+- `POST /api/categories` - Create category (Admin only)
+- `PUT /api/categories/{id}` - Update category (Admin only)
+- `DELETE /api/categories/{id}` - Delete category (Admin only)
 
-## Contributing
+### **Questionnaires:**
+- `GET /api/questionnaires` - Get user's questionnaires (by category)
+- `GET /api/questionnaires/{id}` - Get questionnaire details
+- `POST /api/questionnaires` - Create questionnaire (Admin only)
+- `PUT /api/questionnaires/{id}` - Update questionnaire (Admin only)
+- `DELETE /api/questionnaires/{id}` - Delete questionnaire (Admin only)
 
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests for new functionality
-5. Submit a pull request
+### **Responses:**
+- `GET /api/responses` - Get user's responses
+- `GET /api/responses/{id}` - Get response details
+- `POST /api/responses` - Submit response
+- `PUT /api/responses/{id}` - Update response
 
-## License
+### **Auth:**
+- `POST /api/auth/login` - User login
+- `POST /api/auth/register` - User registration
+- `POST /api/auth/refresh` - Refresh token
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+## 🎯 Response Format
 
-## Support
+### **JsonModel Structure:**
+```json
+{
+    "data": {},
+    "message": "Success",
+    "statusCode": 200,
+    "success": true,
+    "timestamp": "2024-01-15T10:30:00Z"
+}
+```
 
-For support and questions, please open an issue in the repository or contact the development team. 
+### **Success Response:**
+```json
+{
+    "data": {
+        "id": "12345678-1234-1234-1234-123456789012",
+        "title": "Hair Loss Assessment",
+        "description": "Complete hair loss evaluation",
+        "categoryId": "category-id",
+        "questions": []
+    },
+    "message": "Questionnaire retrieved successfully",
+    "statusCode": 200,
+    "success": true,
+    "timestamp": "2024-01-15T10:30:00Z"
+}
+```
+
+### **Error Response:**
+```json
+{
+    "data": null,
+    "message": "Questionnaire not found",
+    "statusCode": 404,
+    "success": false,
+    "timestamp": "2024-01-15T10:30:00Z"
+}
+```
+
+## 🚀 Development Guidelines
+
+### **1. Controller Guidelines:**
+- Keep controllers **thin** - only call services
+- Always use `TokenModel` from `GetToken(HttpContext)`
+- Return `JsonModel` from all endpoints
+- Handle exceptions at service level
+
+### **2. Service Guidelines:**
+- All service methods must include `TokenModel tokenModel` parameter
+- Always return `JsonModel`
+- Implement proper validation
+- Handle business logic and exceptions
+
+### **3. Repository Guidelines:**
+- Use Entity Framework Core
+- Implement proper LINQ queries
+- Use Include() for related data
+- Implement soft delete where needed
+
+### **4. Database Guidelines:**
+- Use soft delete (DeletedAt) for main entities
+- Implement proper indexes
+- Use UTC timestamps
+- Follow naming conventions
+
+## 🔧 Setup Instructions
+
+### **1. Database Setup:**
+```bash
+# Run migrations
+dotnet ef database update
+
+# Seed data
+dotnet run --seed
+```
+
+### **2. API Setup:**
+```bash
+# Install dependencies
+dotnet restore
+
+# Run the application
+dotnet run
+```
+
+### **3. Frontend Setup:**
+```bash
+# Install dependencies
+npm install
+
+# Run development server
+ng serve
+```
+
+## 📊 Sample Data
+
+### **Categories:**
+```sql
+INSERT INTO Categories (Name, Description, Color) VALUES 
+('Hair Loss', 'Hair loss treatment and monitoring', '#8B4513'),
+('Weight Loss', 'Weight loss and fitness tracking', '#32CD32'),
+('Skin Care', 'Skin condition and treatment', '#FFB6C1'),
+('Mental Health', 'Mental health and wellness', '#9370DB');
+```
+
+### **Question Types:**
+```sql
+INSERT INTO QuestionTypes (TypeName, DisplayName, HasOptions) VALUES 
+('text', 'Text Input', 0),
+('radio', 'Single Choice', 1),
+('checkbox', 'Multiple Choice', 1),
+('number', 'Number', 0),
+('file', 'File Upload', 0);
+```
+
+## 🎯 Key Features
+
+1. **Dynamic Question Creation** - Admin can create any type of question
+2. **Category-Based Access** - Users see questionnaires based on their category
+3. **Flexible Response Storage** - Supports all question types
+4. **Token-Based Authentication** - Secure API access
+5. **Consistent Response Format** - All APIs return JsonModel
+6. **Clean Architecture** - Separation of concerns
+7. **Scalable Design** - Handles large datasets efficiently
+
+## 🔍 Troubleshooting
+
+### **Common Issues:**
+1. **Token not found** - Check JWT configuration
+2. **Category access denied** - Verify user's category assignment
+3. **Question type not supported** - Check seeded question types
+4. **File upload failed** - Verify file size and type restrictions
+
+### **Debug Tips:**
+1. Check database connections
+2. Verify JWT token configuration
+3. Review Entity Framework logs
+4. Test API endpoints with Postman
+
+This system provides a **robust, scalable, and maintainable** solution for dynamic questionnaire creation and response collection in healthcare applications! 🚀 

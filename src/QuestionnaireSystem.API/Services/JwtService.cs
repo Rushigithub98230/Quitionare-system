@@ -3,6 +3,8 @@ using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
 using Microsoft.IdentityModel.Tokens;
+using QuestionnaireSystem.Core.DTOs;
+using QuestionnaireSystem.Core.Interfaces;
 using QuestionnaireSystem.Core.Models;
 
 namespace QuestionnaireSystem.API.Services
@@ -16,7 +18,7 @@ namespace QuestionnaireSystem.API.Services
             _configuration = configuration;
         }
 
-        public string GenerateToken(User user)
+        public string GenerateToken(AuthResponseDto authResponse)
         {
             var tokenHandler = new JwtSecurityTokenHandler();
             var key = Encoding.ASCII.GetBytes(_configuration["Jwt:Key"] ?? throw new InvalidOperationException("JWT Key not configured"));
@@ -25,10 +27,12 @@ namespace QuestionnaireSystem.API.Services
             {
                 Subject = new ClaimsIdentity(new[]
                 {
-                    new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
-                    new Claim(ClaimTypes.Email, user.Email),
-                    new Claim(ClaimTypes.Name, $"{user.FirstName} {user.LastName}"),
-                    new Claim(ClaimTypes.Role, user.Role)
+                    new Claim("UserId", authResponse.User.Id.ToString()),
+                    new Claim(ClaimTypes.Email, authResponse.User.Email),
+                    new Claim("FirstName", authResponse.User.FirstName),
+                    new Claim("LastName", authResponse.User.LastName),
+                    new Claim(ClaimTypes.Role, authResponse.User.Role),
+                    new Claim("Category", authResponse.User.Category ?? "")
                 }),
                 Expires = DateTime.UtcNow.AddMinutes(Convert.ToDouble(_configuration["Jwt:ExpiryInMinutes"] ?? "60")),
                 Issuer = _configuration["Jwt:Issuer"],
@@ -75,31 +79,38 @@ namespace QuestionnaireSystem.API.Services
             }
         }
 
-        public Guid? GetUserIdFromToken(string token)
+        public AuthResponseDto? GetUserFromToken(string token)
         {
             try
             {
                 var tokenHandler = new JwtSecurityTokenHandler();
                 var jwtToken = tokenHandler.ReadJwtToken(token);
-                var userIdClaim = jwtToken.Claims.FirstOrDefault(x => x.Type == ClaimTypes.NameIdentifier);
                 
-                return userIdClaim != null ? Guid.Parse(userIdClaim.Value) : null;
-            }
-            catch
-            {
-                return null;
-            }
-        }
-
-        public string? GetRoleFromToken(string token)
-        {
-            try
-            {
-                var tokenHandler = new JwtSecurityTokenHandler();
-                var jwtToken = tokenHandler.ReadJwtToken(token);
+                var userIdClaim = jwtToken.Claims.FirstOrDefault(x => x.Type == "UserId");
+                var emailClaim = jwtToken.Claims.FirstOrDefault(x => x.Type == ClaimTypes.Email);
+                var firstNameClaim = jwtToken.Claims.FirstOrDefault(x => x.Type == "FirstName");
+                var lastNameClaim = jwtToken.Claims.FirstOrDefault(x => x.Type == "LastName");
                 var roleClaim = jwtToken.Claims.FirstOrDefault(x => x.Type == ClaimTypes.Role);
-                
-                return roleClaim?.Value;
+                var categoryClaim = jwtToken.Claims.FirstOrDefault(x => x.Type == "Category");
+
+                if (userIdClaim == null || emailClaim == null)
+                    return null;
+
+                var user = new UserDto
+                {
+                    Id = Guid.Parse(userIdClaim.Value),
+                    Email = emailClaim.Value,
+                    FirstName = firstNameClaim?.Value ?? "",
+                    LastName = lastNameClaim?.Value ?? "",
+                    Role = roleClaim?.Value ?? "User",
+                    Category = categoryClaim?.Value
+                };
+
+                return new AuthResponseDto
+                {
+                    User = user,
+                    Token = token
+                };
             }
             catch
             {

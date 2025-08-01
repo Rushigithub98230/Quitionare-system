@@ -83,7 +83,7 @@ export interface Questionnaire {
               <p class="question-text">{{ question.text }}</p>
               
               <!-- Text Input -->
-              <div *ngIf="question.questionTypeId === 1" class="question-input">
+              <div *ngIf="getQuestionTypeName(question.questionTypeId) === 'text'" class="question-input">
                 <mat-form-field appearance="outline" class="full-width">
                   <mat-label>Your answer</mat-label>
                   <input matInput [formControlName]="'question_' + question.id" 
@@ -100,7 +100,7 @@ export interface Questionnaire {
               </div>
               
               <!-- Number Input -->
-              <div *ngIf="question.questionTypeId === 2" class="question-input">
+              <div *ngIf="getQuestionTypeName(question.questionTypeId) === 'number'" class="question-input">
                 <mat-form-field appearance="outline" class="full-width">
                   <mat-label>Your answer</mat-label>
                   <input matInput type="number" [formControlName]="'question_' + question.id"
@@ -119,7 +119,7 @@ export interface Questionnaire {
               </div>
               
               <!-- Email Input -->
-              <div *ngIf="question.questionTypeId === 3" class="question-input">
+              <div *ngIf="getQuestionTypeName(question.questionTypeId) === 'email'" class="question-input">
                 <mat-form-field appearance="outline" class="full-width">
                   <mat-label>Email address</mat-label>
                   <input matInput type="email" [formControlName]="'question_' + question.id"
@@ -134,7 +134,7 @@ export interface Questionnaire {
               </div>
               
               <!-- Phone Input -->
-              <div *ngIf="question.questionTypeId === 4" class="question-input">
+              <div *ngIf="getQuestionTypeName(question.questionTypeId) === 'phone'" class="question-input">
                 <mat-form-field appearance="outline" class="full-width">
                   <mat-label>Phone number</mat-label>
                   <input matInput type="tel" [formControlName]="'question_' + question.id"
@@ -146,7 +146,7 @@ export interface Questionnaire {
               </div>
               
               <!-- Date Picker -->
-              <div *ngIf="question.questionTypeId === 5" class="question-input">
+              <div *ngIf="getQuestionTypeName(question.questionTypeId) === 'date'" class="question-input">
                 <mat-form-field appearance="outline" class="full-width">
                   <mat-label>Choose a date</mat-label>
                   <input matInput [matDatepicker]="picker" [formControlName]="'question_' + question.id">
@@ -159,7 +159,7 @@ export interface Questionnaire {
               </div>
               
               <!-- Radio Buttons (Single Choice) -->
-              <div *ngIf="question.questionTypeId === 6" class="question-input">
+              <div *ngIf="getQuestionTypeName(question.questionTypeId) === 'radio'" class="question-input">
                 <mat-radio-group [formControlName]="'question_' + question.id" class="radio-group">
                   <mat-radio-button *ngFor="let option of question.options" 
                                    [value]="option.id" class="radio-button">
@@ -172,7 +172,7 @@ export interface Questionnaire {
               </div>
               
               <!-- Checkboxes (Multiple Choice) -->
-              <div *ngIf="question.questionTypeId === 7" class="question-input">
+              <div *ngIf="getQuestionTypeName(question.questionTypeId) === 'checkbox'" class="question-input">
                 <div [formGroupName]="'question_' + question.id" class="checkbox-group">
                   <mat-checkbox *ngFor="let option of question.options" 
                                [formControlName]="option.id" class="checkbox-option">
@@ -185,7 +185,7 @@ export interface Questionnaire {
               </div>
               
               <!-- Dropdown -->
-              <div *ngIf="question.questionTypeId === 8" class="question-input">
+              <div *ngIf="getQuestionTypeName(question.questionTypeId) === 'select'" class="question-input">
                 <mat-form-field appearance="outline" class="full-width">
                   <mat-label>Select an option</mat-label>
                   <mat-select [formControlName]="'question_' + question.id">
@@ -200,7 +200,7 @@ export interface Questionnaire {
               </div>
               
               <!-- Rating -->
-              <div *ngIf="question.questionTypeId === 9" class="question-input">
+              <div *ngIf="getQuestionTypeName(question.questionTypeId) === 'rating'" class="question-input">
                 <div class="rating-container">
                   <span class="rating-label">Rate from 1 to 5:</span>
                   <div class="rating-stars">
@@ -215,7 +215,7 @@ export interface Questionnaire {
               </div>
               
               <!-- Slider -->
-              <div *ngIf="question.questionTypeId === 10" class="question-input">
+              <div *ngIf="getQuestionTypeName(question.questionTypeId) === 'slider'" class="question-input">
                 <div class="slider-container">
                   <span class="slider-label">Value: {{ getQuestionControl(question.id)?.value || 0 }}</span>
                   <mat-slider [formControlName]="'question_' + question.id"
@@ -228,7 +228,7 @@ export interface Questionnaire {
               </div>
               
               <!-- Yes/No -->
-              <div *ngIf="question.questionTypeId === 11" class="question-input">
+              <div *ngIf="getQuestionTypeName(question.questionTypeId) === 'yes_no'" class="question-input">
                 <mat-radio-group [formControlName]="'question_' + question.id" class="radio-group">
                   <mat-radio-button value="true" class="radio-button">Yes</mat-radio-button>
                   <mat-radio-button value="false" class="radio-button">No</mat-radio-button>
@@ -239,7 +239,7 @@ export interface Questionnaire {
               </div>
               
               <!-- File Upload -->
-              <div *ngIf="question.questionTypeId === 12" class="question-input">
+              <div *ngIf="getQuestionTypeName(question.questionTypeId) === 'file'" class="question-input">
                 <div class="file-upload-container">
                   <input type="file" (change)="onFileSelected($event, question.id)" 
                          [accept]="getFileAcceptTypes()" style="display: none;" #fileInput>
@@ -254,7 +254,7 @@ export interface Questionnaire {
               </div>
               
               <!-- Long Text -->
-              <div *ngIf="question.questionTypeId === 14" class="question-input">
+              <div *ngIf="getQuestionTypeName(question.questionTypeId) === 'textarea'" class="question-input">
                 <mat-form-field appearance="outline" class="full-width">
                   <mat-label>Your detailed answer</mat-label>
                   <textarea matInput [formControlName]="'question_' + question.id" 
@@ -475,23 +475,25 @@ export class QuestionnaireRendererComponent implements OnInit {
         validators.push(Validators.required);
       }
       
-      if (question.questionTypeId === 1 || question.questionTypeId === 14) { // Text or TextArea
+      const questionTypeName = this.getQuestionTypeName(question.questionTypeId.toString());
+      
+      if (questionTypeName === 'text' || questionTypeName === 'textarea') {
         if (question.minLength) {
           validators.push(Validators.minLength(question.minLength));
         }
         if (question.maxLength) {
           validators.push(Validators.maxLength(question.maxLength));
         }
-      } else if (question.questionTypeId === 2) { // Number
+      } else if (questionTypeName === 'number') {
         if (question.minValue !== undefined) {
           validators.push(Validators.min(question.minValue));
         }
         if (question.maxValue !== undefined) {
           validators.push(Validators.max(question.maxValue));
         }
-      } else if (question.questionTypeId === 3) { // Email
+      } else if (questionTypeName === 'email') {
         validators.push(Validators.email);
-      } else if (question.questionTypeId === 7) { // Checkbox (Multiple Choice)
+      } else if (questionTypeName === 'checkbox') {
         formGroup[`question_${question.id}`] = this.fb.group({});
         question.options?.forEach(option => {
           formGroup[`question_${question.id}`].addControl(option.id, this.fb.control(false));
@@ -503,6 +505,27 @@ export class QuestionnaireRendererComponent implements OnInit {
     });
     
     this.responseForm = this.fb.group(formGroup);
+  }
+
+  getQuestionTypeName(questionTypeId: string): string {
+    // This is a simple mapping - in a real app, you'd want to fetch question types from backend
+    const questionTypeMap: { [key: string]: string } = {
+      '11111111-1111-1111-1111-111111111111': 'text',
+      '22222222-2222-2222-2222-222222222222': 'textarea',
+      '33333333-3333-3333-3333-333333333333': 'radio',
+      '44444444-4444-4444-4444-444444444444': 'checkbox',
+      '55555555-5555-5555-5555-555555555555': 'select',
+      '66666666-6666-6666-6666-666666666666': 'multiselect',
+      '77777777-7777-7777-7777-777777777777': 'number',
+      '88888888-8888-8888-8888-888888888888': 'date',
+      '99999999-9999-9999-9999-999999999999': 'email',
+      'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa': 'phone',
+      'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb': 'file',
+      'cccccccc-cccc-cccc-cccc-cccccccccccc': 'rating',
+      'dddddddd-dddd-dddd-dddd-dddddddddddd': 'slider',
+      'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee': 'yes_no'
+    };
+    return questionTypeMap[questionTypeId] || 'text';
   }
 
   getQuestionControl(questionId: string): any {

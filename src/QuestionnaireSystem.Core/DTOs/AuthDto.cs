@@ -37,6 +37,8 @@ namespace QuestionnaireSystem.Core.DTOs
 
         [Required]
         public string Role { get; set; } = "User"; // User, Admin
+
+        public string? Category { get; set; } // e.g., "Hair Loss", "Weight Loss"
     }
 
     public class AuthResponseDto
@@ -54,6 +56,7 @@ namespace QuestionnaireSystem.Core.DTOs
         public string LastName { get; set; } = string.Empty;
         public string Email { get; set; } = string.Empty;
         public string Role { get; set; } = string.Empty;
+        public string? Category { get; set; } // e.g., "Hair Loss", "Weight Loss"
         public DateTime CreatedAt { get; set; }
     }
 
@@ -61,5 +64,13 @@ namespace QuestionnaireSystem.Core.DTOs
     {
         [Required]
         public string RefreshToken { get; set; } = string.Empty;
+    }
+
+    public class SubmitResponseDto
+    {
+        [Required]
+        public Guid QuestionnaireId { get; set; }
+        
+        public List<CreateQuestionResponseDto> Responses { get; set; } = new List<CreateQuestionResponseDto>();
     }
 } 

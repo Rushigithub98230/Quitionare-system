@@ -11,40 +11,59 @@ public class MappingProfile : Profile
     {
         // Category mappings
         CreateMap<Category, CategoryDto>()
-            .ForMember(dest => dest.QuestionnaireCount, opt => opt.MapFrom(src => src.Questionnaires.Count));
+            .ForMember(dest => dest.HasQuestionnaireTemplate, opt => opt.MapFrom(src => src.QuestionnaireTemplate != null));
 
         CreateMap<CreateCategoryDto, Category>();
         CreateMap<UpdateCategoryDto, Category>();
 
-        // Questionnaire mappings
-        CreateMap<QuestionnaireTemplate, QuestionnaireDetailDto>()
-            .ForMember(dest => dest.CategoryName, opt => opt.MapFrom(src => src.Category.Name));
+        // Questionnaire template mappings
+        CreateMap<CategoryQuestionnaireTemplate, CategoryQuestionnaireTemplateDto>()
+            .ForMember(dest => dest.CategoryName, opt => opt.MapFrom(src => src.Category.Name))
+            .ForMember(dest => dest.CreatedByUserName, opt => opt.MapFrom(src => src.CreatedByUser.FirstName + " " + src.CreatedByUser.LastName))
+            .ForMember(dest => dest.QuestionCount, opt => opt.MapFrom(src => src.Questions.Count));
 
-        CreateMap<QuestionnaireTemplate, QuestionnaireResponseDto>()
-            .ForMember(dest => dest.CategoryName, opt => opt.MapFrom(src => src.Category.Name));
+        CreateMap<CategoryQuestionnaireTemplate, CategoryQuestionnaireTemplateSummaryDto>()
+            .ForMember(dest => dest.QuestionCount, opt => opt.MapFrom(src => src.Questions.Count))
+            .ForMember(dest => dest.ResponseCount, opt => opt.MapFrom(src => src.UserResponses.Count));
 
-        CreateMap<CreateQuestionnaireDto, QuestionnaireTemplate>();
-        CreateMap<UpdateQuestionnaireDto, QuestionnaireTemplate>();
+        CreateMap<CategoryQuestionnaireTemplate, CategoryQuestionnaireTemplateWithCategoryDto>();
+
+        CreateMap<CategoryQuestionnaireTemplate, CategoryQuestionnaireTemplateWithResponsesDto>();
+
+        CreateMap<CreateCategoryQuestionnaireTemplateDto, CategoryQuestionnaireTemplate>();
+        CreateMap<UpdateCategoryQuestionnaireTemplateDto, CategoryQuestionnaireTemplate>();
 
         // Question mappings
-        CreateMap<Question, QuestionDetailDto>()
-            .ForMember(dest => dest.QuestionType, opt => opt.MapFrom(src => src.QuestionType.TypeName))
-            .ForMember(dest => dest.QuestionTypeDisplayName, opt => opt.MapFrom(src => src.QuestionType.DisplayName))
-            .ForMember(dest => dest.ValidationRules, opt => opt.Ignore())
-            .ForMember(dest => dest.ConditionalLogic, opt => opt.Ignore())
-            .ForMember(dest => dest.Settings, opt => opt.Ignore());
+        CreateMap<CategoryQuestion, CategoryQuestionDto>()
+            .ForMember(dest => dest.QuestionTypeName, opt => opt.MapFrom(src => src.QuestionType.DisplayName));
 
-        CreateMap<CreateQuestionDto, Question>();
-        CreateMap<UpdateQuestionDto, Question>();
+        CreateMap<CreateCategoryQuestionDto, CategoryQuestion>();
+        CreateMap<UpdateCategoryQuestionDto, CategoryQuestion>();
 
         // Question option mappings
-        CreateMap<QuestionOption, QuestionOptionDetailDto>();
+        CreateMap<QuestionOption, QuestionOptionDto>();
         CreateMap<CreateQuestionOptionDto, QuestionOption>();
+        CreateMap<UpdateQuestionOptionDto, QuestionOption>();
 
-        // Patient response mappings
-        CreateMap<PatientResponse, ResponseSummaryDto>()
+        // User question response mappings
+        CreateMap<UserQuestionResponse, ResponseSummaryDto>()
             .ForMember(dest => dest.QuestionnaireTitle, opt => opt.MapFrom(src => src.Questionnaire.Title))
             .ForMember(dest => dest.CategoryName, opt => opt.MapFrom(src => src.Questionnaire.Category.Name));
+
+        // Question type mappings
+        CreateMap<QuestionType, QuestionTypeDto>();
+
+        CreateMap<UserQuestionResponse, ResponseDetailDto>()
+            .ForMember(dest => dest.QuestionnaireTitle, opt => opt.MapFrom(src => src.Questionnaire.Title))
+            .ForMember(dest => dest.CategoryName, opt => opt.MapFrom(src => src.Questionnaire.Category.Name));
+
+        CreateMap<QuestionResponse, QuestionResponseDetailDto>()
+            .ForMember(dest => dest.QuestionText, opt => opt.MapFrom(src => src.Question.QuestionText))
+            .ForMember(dest => dest.QuestionType, opt => opt.MapFrom(src => src.Question.QuestionType.TypeName));
+
+        CreateMap<QuestionOptionResponse, QuestionOptionResponseDetailDto>()
+            .ForMember(dest => dest.OptionText, opt => opt.MapFrom(src => src.Option.OptionText))
+            .ForMember(dest => dest.OptionValue, opt => opt.MapFrom(src => src.Option.OptionValue));
 
         // User mappings
         CreateMap<User, UserDto>();

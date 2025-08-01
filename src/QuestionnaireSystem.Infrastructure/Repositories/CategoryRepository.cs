@@ -17,7 +17,7 @@ public class CategoryRepository : ICategoryRepository
     public async Task<Category?> GetByIdAsync(Guid id)
     {
         return await _context.Categories
-            .Include(c => c.Questionnaires)
+            .Include(c => c.QuestionnaireTemplate)
             .FirstOrDefaultAsync(c => c.Id == id);
     }
 
@@ -35,7 +35,7 @@ public class CategoryRepository : ICategoryRepository
             query = query.Where(c => c.IsActive);
 
         return await query
-            .Include(c => c.Questionnaires.Where(q => q.IsActive))
+            .Include(c => c.QuestionnaireTemplate)
             .OrderBy(c => c.DisplayOrder)
             .ThenBy(c => c.Name)
             .ToListAsync();

@@ -1,12 +1,14 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, AbstractControl } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
-import { MatCardModule } from '@angular/material/card';
+import { Router } from '@angular/router';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
+import { MatCardModule } from '@angular/material/card';
+import { MatIconModule } from '@angular/material/icon';
 import { MatSelectModule } from '@angular/material/select';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { AuthService } from '../../../services/auth.service';
 
@@ -16,18 +18,20 @@ import { AuthService } from '../../../services/auth.service';
   imports: [
     CommonModule,
     ReactiveFormsModule,
-    RouterLink,
-    MatCardModule,
     MatFormFieldModule,
     MatInputModule,
     MatButtonModule,
-    MatSelectModule
+    MatCardModule,
+    MatIconModule,
+    MatSelectModule,
+    MatProgressSpinnerModule
   ],
   template: `
     <div class="register-container">
       <mat-card class="register-card">
         <mat-card-header>
-          <mat-card-title>Register</mat-card-title>
+          <mat-card-title>Create Account</mat-card-title>
+          <mat-card-subtitle>Join the questionnaire system</mat-card-subtitle>
         </mat-card-header>
         
         <mat-card-content>
@@ -36,6 +40,7 @@ import { AuthService } from '../../../services/auth.service';
               <mat-form-field appearance="outline" class="half-width">
                 <mat-label>First Name</mat-label>
                 <input matInput formControlName="firstName" placeholder="Enter your first name">
+                <mat-icon matSuffix>person</mat-icon>
                 <mat-error *ngIf="registerForm.get('firstName')?.hasError('required')">
                   First name is required
                 </mat-error>
@@ -44,6 +49,7 @@ import { AuthService } from '../../../services/auth.service';
               <mat-form-field appearance="outline" class="half-width">
                 <mat-label>Last Name</mat-label>
                 <input matInput formControlName="lastName" placeholder="Enter your last name">
+                <mat-icon matSuffix>person</mat-icon>
                 <mat-error *ngIf="registerForm.get('lastName')?.hasError('required')">
                   Last name is required
                 </mat-error>
@@ -52,7 +58,8 @@ import { AuthService } from '../../../services/auth.service';
 
             <mat-form-field appearance="outline" class="full-width">
               <mat-label>Email</mat-label>
-              <input matInput formControlName="email" type="email" placeholder="Enter your email">
+              <input matInput type="email" formControlName="email" placeholder="Enter your email">
+              <mat-icon matSuffix>email</mat-icon>
               <mat-error *ngIf="registerForm.get('email')?.hasError('required')">
                 Email is required
               </mat-error>
@@ -63,7 +70,10 @@ import { AuthService } from '../../../services/auth.service';
 
             <mat-form-field appearance="outline" class="full-width">
               <mat-label>Password</mat-label>
-              <input matInput formControlName="password" type="password" placeholder="Enter your password">
+              <input matInput [type]="hidePassword ? 'password' : 'text'" formControlName="password" placeholder="Enter your password">
+              <button mat-icon-button matSuffix (click)="hidePassword = !hidePassword" type="button">
+                <mat-icon>{{hidePassword ? 'visibility_off' : 'visibility'}}</mat-icon>
+              </button>
               <mat-error *ngIf="registerForm.get('password')?.hasError('required')">
                 Password is required
               </mat-error>
@@ -74,11 +84,14 @@ import { AuthService } from '../../../services/auth.service';
 
             <mat-form-field appearance="outline" class="full-width">
               <mat-label>Confirm Password</mat-label>
-              <input matInput formControlName="confirmPassword" type="password" placeholder="Confirm your password">
+              <input matInput [type]="hideConfirmPassword ? 'password' : 'text'" formControlName="confirmPassword" placeholder="Confirm your password">
+              <button mat-icon-button matSuffix (click)="hideConfirmPassword = !hideConfirmPassword" type="button">
+                <mat-icon>{{hideConfirmPassword ? 'visibility_off' : 'visibility'}}</mat-icon>
+              </button>
               <mat-error *ngIf="registerForm.get('confirmPassword')?.hasError('required')">
-                Confirm password is required
+                Please confirm your password
               </mat-error>
-              <mat-error *ngIf="registerForm.hasError('passwordMismatch')">
+              <mat-error *ngIf="registerForm.get('confirmPassword')?.hasError('passwordMismatch')">
                 Passwords do not match
               </mat-error>
             </mat-form-field>
@@ -94,13 +107,18 @@ import { AuthService } from '../../../services/auth.service';
               </mat-error>
             </mat-form-field>
 
-            <button mat-raised-button color="primary" type="submit" 
-                    [disabled]="registerForm.invalid || isLoading" class="full-width">
-              {{ isLoading ? 'Registering...' : 'Register' }}
-            </button>
+
+
+            <div class="button-container">
+              <button mat-raised-button color="primary" type="submit" [disabled]="registerForm.invalid || isLoading" class="full-width">
+                <mat-icon *ngIf="!isLoading">person_add</mat-icon>
+                <mat-spinner diameter="20" *ngIf="isLoading"></mat-spinner>
+                {{ isLoading ? 'Creating Account...' : 'Create Account' }}
+              </button>
+            </div>
           </form>
         </mat-card-content>
-
+        
         <mat-card-actions>
           <button mat-button routerLink="/login">Already have an account? Login</button>
         </mat-card-actions>
@@ -114,21 +132,14 @@ import { AuthService } from '../../../services/auth.service';
       align-items: center;
       min-height: 100vh;
       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      padding: 20px;
     }
 
     .register-card {
       max-width: 500px;
       width: 100%;
-      margin: 20px;
-    }
-
-    .form-row {
-      display: flex;
-      gap: 16px;
-    }
-
-    .half-width {
-      flex: 1;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+      border-radius: 16px;
     }
 
     .full-width {
@@ -136,14 +147,34 @@ import { AuthService } from '../../../services/auth.service';
       margin-bottom: 16px;
     }
 
+    .half-width {
+      width: 48%;
+      margin-bottom: 16px;
+    }
+
+    .form-row {
+      display: flex;
+      gap: 16px;
+    }
+
+    .button-container {
+      margin-top: 24px;
+    }
+
     mat-card-header {
-      justify-content: center;
-      margin-bottom: 20px;
+      text-align: center;
+      margin-bottom: 24px;
     }
 
     mat-card-title {
       font-size: 24px;
-      font-weight: 500;
+      font-weight: 600;
+      color: #333;
+    }
+
+    mat-card-subtitle {
+      color: #666;
+      margin-top: 8px;
     }
 
     mat-card-actions {
@@ -152,10 +183,13 @@ import { AuthService } from '../../../services/auth.service';
       padding: 16px;
     }
 
-    @media (max-width: 600px) {
+    @media (max-width: 768px) {
       .form-row {
         flex-direction: column;
-        gap: 0;
+      }
+
+      .half-width {
+        width: 100%;
       }
     }
   `]
@@ -163,6 +197,8 @@ import { AuthService } from '../../../services/auth.service';
 export class RegisterComponent {
   registerForm: FormGroup;
   isLoading = false;
+  hidePassword = true;
+  hideConfirmPassword = true;
 
   constructor(
     private fb: FormBuilder,
@@ -194,22 +230,22 @@ export class RegisterComponent {
   onSubmit(): void {
     if (this.registerForm.valid) {
       this.isLoading = true;
-      this.authService.register(this.registerForm.value).subscribe({
+      const userData = this.registerForm.value;
+
+      this.authService.register(userData).subscribe({
         next: (response) => {
-          this.isLoading = false;
-          this.snackBar.open('Registration successful!', 'Close', { duration: 3000 });
-          
-          // Redirect based on user role
-          if (response.user.role === 'Admin') {
-            this.router.navigate(['/admin']);
+          if (response.success) {
+            this.snackBar.open('Account created successfully!', 'Close', { duration: 3000 });
+            this.router.navigate(['/dashboard']);
           } else {
-            this.router.navigate(['/categories']);
+            this.snackBar.open(response.message || 'Registration failed', 'Close', { duration: 5000 });
           }
         },
         error: (error) => {
+          this.snackBar.open(error.message || 'Registration failed. Please try again.', 'Close', { duration: 5000 });
+        },
+        complete: () => {
           this.isLoading = false;
-          const message = error.error?.message || 'Registration failed. Please try again.';
-          this.snackBar.open(message, 'Close', { duration: 5000 });
         }
       });
     }
