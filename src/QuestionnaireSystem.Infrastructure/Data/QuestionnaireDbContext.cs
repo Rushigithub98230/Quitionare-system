@@ -23,6 +23,13 @@ public class QuestionnaireDbContext : DbContext
     {
         base.OnModelCreating(modelBuilder);
 
+        // Configure table names
+        modelBuilder.Entity<CategoryQuestionnaireTemplate>()
+            .ToTable("QuestionnaireTemplates");
+        
+        modelBuilder.Entity<CategoryQuestion>()
+            .ToTable("Questions");
+
         // Configure relationships and constraints
         modelBuilder.Entity<CategoryQuestionnaireTemplate>()
             .HasOne(q => q.Category)
@@ -30,11 +37,14 @@ public class QuestionnaireDbContext : DbContext
             .HasForeignKey<CategoryQuestionnaireTemplate>(q => q.CategoryId)
             .OnDelete(DeleteBehavior.Cascade);
 
+        // TODO: Re-enable authentication for production
+        // Make CreatedBy relationship optional temporarily
         modelBuilder.Entity<CategoryQuestionnaireTemplate>()
             .HasOne(q => q.CreatedByUser)
             .WithMany(u => u.CreatedQuestionnaires)
             .HasForeignKey(q => q.CreatedBy)
-            .OnDelete(DeleteBehavior.Restrict);
+            .OnDelete(DeleteBehavior.Restrict)
+            .IsRequired(false);
 
         modelBuilder.Entity<CategoryQuestion>()
             .HasOne(q => q.Questionnaire)
@@ -146,6 +156,8 @@ public class QuestionnaireDbContext : DbContext
             new QuestionType { Id = Guid.Parse("dddddddd-dddd-dddd-dddd-dddddddddddd"), TypeName = "slider", DisplayName = "Slider", HasOptions = false, SupportsImage = true },
             new QuestionType { Id = Guid.Parse("eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee"), TypeName = "yes_no", DisplayName = "Yes/No", HasOptions = true, SupportsImage = true }
         );
+
+        // Admin user is now seeded through migrations
     }
 
     public override int SaveChanges()

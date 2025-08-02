@@ -62,8 +62,8 @@ public class CreateCategoryQuestionnaireTemplateDto
     
     public int Version { get; set; } = 1;
     
-    [Required]
-    public Guid CreatedBy { get; set; }
+    // TODO: Re-enable authentication for production
+    public Guid? CreatedBy { get; set; }
     
     public List<CreateCategoryQuestionDto> Questions { get; set; } = new List<CreateCategoryQuestionDto>();
 }
@@ -109,8 +109,8 @@ public class CategoryQuestionnaireTemplateSummaryDto
     
     public int Version { get; set; } = 1;
     
-    [Required]
-    public Guid CreatedBy { get; set; }
+    // TODO: Re-enable authentication for production
+    public Guid? CreatedBy { get; set; }
     
     public DateTime CreatedAt { get; set; }
     

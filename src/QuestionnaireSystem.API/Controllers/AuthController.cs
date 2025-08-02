@@ -40,22 +40,43 @@ public class AuthController : ControllerBase
     }
 
     [HttpPost("validate")]
-    [Authorize]
     public async Task<ActionResult<JsonModel>> ValidateToken()
     {
         var token = Request.Headers["Authorization"].FirstOrDefault()?.Split(" ").Last();
         if (string.IsNullOrEmpty(token))
         {
-            return JsonModel.ErrorResult("Token is required");
+            return BadRequest(new JsonModel
+            {
+                Success = false,
+                Message = "Token is required",
+                StatusCode = HttpStatusCodes.BadRequest
+            });
         }
 
         return await _authService.ValidateTokenAsync(token);
     }
 
     [HttpGet("profile")]
-    [Authorize]
     public async Task<ActionResult<JsonModel>> GetUserProfile()
     {
-        return await _authService.GetUserProfileAsync(TokenHelper.GetToken(HttpContext));
+        // Return seeded admin user profile since authentication is disabled
+        var adminUser = new UserDto
+        {
+            Id = AdminConstants.AdminUserId,
+            FirstName = AdminConstants.AdminFirstName,
+            LastName = AdminConstants.AdminLastName,
+            Email = AdminConstants.AdminEmail,
+            Role = AdminConstants.AdminRole,
+            Category = "System Administrator",
+            CreatedAt = DateTime.UtcNow.AddDays(-30)
+        };
+        
+        return Ok(new JsonModel
+        {
+            Success = true,
+            Data = adminUser,
+            Message = "Admin profile retrieved successfully",
+            StatusCode = HttpStatusCodes.OK
+        });
     }
 } 

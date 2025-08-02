@@ -9,47 +9,6 @@ public class JsonModel
     public int StatusCode { get; set; }
     public bool Success { get; set; }
     public DateTime Timestamp { get; set; } = DateTime.UtcNow;
-
-    public static JsonModel SuccessResult(object? data, string message = "Success")
-    {
-        return new JsonModel
-        {
-            Data = data,
-            Message = message,
-            StatusCode = HttpStatusCodes.OK,
-            Success = true
-        };
-    }
-
-    public static JsonModel ErrorResult(string message, int statusCode = HttpStatusCodes.BadRequest)
-    {
-        return new JsonModel
-        {
-            Message = message,
-            StatusCode = statusCode,
-            Success = false
-        };
-    }
-
-    public static JsonModel NotFoundResult(string message = "Resource not found")
-    {
-        return new JsonModel
-        {
-            Message = message,
-            StatusCode = HttpStatusCodes.NotFound,
-            Success = false
-        };
-    }
-
-    public static JsonModel ValidationErrorResult(string message)
-    {
-        return new JsonModel
-        {
-            Message = message,
-            StatusCode = HttpStatusCodes.BadRequest,
-            Success = false
-        };
-    }
 }
 
 public static class HttpStatusCodes

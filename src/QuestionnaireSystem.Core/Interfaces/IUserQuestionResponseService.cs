@@ -9,5 +9,7 @@ public interface IUserQuestionResponseService
     Task<JsonModel> GetUserResponsesAsync(TokenModel tokenModel);
     Task<JsonModel> GetResponseByIdAsync(Guid responseId, TokenModel tokenModel);
     Task<JsonModel> GetResponsesByQuestionnaireAsync(Guid questionnaireId, TokenModel tokenModel);
+    Task<JsonModel> GetAllResponsesAsync(TokenModel tokenModel);
     Task<JsonModel> ValidateResponsesAsync(SubmitResponseDto dto, TokenModel tokenModel);
+    Task<JsonModel> ExportResponsesAsync(Guid questionnaireId, TokenModel tokenModel);
 } 

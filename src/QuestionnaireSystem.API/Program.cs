@@ -42,7 +42,12 @@ builder.Services.AddControllers()
                 .ToList();
             
             var errorMessage = string.Join("; ", errors);
-            var jsonModel = JsonModel.ErrorResult(errorMessage, HttpStatusCodes.BadRequest);
+            var jsonModel = new JsonModel
+            {
+                Success = false,
+                Message = errorMessage,
+                StatusCode = HttpStatusCodes.BadRequest
+            };
             
             return new BadRequestObjectResult(jsonModel);
         };
@@ -153,6 +158,15 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 
 app.UseCors("AllowAngular");
+
+// Serve static files from uploads directory
+app.UseStaticFiles();
+app.UseStaticFiles(new StaticFileOptions
+{
+    FileProvider = new Microsoft.Extensions.FileProviders.PhysicalFileProvider(
+        Path.Combine(builder.Environment.WebRootPath, "uploads")),
+    RequestPath = "/uploads"
+});
 
 app.UseAuthentication();
 app.UseAuthorization();

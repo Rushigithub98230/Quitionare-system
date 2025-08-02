@@ -8,7 +8,6 @@ namespace QuestionnaireSystem.API.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-[Authorize]
 public class QuestionTypesController : ControllerBase
 {
     private readonly IQuestionTypeService _questionTypeService;
@@ -21,18 +20,21 @@ public class QuestionTypesController : ControllerBase
     [HttpGet]
     public async Task<ActionResult<JsonModel>> GetAll()
     {
-        return await _questionTypeService.GetAllAsync(TokenHelper.GetToken(HttpContext));
+        // TODO: Re-enable authentication for production
+        return await _questionTypeService.GetAllAsync(null);
     }
 
     [HttpGet("active")]
     public async Task<ActionResult<JsonModel>> GetActive()
     {
-        return await _questionTypeService.GetActiveAsync(TokenHelper.GetToken(HttpContext));
+        // TODO: Re-enable authentication for production
+        return await _questionTypeService.GetActiveAsync(null);
     }
 
     [HttpGet("{id:guid}")]
     public async Task<ActionResult<JsonModel>> GetById(Guid id)
     {
-        return await _questionTypeService.GetByIdAsync(id, TokenHelper.GetToken(HttpContext));
+        // TODO: Re-enable authentication for production
+        return await _questionTypeService.GetByIdAsync(id, null);
     }
 } 

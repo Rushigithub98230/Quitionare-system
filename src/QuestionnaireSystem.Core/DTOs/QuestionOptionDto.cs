@@ -16,7 +16,11 @@ public class QuestionOptionDto
     
     public string? Value { get; set; }
     
+    public string OptionValue { get; set; } = string.Empty;
+    
     public bool IsCorrect { get; set; } = false;
+    
+    public bool IsActive { get; set; } = true;
     
     public DateTime CreatedAt { get; set; }
     
@@ -40,7 +44,11 @@ public class CreateQuestionOptionDto
     
     public string? Value { get; set; }
     
+    public string OptionValue { get; set; } = string.Empty;
+    
     public bool IsCorrect { get; set; } = false;
+    
+    public bool IsActive { get; set; } = true;
 }
 
 public class UpdateQuestionOptionDto
@@ -52,5 +60,9 @@ public class UpdateQuestionOptionDto
     
     public string? Value { get; set; }
     
+    public string OptionValue { get; set; } = string.Empty;
+    
     public bool IsCorrect { get; set; } = false;
+    
+    public bool IsActive { get; set; } = true;
 } 

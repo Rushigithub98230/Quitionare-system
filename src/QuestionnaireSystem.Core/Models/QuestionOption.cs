@@ -19,9 +19,15 @@ public class QuestionOption
     
     public bool IsActive { get; set; } = true;
     
+    public bool IsCorrect { get; set; } = false;
+    
     public bool HasTextInput { get; set; } = false;
     
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    
+    public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
+    
+    public DateTime? DeletedAt { get; set; }
     
     // Navigation properties
     [System.Text.Json.Serialization.JsonIgnore]

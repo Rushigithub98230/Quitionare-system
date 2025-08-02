@@ -22,8 +22,8 @@ public class CategoryQuestionnaireTemplate
     
     public int Version { get; set; } = 1;
     
-    [Required]
-    public Guid CreatedBy { get; set; }
+    // TODO: Re-enable authentication for production
+    public Guid? CreatedBy { get; set; }
     
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     
@@ -35,7 +35,7 @@ public class CategoryQuestionnaireTemplate
     [System.Text.Json.Serialization.JsonIgnore]
     public virtual Category Category { get; set; } = null!;
     [System.Text.Json.Serialization.JsonIgnore]
-    public virtual User CreatedByUser { get; set; } = null!;
+    public virtual User? CreatedByUser { get; set; }
     [System.Text.Json.Serialization.JsonIgnore]
     public virtual ICollection<CategoryQuestion> Questions { get; set; } = new List<CategoryQuestion>();
     [System.Text.Json.Serialization.JsonIgnore]

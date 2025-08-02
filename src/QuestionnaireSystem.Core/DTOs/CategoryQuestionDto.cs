@@ -73,7 +73,7 @@ public class CreateCategoryQuestionDto
     
     public bool IsRequired { get; set; } = false;
     
-    public int DisplayOrder { get; set; }
+    public int? DisplayOrder { get; set; } // Optional - will be auto-generated
     
     [MaxLength(100)]
     public string? SectionName { get; set; }
@@ -114,7 +114,7 @@ public class UpdateCategoryQuestionDto
     
     public bool IsRequired { get; set; } = false;
     
-    public int DisplayOrder { get; set; }
+    public int? DisplayOrder { get; set; } // Optional - will be auto-generated if not provided
     
     [MaxLength(100)]
     public string? SectionName { get; set; }
@@ -142,5 +142,14 @@ public class UpdateCategoryQuestionDto
     
     public string? Settings { get; set; } // JSON string
     
-    public List<CreateQuestionOptionDto> Options { get; set; } = new List<CreateQuestionOptionDto>();
+    public List<UpdateQuestionOptionDto> Options { get; set; } = new List<UpdateQuestionOptionDto>();
+}
+
+public class QuestionOrderUpdateDto
+{
+    [Required]
+    public Guid Id { get; set; }
+    
+    [Required]
+    public int DisplayOrder { get; set; }
 } 

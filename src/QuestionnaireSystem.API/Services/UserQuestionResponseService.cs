@@ -34,26 +34,41 @@ public class UserQuestionResponseService : IUserQuestionResponseService
             // Check if questionnaire exists and user has access
             var questionnaire = await _questionnaireRepository.GetByIdAsync(dto.QuestionnaireId);
             if (questionnaire == null)
-                return JsonModel.NotFoundResult("Questionnaire not found or inactive");
+                return new JsonModel
+                {
+                    Success = false,
+                    Message = "Questionnaire not found or inactive",
+                    StatusCode = HttpStatusCodes.NotFound
+                };
 
             if (tokenModel.Role != "Admin" && questionnaire.Category?.Name != tokenModel.Category)
-                return JsonModel.ErrorResult("Access denied to this questionnaire", HttpStatusCodes.Forbidden);
+                return new JsonModel
+                {
+                    Success = false,
+                    Message = "Access denied to this questionnaire",
+                    StatusCode = HttpStatusCodes.Forbidden
+                };
 
             // Validate responses
             var validationResult = await ValidateResponsesAsync(dto.Responses, dto.QuestionnaireId);
             if (!validationResult.Success)
                 return validationResult;
 
-            // Create response
+            // Create response with proper timestamp tracking
             var responseId = Guid.NewGuid();
+            var now = DateTime.UtcNow;
+            
             var response = new UserQuestionResponse
             {
                 Id = responseId,
                 UserId = tokenModel.UserId,
                 QuestionnaireId = dto.QuestionnaireId,
-                CompletedAt = DateTime.UtcNow,
+                StartedAt = now,
+                CompletedAt = now,
                 IsCompleted = true,
                 IsDraft = false,
+                CreatedAt = now,
+                UpdatedAt = now,
                 QuestionResponses = dto.Responses.Select(r => 
                 {
                     var questionResponseId = Guid.NewGuid();
@@ -65,12 +80,25 @@ public class UserQuestionResponseService : IUserQuestionResponseService
                         TextResponse = r.TextResponse,
                         NumberResponse = r.NumberResponse,
                         DateResponse = r.DateResponse,
+                        DatetimeResponse = r.DateResponse, // Map date to datetime as well
+                        BooleanResponse = r.TextResponse?.ToLower() switch
+                        {
+                            "yes" => true,
+                            "no" => false,
+                            _ => null
+                        },
                         FilePath = r.FileUrl,
+                        FileName = r.FileUrl?.Split('/').LastOrDefault(),
+                        FileSize = null, // TODO: Implement file size tracking
+                        FileType = r.FileUrl?.Split('.').LastOrDefault(),
+                        CreatedAt = now,
+                        UpdatedAt = now,
                         OptionResponses = r.SelectedOptionIds?.Select(optionId => new QuestionOptionResponse
                         {
                             Id = Guid.NewGuid(),
                             QuestionResponseId = questionResponseId,
-                            OptionId = optionId
+                            OptionId = optionId,
+                            CreatedAt = now
                         }).ToList() ?? new List<QuestionOptionResponse>()
                     };
                 }).ToList()
@@ -78,11 +106,22 @@ public class UserQuestionResponseService : IUserQuestionResponseService
 
             await _responseRepository.AddAsync(response);
 
-            return JsonModel.SuccessResult(response, "Response submitted successfully");
+            return new JsonModel
+            {
+                Success = true,
+                Data = new { responseId = response.Id, submittedAt = response.CompletedAt },
+                Message = "Response submitted successfully",
+                StatusCode = HttpStatusCodes.OK
+            };
         }
         catch (Exception ex)
         {
-            return JsonModel.ErrorResult($"Error submitting response: {ex.Message}", HttpStatusCodes.InternalServerError);
+            return new JsonModel
+            {
+                Success = false,
+                Message = $"Error submitting response: {ex.Message}",
+                StatusCode = HttpStatusCodes.InternalServerError
+            };
         }
     }
 
@@ -92,18 +131,39 @@ public class UserQuestionResponseService : IUserQuestionResponseService
         {
             var response = await _responseRepository.GetByIdAsync(responseId);
             if (response == null)
-                return JsonModel.NotFoundResult("Response not found");
+                return new JsonModel
+                {
+                    Success = false,
+                    Message = "Response not found",
+                    StatusCode = HttpStatusCodes.NotFound
+                };
 
             // Check if user has access to this response
             if (response.UserId != tokenModel.UserId && tokenModel.Role != "Admin")
-                return JsonModel.NotFoundResult("Response not found"); // Return not found for security
+                return new JsonModel
+                {
+                    Success = false,
+                    Message = "Response not found", // Return not found for security
+                    StatusCode = HttpStatusCodes.NotFound
+                };
 
             var responseDto = _mapper.Map<ResponseDetailDto>(response);
-            return JsonModel.SuccessResult(responseDto, "Response retrieved successfully");
+            return new JsonModel
+            {
+                Success = true,
+                Data = responseDto,
+                Message = "Response retrieved successfully",
+                StatusCode = HttpStatusCodes.OK
+            };
         }
         catch (Exception ex)
         {
-            return JsonModel.ErrorResult($"Error retrieving response: {ex.Message}");
+            return new JsonModel
+            {
+                Success = false,
+                Message = $"Error retrieving response: {ex.Message}",
+                StatusCode = HttpStatusCodes.InternalServerError
+            };
         }
     }
 
@@ -114,19 +174,40 @@ public class UserQuestionResponseService : IUserQuestionResponseService
             // Check if user has access to this questionnaire
             var questionnaire = await _questionnaireRepository.GetByIdAsync(questionnaireId);
             if (questionnaire == null)
-                return JsonModel.NotFoundResult("Questionnaire template not found");
+                return new JsonModel
+                {
+                    Success = false,
+                    Message = "Questionnaire template not found",
+                    StatusCode = HttpStatusCodes.NotFound
+                };
 
             if (questionnaire.Category?.Name != tokenModel.Category && tokenModel.Role != "Admin")
-                return JsonModel.ErrorResult("Access denied to this questionnaire", HttpStatusCodes.Forbidden);
+                return new JsonModel
+                {
+                    Success = false,
+                    Message = "Access denied to this questionnaire",
+                    StatusCode = HttpStatusCodes.Forbidden
+                };
 
             var responses = await _responseRepository.GetByQuestionnaireAsync(questionnaireId);
             var responseDtos = _mapper.Map<List<ResponseSummaryDto>>(responses);
 
-            return JsonModel.SuccessResult(responseDtos, "Responses retrieved successfully");
+            return new JsonModel
+            {
+                Success = true,
+                Data = responseDtos,
+                Message = "Responses retrieved successfully",
+                StatusCode = HttpStatusCodes.OK
+            };
         }
         catch (Exception ex)
         {
-            return JsonModel.ErrorResult($"Error retrieving responses: {ex.Message}", HttpStatusCodes.InternalServerError);
+            return new JsonModel
+            {
+                Success = false,
+                Message = $"Error retrieving responses: {ex.Message}",
+                StatusCode = HttpStatusCodes.InternalServerError
+            };
         }
     }
 
@@ -137,11 +218,49 @@ public class UserQuestionResponseService : IUserQuestionResponseService
             var responses = await _responseRepository.GetByUserAsync(tokenModel.UserId);
             var responseDtos = _mapper.Map<List<ResponseSummaryDto>>(responses);
 
-            return JsonModel.SuccessResult(responseDtos, "User responses retrieved successfully");
+            return new JsonModel
+            {
+                Success = true,
+                Data = responseDtos,
+                Message = "User responses retrieved successfully",
+                StatusCode = HttpStatusCodes.OK
+            };
         }
         catch (Exception ex)
         {
-            return JsonModel.ErrorResult($"Error retrieving user responses: {ex.Message}");
+            return new JsonModel
+            {
+                Success = false,
+                Message = $"Error retrieving user responses: {ex.Message}",
+                StatusCode = HttpStatusCodes.InternalServerError
+            };
+        }
+    }
+
+    public async Task<JsonModel> GetAllResponsesAsync(TokenModel tokenModel)
+    {
+        try
+        {
+            // For admin, get all responses from all questionnaires
+            var responses = await _responseRepository.GetAllAsync();
+            var responseDtos = _mapper.Map<List<ResponseSummaryDto>>(responses);
+
+            return new JsonModel
+            {
+                Success = true,
+                Data = responseDtos,
+                Message = "All responses retrieved successfully",
+                StatusCode = HttpStatusCodes.OK
+            };
+        }
+        catch (Exception ex)
+        {
+            return new JsonModel
+            {
+                Success = false,
+                Message = $"Error retrieving all responses: {ex.Message}",
+                StatusCode = HttpStatusCodes.InternalServerError
+            };
         }
     }
 
@@ -156,7 +275,12 @@ public class UserQuestionResponseService : IUserQuestionResponseService
         {
             var questionnaire = await _questionnaireRepository.GetByIdAsync(questionnaireId);
             if (questionnaire == null || !questionnaire.IsActive)
-                return JsonModel.NotFoundResult("Questionnaire not found or inactive");
+                return new JsonModel
+                {
+                    Success = false,
+                    Message = "Questionnaire not found or inactive",
+                    StatusCode = HttpStatusCodes.NotFound
+                };
 
             var questions = await _questionRepository.GetByQuestionnaireIdAsync(questionnaireId);
             var requiredQuestions = questions.Where(q => q.IsRequired).ToList();
@@ -182,14 +306,21 @@ public class UserQuestionResponseService : IUserQuestionResponseService
                     continue;
                 }
 
-                // Only validate if a response is provided (for non-required questions)
-                var hasResponse = !string.IsNullOrEmpty(response.TextResponse) || 
-                                response.NumberResponse.HasValue || 
-                                response.DateResponse.HasValue || 
-                                !string.IsNullOrEmpty(response.FileUrl) ||
-                                (response.SelectedOptionIds != null && response.SelectedOptionIds.Any());
+                // Check if a valid response is provided
+                var hasValidResponse = !string.IsNullOrEmpty(response.TextResponse) || 
+                                     response.NumberResponse.HasValue || 
+                                     response.DateResponse.HasValue || 
+                                     !string.IsNullOrEmpty(response.FileUrl) ||
+                                     (response.SelectedOptionIds != null && response.SelectedOptionIds.Any());
 
-                if (!hasResponse && !question.IsRequired)
+                // For required questions, validate that they have a valid response
+                if (question.IsRequired && !hasValidResponse)
+                {
+                    validationErrors.Add($"Required question '{question.QuestionText}' must have a valid response");
+                    continue;
+                }
+
+                if (!hasValidResponse && !question.IsRequired)
                     continue; // Skip validation for non-required questions with no response
 
                 switch (questionType.TypeName.ToLower())
@@ -256,14 +387,112 @@ public class UserQuestionResponseService : IUserQuestionResponseService
             }
 
             if (validationErrors.Any())
-                return JsonModel.ErrorResult(string.Join("; ", validationErrors), HttpStatusCodes.BadRequest);
+                return new JsonModel
+                {
+                    Success = false,
+                    Message = string.Join("; ", validationErrors),
+                    StatusCode = HttpStatusCodes.BadRequest
+                };
 
-            return JsonModel.SuccessResult("Validation successful");
+            return new JsonModel
+            {
+                Success = true,
+                Message = "Validation successful",
+                StatusCode = HttpStatusCodes.OK
+            };
         }
         catch (Exception ex)
         {
-            return JsonModel.ErrorResult($"Error validating responses: {ex.Message}", HttpStatusCodes.InternalServerError);
+            return new JsonModel
+            {
+                Success = false,
+                Message = $"Error validating responses: {ex.Message}",
+                StatusCode = HttpStatusCodes.InternalServerError
+            };
         }
+    }
+
+    public async Task<JsonModel> ExportResponsesAsync(Guid questionnaireId, TokenModel tokenModel)
+    {
+        try
+        {
+            // Check if user has access to this questionnaire
+            var questionnaire = await _questionnaireRepository.GetByIdAsync(questionnaireId);
+            if (questionnaire == null)
+                return new JsonModel
+                {
+                    Success = false,
+                    Message = "Questionnaire template not found",
+                    StatusCode = HttpStatusCodes.NotFound
+                };
+
+            if (questionnaire.Category?.Name != tokenModel.Category && tokenModel.Role != "Admin")
+                return new JsonModel
+                {
+                    Success = false,
+                    Message = "Access denied to this questionnaire",
+                    StatusCode = HttpStatusCodes.Forbidden
+                };
+
+            var responses = await _responseRepository.GetByQuestionnaireAsync(questionnaireId);
+            
+            // Generate CSV content
+            var csvContent = GenerateCsvContent(responses, questionnaire);
+            
+            return new JsonModel
+            {
+                Success = true,
+                Data = new { csvContent = csvContent, fileName = $"responses_{questionnaireId}.csv" },
+                Message = "Responses exported successfully",
+                StatusCode = HttpStatusCodes.OK
+            };
+        }
+        catch (Exception ex)
+        {
+            return new JsonModel
+            {
+                Success = false,
+                Message = $"Error exporting responses: {ex.Message}",
+                StatusCode = HttpStatusCodes.InternalServerError
+            };
+        }
+    }
+
+    private string GenerateCsvContent(List<UserQuestionResponse> responses, CategoryQuestionnaireTemplate questionnaire)
+    {
+        var csvLines = new List<string>();
+        
+        // Header
+        csvLines.Add("Response ID,User ID,Questionnaire,Submitted At,Completed,Time Taken (seconds),Question ID,Question Text,Question Type,Response,Options");
+        
+        foreach (var response in responses)
+        {
+            foreach (var questionResponse in response.QuestionResponses)
+            {
+                var responseValue = GetResponseValue(questionResponse);
+                var options = string.Join(";", questionResponse.OptionResponses.Select(o => o.Option?.OptionText ?? "Unknown"));
+                
+                csvLines.Add($"\"{response.Id}\",\"{response.UserId}\",\"{questionnaire.Title}\",\"{response.CompletedAt:yyyy-MM-dd HH:mm:ss}\",\"{response.IsCompleted}\",\"{response.TimeTaken}\",\"{questionResponse.QuestionId}\",\"{questionResponse.Question?.QuestionText ?? "Unknown"}\",\"{questionResponse.Question?.QuestionType?.TypeName ?? "Unknown"}\",\"{responseValue}\",\"{options}\"");
+            }
+        }
+        
+        return string.Join("\n", csvLines);
+    }
+
+    private string GetResponseValue(QuestionResponse questionResponse)
+    {
+        if (!string.IsNullOrEmpty(questionResponse.TextResponse))
+            return questionResponse.TextResponse;
+        if (questionResponse.NumberResponse.HasValue)
+            return questionResponse.NumberResponse.Value.ToString();
+        if (questionResponse.DateResponse.HasValue)
+            return questionResponse.DateResponse.Value.ToString("yyyy-MM-dd");
+        if (questionResponse.BooleanResponse.HasValue)
+            return questionResponse.BooleanResponse.Value ? "Yes" : "No";
+        if (!string.IsNullOrEmpty(questionResponse.FilePath))
+            return $"File: {questionResponse.FileName ?? "Unknown"}";
+        
+        return "No response";
     }
 
     private bool IsValidEmail(string email)

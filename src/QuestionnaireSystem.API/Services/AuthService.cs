@@ -31,7 +31,12 @@ public class AuthService : IAuthService
 
             if (user == null || !VerifyPassword(loginDto.Password, user.PasswordHash))
             {
-                return JsonModel.ErrorResult("Invalid email or password", HttpStatusCodes.Unauthorized);
+                return new JsonModel
+                {
+                    Success = false,
+                    Message = "Invalid email or password",
+                    StatusCode = HttpStatusCodes.Unauthorized
+                };
             }
 
             // Update last login
@@ -48,11 +53,22 @@ public class AuthService : IAuthService
 
             authResponse.Token = _jwtService.GenerateToken(authResponse);
 
-            return JsonModel.SuccessResult(authResponse, "Login successful");
+            return new JsonModel
+            {
+                Success = true,
+                Data = authResponse,
+                Message = "Login successful",
+                StatusCode = HttpStatusCodes.OK
+            };
         }
         catch (Exception ex)
         {
-            return JsonModel.ErrorResult($"Error during login: {ex.Message}");
+            return new JsonModel
+            {
+                Success = false,
+                Message = $"Error during login: {ex.Message}",
+                StatusCode = HttpStatusCodes.InternalServerError
+            };
         }
     }
 
@@ -63,7 +79,12 @@ public class AuthService : IAuthService
             // Check if user already exists
             if (await _context.Users.AnyAsync(u => u.Email == registerDto.Email))
             {
-                return JsonModel.ErrorResult("User with this email already exists", HttpStatusCodes.Conflict);
+                return new JsonModel
+                {
+                    Success = false,
+                    Message = "User with this email already exists",
+                    StatusCode = HttpStatusCodes.Conflict
+                };
             }
 
             var user = new User
@@ -92,11 +113,22 @@ public class AuthService : IAuthService
 
             authResponse.Token = _jwtService.GenerateToken(authResponse);
 
-            return JsonModel.SuccessResult(authResponse, "Registration successful");
+            return new JsonModel
+            {
+                Success = true,
+                Data = authResponse,
+                Message = "Registration successful",
+                StatusCode = HttpStatusCodes.OK
+            };
         }
         catch (Exception ex)
         {
-            return JsonModel.ErrorResult($"Error during registration: {ex.Message}");
+            return new JsonModel
+            {
+                Success = false,
+                Message = $"Error during registration: {ex.Message}",
+                StatusCode = HttpStatusCodes.InternalServerError
+            };
         }
     }
 
@@ -106,11 +138,21 @@ public class AuthService : IAuthService
         {
             // In a real application, you would store refresh tokens in the database
             // and validate them. For now, we'll just generate a new token.
-            return JsonModel.ErrorResult("Refresh token functionality not implemented", HttpStatusCodes.NotImplemented);
+            return new JsonModel
+            {
+                Success = false,
+                Message = "Refresh token functionality not implemented",
+                StatusCode = HttpStatusCodes.NotImplemented
+            };
         }
         catch (Exception ex)
         {
-            return JsonModel.ErrorResult($"Error refreshing token: {ex.Message}");
+            return new JsonModel
+            {
+                Success = false,
+                Message = $"Error refreshing token: {ex.Message}",
+                StatusCode = HttpStatusCodes.InternalServerError
+            };
         }
     }
 
@@ -119,11 +161,22 @@ public class AuthService : IAuthService
         try
         {
             var isValid = _jwtService.ValidateToken(token);
-            return JsonModel.SuccessResult(isValid, "Token validation completed");
+            return new JsonModel
+            {
+                Success = true,
+                Data = isValid,
+                Message = "Token validation completed",
+                StatusCode = HttpStatusCodes.OK
+            };
         }
         catch (Exception ex)
         {
-            return JsonModel.ErrorResult($"Error validating token: {ex.Message}");
+            return new JsonModel
+            {
+                Success = false,
+                Message = $"Error validating token: {ex.Message}",
+                StatusCode = HttpStatusCodes.InternalServerError
+            };
         }
     }
 
@@ -133,14 +186,30 @@ public class AuthService : IAuthService
         {
             var user = await _context.Users.FindAsync(tokenModel.UserId);
             if (user == null)
-                return JsonModel.NotFoundResult("User not found");
+                return new JsonModel
+                {
+                    Success = false,
+                    Message = "User not found",
+                    StatusCode = HttpStatusCodes.NotFound
+                };
 
             var userDto = _mapper.Map<UserDto>(user);
-            return JsonModel.SuccessResult(userDto, "User profile retrieved successfully");
+            return new JsonModel
+            {
+                Success = true,
+                Data = userDto,
+                Message = "User profile retrieved successfully",
+                StatusCode = HttpStatusCodes.OK
+            };
         }
         catch (Exception ex)
         {
-            return JsonModel.ErrorResult($"Error retrieving user profile: {ex.Message}");
+            return new JsonModel
+            {
+                Success = false,
+                Message = $"Error retrieving user profile: {ex.Message}",
+                StatusCode = HttpStatusCodes.InternalServerError
+            };
         }
     }
 

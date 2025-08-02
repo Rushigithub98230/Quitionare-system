@@ -22,6 +22,8 @@ public class UserQuestionResponseRepository : IUserQuestionResponseRepository
             .Include(uqr => uqr.QuestionResponses)
             .ThenInclude(qr => qr.Question)
             .Include(uqr => uqr.QuestionResponses)
+            .ThenInclude(qr => qr.Question.QuestionType)
+            .Include(uqr => uqr.QuestionResponses)
             .ThenInclude(qr => qr.OptionResponses)
             .ThenInclude(qor => qor.Option)
             .FirstOrDefaultAsync(uqr => uqr.Id == id);
@@ -47,11 +49,31 @@ public class UserQuestionResponseRepository : IUserQuestionResponseRepository
             .ToListAsync();
     }
 
+    public async Task<List<UserQuestionResponse>> GetAllAsync()
+    {
+        return await _context.UserQuestionResponses
+            .Include(uqr => uqr.User)
+            .Include(uqr => uqr.Questionnaire)
+            .Include(uqr => uqr.QuestionResponses)
+            .OrderByDescending(uqr => uqr.CreatedAt)
+            .ToListAsync();
+    }
+
     public async Task<UserQuestionResponse> AddAsync(UserQuestionResponse response)
     {
-        _context.UserQuestionResponses.Add(response);
-        await _context.SaveChangesAsync();
-        return response;
+        try
+        {
+
+
+            _context.UserQuestionResponses.Add(response);
+            await _context.SaveChangesAsync();
+            return response;
+        }
+        catch(Exception ex)
+        {
+            Console.WriteLine(ex);
+            return response;
+        }
     }
 
     public async Task<UserQuestionResponse> CreateAsync(UserQuestionResponse response)

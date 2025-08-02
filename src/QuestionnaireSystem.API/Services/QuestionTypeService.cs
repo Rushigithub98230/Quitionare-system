@@ -23,11 +23,22 @@ public class QuestionTypeService : IQuestionTypeService
             var questionTypes = await _questionTypeRepository.GetAllAsync();
             var questionTypeDtos = _mapper.Map<List<QuestionTypeDto>>(questionTypes);
             
-            return JsonModel.SuccessResult(questionTypeDtos, "Question types retrieved successfully");
+            return new JsonModel
+            {
+                Success = true,
+                Data = questionTypeDtos,
+                Message = "Question types retrieved successfully",
+                StatusCode = HttpStatusCodes.OK
+            };
         }
         catch (Exception ex)
         {
-            return JsonModel.ErrorResult($"Error retrieving question types: {ex.Message}");
+            return new JsonModel
+            {
+                Success = false,
+                Message = $"Error retrieving question types: {ex.Message}",
+                StatusCode = HttpStatusCodes.InternalServerError
+            };
         }
     }
 
@@ -37,14 +48,30 @@ public class QuestionTypeService : IQuestionTypeService
         {
             var questionType = await _questionTypeRepository.GetByIdAsync(id);
             if (questionType == null)
-                return JsonModel.NotFoundResult("Question type not found");
+                return new JsonModel
+                {
+                    Success = false,
+                    Message = "Question type not found",
+                    StatusCode = HttpStatusCodes.NotFound
+                };
 
             var questionTypeDto = _mapper.Map<QuestionTypeDto>(questionType);
-            return JsonModel.SuccessResult(questionTypeDto, "Question type retrieved successfully");
+            return new JsonModel
+            {
+                Success = true,
+                Data = questionTypeDto,
+                Message = "Question type retrieved successfully",
+                StatusCode = HttpStatusCodes.OK
+            };
         }
         catch (Exception ex)
         {
-            return JsonModel.ErrorResult($"Error retrieving question type: {ex.Message}");
+            return new JsonModel
+            {
+                Success = false,
+                Message = $"Error retrieving question type: {ex.Message}",
+                StatusCode = HttpStatusCodes.InternalServerError
+            };
         }
     }
 
@@ -55,11 +82,22 @@ public class QuestionTypeService : IQuestionTypeService
             var questionTypes = await _questionTypeRepository.GetActiveAsync();
             var questionTypeDtos = _mapper.Map<List<QuestionTypeDto>>(questionTypes);
             
-            return JsonModel.SuccessResult(questionTypeDtos, "Active question types retrieved successfully");
+            return new JsonModel
+            {
+                Success = true,
+                Data = questionTypeDtos,
+                Message = "Active question types retrieved successfully",
+                StatusCode = HttpStatusCodes.OK
+            };
         }
         catch (Exception ex)
         {
-            return JsonModel.ErrorResult($"Error retrieving active question types: {ex.Message}");
+            return new JsonModel
+            {
+                Success = false,
+                Message = $"Error retrieving active question types: {ex.Message}",
+                StatusCode = HttpStatusCodes.InternalServerError
+            };
         }
     }
 } 

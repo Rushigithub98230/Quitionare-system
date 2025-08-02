@@ -1,0 +1,395 @@
+<div class="admin-dashboard">
+  <div class="dashboard-header">
+    <h1>Admin Dashboard</h1>
+    <p>Manage categories and questionnaires</p>
+  </div>
+
+  <mat-tab-group (selectedTabChange)="onTabChange($event)">
+    <!-- Categories Tab -->
+    <mat-tab label="Categories">
+      <div class="tab-content">
+        <div class="actions-bar">
+          <button mat-raised-button color="primary" (click)="createCategory()">
+            <mat-icon>add</mat-icon>
+            Add Category
+          </button>
+          <button mat-raised-button color="accent" (click)="toggleCategoryOrderManager()">
+            <mat-icon>sort</mat-icon>
+            {{ showCategoryOrderManager ? 'Hide' : 'Manage' }} Order
+          </button>
+        </div>
+
+        <!-- Category Order Manager -->
+        <div *ngIf="showCategoryOrderManager" class="order-manager-section">
+          <app-order-manager 
+            [items]="categoryOrderItems"
+            [title]="'Category Order Management'"
+            (orderChanged)="onCategoryOrderChanged($event)">
+          </app-order-manager>
+          
+          <div class="order-actions">
+            <button mat-raised-button color="primary" (click)="saveCategoryOrder()">
+              <mat-icon>save</mat-icon>
+              Save Order
+            </button>
+            <button mat-button (click)="toggleCategoryOrderManager()">
+              <mat-icon>close</mat-icon>
+              Cancel
+            </button>
+          </div>
+        </div>
+
+        <div class="content-area">
+          <div *ngIf="loading" class="loading">
+            <mat-spinner></mat-spinner>
+            <p>Loading categories...</p>
+          </div>
+
+          <div *ngIf="error" class="error">
+            <p>{{ error }}</p>
+          </div>
+
+          <div *ngIf="!loading && !error" class="categories-grid">
+            <mat-card *ngFor="let category of categories" class="category-card">
+              <mat-card-header>
+                <mat-card-title>{{ category.name }}</mat-card-title>
+                <mat-card-subtitle>{{ category.description }}</mat-card-subtitle>
+              </mat-card-header>
+              
+              <mat-card-content>
+                <p><strong>Status:</strong> {{ category.isActive ? 'Active' : 'Inactive' }}</p>
+                <p><strong>Display Order:</strong> {{ category.displayOrder }}</p>
+                <p><strong>Questionnaires:</strong> {{ getCategoryQuestionnaireCount(category.id) }}</p>
+              </mat-card-content>
+              
+              <mat-card-actions>
+                <button mat-button color="primary" (click)="editCategory(category)">
+                  <mat-icon>edit</mat-icon>
+                  Edit
+                </button>
+                <button mat-button color="warn" (click)="deleteCategory(category)">
+                  <mat-icon>delete</mat-icon>
+                  Delete
+                </button>
+              </mat-card-actions>
+            </mat-card>
+          </div>
+        </div>
+      </div>
+    </mat-tab>
+
+    <!-- Questionnaires Tab -->
+    <mat-tab label="Questionnaires">
+      <div class="tab-content">
+        <div class="actions-bar">
+          <button mat-raised-button color="primary" (click)="createQuestionnaire()">
+            <mat-icon>add</mat-icon>
+            Add Questionnaire
+          </button>
+          <button mat-raised-button color="accent" (click)="toggleQuestionnaireOrderManager()">
+            <mat-icon>sort</mat-icon>
+            {{ showQuestionnaireOrderManager ? 'Hide' : 'Manage' }} Order
+          </button>
+        </div>
+
+        <!-- Questionnaire Order Manager -->
+        <div *ngIf="showQuestionnaireOrderManager" class="order-manager-section">
+          <app-order-manager 
+            [items]="questionnaireOrderItems"
+            [title]="'Questionnaire Order Management'"
+            (orderChanged)="onQuestionnaireOrderChanged($event)">
+          </app-order-manager>
+          
+          <div class="order-actions">
+            <button mat-raised-button color="primary" (click)="saveQuestionnaireOrder()">
+              <mat-icon>save</mat-icon>
+              Save Order
+            </button>
+            <button mat-button (click)="toggleQuestionnaireOrderManager()">
+              <mat-icon>close</mat-icon>
+              Cancel
+            </button>
+          </div>
+        </div>
+
+        <div class="content-area">
+          <div *ngIf="loading" class="loading">
+            <mat-spinner></mat-spinner>
+            <p>Loading questionnaires...</p>
+          </div>
+
+          <div *ngIf="error" class="error">
+            <p>{{ error }}</p>
+          </div>
+
+          <div *ngIf="!loading && !error" class="questionnaires-grid">
+            <mat-card *ngFor="let questionnaire of questionnaires" class="questionnaire-card">
+              <mat-card-header>
+                <mat-card-title>{{ questionnaire.title }}</mat-card-title>
+                <mat-card-subtitle>{{ questionnaire.description }}</mat-card-subtitle>
+              </mat-card-header>
+              
+              <mat-card-content>
+                <p><strong>Category:</strong> {{ getCategoryName(questionnaire.categoryId) }}</p>
+                <p><strong>Status:</strong> {{ questionnaire.isActive ? 'Active' : 'Inactive' }}</p>
+                <p><strong>Mandatory:</strong> {{ questionnaire.isMandatory ? 'Yes' : 'No' }}</p>
+                <p><strong>Display Order:</strong> {{ questionnaire.displayOrder }}</p>
+                <p><strong>Questions:</strong> {{ getQuestionnaireQuestionCount(questionnaire.id) }}</p>
+              </mat-card-content>
+              
+              <mat-card-actions>
+                <button mat-button color="primary" (click)="editQuestionnaire(questionnaire)">
+                  <mat-icon>edit</mat-icon>
+                  Edit
+                </button>
+                <button mat-button color="accent" (click)="manageQuestions(questionnaire)">
+                  <mat-icon>list</mat-icon>
+                  Questions
+                </button>
+                <button mat-button color="primary" (click)="previewQuestionnaire(questionnaire)">
+                  <mat-icon>preview</mat-icon>
+                  Preview & Test
+                </button>
+                <button mat-button color="accent" (click)="solveAsAdmin(questionnaire)">
+                  <mat-icon>assignment</mat-icon>
+                  Solve as Admin
+                </button>
+                <button mat-button color="warn" (click)="deleteQuestionnaire(questionnaire)">
+                  <mat-icon>delete</mat-icon>
+                  Delete
+                </button>
+              </mat-card-actions>
+            </mat-card>
+          </div>
+        </div>
+      </div>
+    </mat-tab>
+
+    <!-- Deleted Categories Tab -->
+    <mat-tab label="Deleted Categories">
+      <div class="tab-content">
+        <div class="actions-bar">
+          <button mat-raised-button color="primary" (click)="loadDeletedCategories()">
+            <mat-icon>refresh</mat-icon>
+            Refresh
+          </button>
+        </div>
+
+        <div class="content-area">
+          <div *ngIf="loadingDeleted" class="loading">
+            <mat-spinner></mat-spinner>
+            <p>Loading deleted categories...</p>
+          </div>
+
+          <div *ngIf="errorDeleted" class="error">
+            <p>{{ errorDeleted }}</p>
+          </div>
+
+          <div *ngIf="!loadingDeleted && !errorDeleted" class="deleted-categories-grid">
+            <div *ngIf="deletedCategories.length === 0" class="no-data">
+              <mat-icon>delete_outline</mat-icon>
+              <p>No deleted categories found</p>
+            </div>
+
+            <mat-card *ngFor="let category of deletedCategories" class="deleted-category-card">
+              <mat-card-header>
+                <mat-card-title>{{ category.name }}</mat-card-title>
+                <mat-card-subtitle>{{ category.description }}</mat-card-subtitle>
+                <div class="deleted-badge">
+                  <mat-chip color="warn" selected>Deleted</mat-chip>
+                </div>
+              </mat-card-header>
+              
+              <mat-card-content>
+                <p><strong>Deleted At:</strong> {{ category.deletedAt | date:'medium' }}</p>
+                <p><strong>Display Order:</strong> {{ category.displayOrder }}</p>
+                <p><strong>Questionnaires:</strong> {{ getCategoryQuestionnaireCount(category.id) }}</p>
+                <p><strong>Status:</strong> {{ category.isActive ? 'Active' : 'Inactive' }}</p>
+              </mat-card-content>
+              
+              <mat-card-actions>
+                <button mat-raised-button color="primary" (click)="restoreCategory(category)">
+                  <mat-icon>restore</mat-icon>
+                  Restore
+                </button>
+                <button mat-button color="accent" (click)="viewCategoryDetails(category)">
+                  <mat-icon>visibility</mat-icon>
+                  View Details
+                </button>
+              </mat-card-actions>
+            </mat-card>
+          </div>
+        </div>
+      </div>
+    </mat-tab>
+
+    <!-- Responses Tab -->
+    <mat-tab label="Responses">
+      <div class="tab-content">
+        <div class="actions-bar">
+          <button mat-raised-button color="primary" (click)="loadAllResponses()">
+            <mat-icon>refresh</mat-icon>
+            Refresh Responses
+          </button>
+          <button mat-raised-button color="accent" (click)="exportResponses()">
+            <mat-icon>download</mat-icon>
+            Export All
+          </button>
+        </div>
+
+        <div class="content-area">
+          <div *ngIf="loadingResponses" class="loading">
+            <mat-spinner></mat-spinner>
+            <p>Loading responses...</p>
+          </div>
+
+          <div *ngIf="errorResponses" class="error">
+            <p>{{ errorResponses }}</p>
+          </div>
+
+          <div *ngIf="!loadingResponses && !errorResponses" class="responses-container">
+            <!-- Response Filters -->
+            <div class="response-filters">
+              <mat-form-field appearance="outline">
+                <mat-label>Filter by Questionnaire</mat-label>
+                <mat-select [(ngModel)]="selectedQuestionnaireFilter">
+                  <mat-option value="">All Questionnaires</mat-option>
+                  <mat-option *ngFor="let q of questionnaires" [value]="q.id">
+                    {{ q.title }}
+                  </mat-option>
+                </mat-select>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Filter by Date Range</mat-label>
+                <mat-select [(ngModel)]="selectedDateFilter">
+                  <mat-option value="">All Time</mat-option>
+                  <mat-option value="today">Today</mat-option>
+                  <mat-option value="week">This Week</mat-option>
+                  <mat-option value="month">This Month</mat-option>
+                </mat-select>
+              </mat-form-field>
+
+              <button mat-raised-button color="primary" (click)="applyFilters()">
+                <mat-icon>filter_list</mat-icon>
+                Apply Filters
+              </button>
+            </div>
+
+            <!-- Responses List -->
+            <div class="responses-list">
+              <div *ngIf="filteredResponses.length === 0" class="no-responses">
+                <mat-icon>assignment</mat-icon>
+                <p>No responses found</p>
+              </div>
+
+              <mat-card *ngFor="let response of filteredResponses" class="response-card">
+                <mat-card-header>
+                  <mat-card-title>{{ getQuestionnaireName(response.questionnaireId) }}</mat-card-title>
+                  <mat-card-subtitle>
+                    Submitted: {{ response.submittedAt | date:'medium' }}
+                  </mat-card-subtitle>
+                </mat-card-header>
+                
+                <mat-card-content>
+                  <p><strong>User:</strong> {{ response.userName || 'Admin' }}</p>
+                  <p><strong>Questions Answered:</strong> {{ response.responseCount || 0 }}</p>
+                  <p><strong>Status:</strong> {{ response.isCompleted ? 'Completed' : 'Draft' }}</p>
+                </mat-card-content>
+                
+                <mat-card-actions>
+                  <button mat-button color="primary" (click)="viewResponseDetails(response)">
+                    <mat-icon>visibility</mat-icon>
+                    View Details
+                  </button>
+                  <button mat-button color="accent" (click)="exportResponse(response)">
+                    <mat-icon>download</mat-icon>
+                    Export
+                  </button>
+                </mat-card-actions>
+              </mat-card>
+            </div>
+          </div>
+        </div>
+      </div>
+    </mat-tab>
+
+    <!-- Combined View Tab -->
+    <mat-tab label="Combined View">
+      <div class="tab-content">
+        <div class="content-area">
+          <div *ngIf="loading" class="loading">
+            <mat-spinner></mat-spinner>
+            <p>Loading data...</p>
+          </div>
+
+          <div *ngIf="error" class="error">
+            <p>{{ error }}</p>
+          </div>
+
+          <div *ngIf="!loading && !error" class="combined-view">
+            <mat-expansion-panel *ngFor="let category of categories" class="category-panel">
+              <mat-expansion-panel-header>
+                <mat-panel-title>
+                  {{ category.name }}
+                  <span class="questionnaire-count">({{ getCategoryQuestionnaireCount(category.id) }} questionnaires)</span>
+                </mat-panel-title>
+                <mat-panel-description>
+                  {{ category.description }}
+                </mat-panel-description>
+              </mat-expansion-panel-header>
+
+              <div class="category-actions">
+                <button mat-button color="primary" (click)="editCategory(category)">
+                  <mat-icon>edit</mat-icon>
+                  Edit Category
+                </button>
+                <button mat-button color="accent" (click)="createQuestionnaire()">
+                  <mat-icon>add</mat-icon>
+                  Add Questionnaire
+                </button>
+              </div>
+
+              <div class="questionnaires-list">
+                <mat-card *ngFor="let questionnaire of getQuestionnairesByCategory(category.id)" class="questionnaire-item">
+                  <mat-card-header>
+                    <mat-card-title>{{ questionnaire.title }}</mat-card-title>
+                    <mat-card-subtitle>{{ questionnaire.description }}</mat-card-subtitle>
+                  </mat-card-header>
+                  
+                  <mat-card-content>
+                    <p><strong>Questions:</strong> {{ questionnaire.questionCount || 0 }}</p>
+                    <p><strong>Status:</strong> {{ questionnaire.isActive ? 'Active' : 'Inactive' }}</p>
+                  </mat-card-content>
+                  
+                  <mat-card-actions>
+                    <button mat-button color="primary" (click)="editQuestionnaire(questionnaire)">
+                      <mat-icon>edit</mat-icon>
+                      Edit
+                    </button>
+                    <button mat-button color="accent" (click)="manageQuestions(questionnaire)">
+                      <mat-icon>quiz</mat-icon>
+                      Questions
+                    </button>
+                    <button mat-button color="warn" (click)="deleteQuestionnaire(questionnaire)">
+                      <mat-icon>delete</mat-icon>
+                      Delete
+                    </button>
+                  </mat-card-actions>
+                </mat-card>
+
+                <div *ngIf="getQuestionnairesByCategory(category.id).length === 0" class="no-questionnaires">
+                  <p>No questionnaires in this category yet.</p>
+                  <button mat-button color="primary" (click)="createQuestionnaire()">
+                    <mat-icon>add</mat-icon>
+                    Add First Questionnaire
+                  </button>
+                </div>
+              </div>
+            </mat-expansion-panel>
+          </div>
+        </div>
+      </div>
+    </mat-tab>
+  </mat-tab-group>
+</div> 

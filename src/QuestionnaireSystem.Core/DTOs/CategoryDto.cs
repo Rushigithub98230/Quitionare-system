@@ -17,7 +17,7 @@ public class CreateCategoryDto
     [MaxLength(100)]
     public string? Color { get; set; }
     
-    public int DisplayOrder { get; set; }
+    public int? DisplayOrder { get; set; } // Optional - will be auto-generated
     
     [MaxLength(1000)]
     public string? Features { get; set; }
@@ -55,8 +55,6 @@ public class UpdateCategoryDto
     [MaxLength(100)]
     public string? Color { get; set; }
     
-    public bool IsActive { get; set; } = true;
-    
     public int DisplayOrder { get; set; }
     
     [MaxLength(1000)]
@@ -78,6 +76,17 @@ public class UpdateCategoryDto
     public bool IsMostPopular { get; set; } = false;
     
     public bool IsTrending { get; set; } = false;
+    
+    public bool IsActive { get; set; } = true;
+}
+
+public class CategoryOrderUpdateDto
+{
+    [Required]
+    public Guid Id { get; set; }
+    
+    [Required]
+    public int DisplayOrder { get; set; }
 }
 
 public class CategoryDto
