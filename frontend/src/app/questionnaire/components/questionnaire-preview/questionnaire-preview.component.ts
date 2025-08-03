@@ -2,7 +2,7 @@ import { Component, OnInit, Inject } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
-import { QuestionService } from '../../services/question.service';
+import { QuestionService } from '../../../core/services/question.service';
 import { UserQuestionResponseService } from '../../../core/services/user-question-response.service';
 import { FileUploadService } from '../../../core/services/file-upload.service';
 import { forkJoin, of } from 'rxjs';

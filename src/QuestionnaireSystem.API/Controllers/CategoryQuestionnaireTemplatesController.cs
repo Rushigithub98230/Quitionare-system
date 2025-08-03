@@ -158,13 +158,57 @@ public class CategoryQuestionnaireTemplatesController : ControllerBase
     [HttpPost("{questionnaireId}/questions")]
     public async Task<ActionResult<JsonModel>> AddQuestion(Guid questionnaireId, CreateCategoryQuestionDto questionDto)
     {
-        return await _questionnaireService.AddQuestionAsync(questionnaireId, questionDto);
+        if (!ModelState.IsValid)
+        {
+            var errors = ModelState.Values
+                .SelectMany(v => v.Errors)
+                .Select(e => e.ErrorMessage)
+                .ToList();
+            return BadRequest(new JsonModel
+            {
+                Success = false,
+                Message = $"Validation failed: {string.Join(", ", errors)}",
+                StatusCode = HttpStatusCodes.BadRequest
+            });
+        }
+        
+        var result = await _questionnaireService.AddQuestionAsync(questionnaireId, questionDto);
+        
+        // Handle validation errors from service
+        if (!result.Success && result.StatusCode == HttpStatusCodes.BadRequest)
+        {
+            return BadRequest(result);
+        }
+        
+        return result;
     }
 
     [HttpPut("{questionnaireId}/questions/{questionId}")]
     public async Task<ActionResult<JsonModel>> UpdateQuestion(Guid questionnaireId, Guid questionId, UpdateCategoryQuestionDto questionDto)
     {
-        return await _questionnaireService.UpdateQuestionAsync(questionnaireId, questionId, questionDto);
+        if (!ModelState.IsValid)
+        {
+            var errors = ModelState.Values
+                .SelectMany(v => v.Errors)
+                .Select(e => e.ErrorMessage)
+                .ToList();
+            return BadRequest(new JsonModel
+            {
+                Success = false,
+                Message = $"Validation failed: {string.Join(", ", errors)}",
+                StatusCode = HttpStatusCodes.BadRequest
+            });
+        }
+        
+        var result = await _questionnaireService.UpdateQuestionAsync(questionnaireId, questionId, questionDto);
+        
+        // Handle validation errors from service
+        if (!result.Success && result.StatusCode == HttpStatusCodes.BadRequest)
+        {
+            return BadRequest(result);
+        }
+        
+        return result;
     }
 
     [HttpDelete("{questionnaireId}/questions/{questionId}")]

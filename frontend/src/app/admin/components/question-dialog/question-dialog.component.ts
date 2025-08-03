@@ -35,9 +35,12 @@ export interface QuestionDialogData {
         <div class="form-row">
           <mat-form-field appearance="outline" class="full-width">
             <mat-label>Question Text</mat-label>
-            <textarea matInput formControlName="questionText" placeholder="Enter your question" rows="3"></textarea>
+            <textarea matInput formControlName="questionText" placeholder="Enter your question" rows="3" (input)="validateQuestionText()"></textarea>
             <mat-error *ngIf="questionForm.get('questionText')?.hasError('required')">
               Question text is required
+            </mat-error>
+            <mat-error *ngIf="questionForm.get('questionText')?.hasError('maxLength')">
+              Question text cannot exceed 1000 characters
             </mat-error>
           </mat-form-field>
         </div>
@@ -55,6 +58,9 @@ export interface QuestionDialogData {
             </mat-select>
             <mat-error *ngIf="questionForm.get('questionTypeId')?.hasError('required')">
               Question type is required
+            </mat-error>
+            <mat-error *ngIf="questionForm.get('questionTypeId')?.hasError('inactiveType')">
+              Only active question types can be used
             </mat-error>
           </mat-form-field>
         </div>
@@ -94,24 +100,36 @@ export interface QuestionDialogData {
           <div class="form-row">
             <mat-form-field appearance="outline">
               <mat-label>Minimum Length</mat-label>
-              <input matInput type="number" formControlName="minLength" placeholder="0">
+              <input matInput type="number" formControlName="minLength" placeholder="0" (input)="validateMinMaxLength()">
+              <mat-error *ngIf="questionForm.get('minLength')?.hasError('invalidRange')">
+                MinLength cannot be greater than MaxLength
+              </mat-error>
             </mat-form-field>
 
             <mat-form-field appearance="outline">
               <mat-label>Maximum Length</mat-label>
-              <input matInput type="number" formControlName="maxLength" placeholder="255">
+              <input matInput type="number" formControlName="maxLength" placeholder="255" (input)="validateMinMaxLength()">
+              <mat-error *ngIf="questionForm.get('maxLength')?.hasError('invalidRange')">
+                MinLength cannot be greater than MaxLength
+              </mat-error>
             </mat-form-field>
           </div>
 
           <div class="form-row">
             <mat-form-field appearance="outline">
               <mat-label>Minimum Value</mat-label>
-              <input matInput type="number" formControlName="minValue" placeholder="0">
+              <input matInput type="number" formControlName="minValue" placeholder="0" (input)="validateMinMaxValues()">
+              <mat-error *ngIf="questionForm.get('minValue')?.hasError('invalidRange')">
+                MinValue cannot be greater than MaxValue
+              </mat-error>
             </mat-form-field>
 
             <mat-form-field appearance="outline">
               <mat-label>Maximum Value</mat-label>
-              <input matInput type="number" formControlName="maxValue" placeholder="100">
+              <input matInput type="number" formControlName="maxValue" placeholder="100" (input)="validateMinMaxValues()">
+              <mat-error *ngIf="questionForm.get('maxValue')?.hasError('invalidRange')">
+                MinValue cannot be greater than MaxValue
+              </mat-error>
             </mat-form-field>
           </div>
         </div>
@@ -130,26 +148,46 @@ export interface QuestionDialogData {
             <div *ngFor="let option of optionsArray.controls; let i = index" [formGroupName]="i" class="option-row">
               <mat-form-field appearance="outline">
                 <mat-label>Option {{ i + 1 }}</mat-label>
-                <input matInput formControlName="optionText" placeholder="Enter option text">
+                <input matInput formControlName="optionText" placeholder="Enter option text" (input)="validateOptionTextLength()">
                 <mat-error *ngIf="option.get('optionText')?.hasError('required')">
                   Option text is required
+                </mat-error>
+                <mat-error *ngIf="option.get('optionText')?.hasError('maxLength')">
+                  Option text cannot exceed 500 characters
                 </mat-error>
               </mat-form-field>
 
               <mat-form-field appearance="outline">
                 <mat-label>Value</mat-label>
-                <input matInput formControlName="optionValue" placeholder="Option value">
+                <input matInput formControlName="optionValue" placeholder="Option value" (input)="validateOptionUniqueness()">
                 <mat-error *ngIf="option.get('optionValue')?.hasError('required')">
                   Option value is required
+                </mat-error>
+                <mat-error *ngIf="option.get('optionValue')?.hasError('duplicate')">
+                  Duplicate option values are not allowed
                 </mat-error>
               </mat-form-field>
 
               <mat-form-field appearance="outline">
                 <mat-label>Order</mat-label>
-                <input matInput type="number" formControlName="displayOrder" placeholder="{{ i }}">
+                <input matInput type="number" formControlName="displayOrder" placeholder="{{ i }}" (input)="validateOptionOrders()">
+                <mat-error *ngIf="option.get('displayOrder')?.hasError('duplicate')">
+                  Duplicate order number
+                </mat-error>
+                <mat-error *ngIf="option.get('displayOrder')?.hasError('invalidRange')">
+                  Order must be between 1 and {{ optionsArray.length }}
+                </mat-error>
+                <mat-error *ngIf="option.get('displayOrder')?.hasError('missing')">
+                  Order is required
+                </mat-error>
               </mat-form-field>
 
-              <mat-checkbox formControlName="isCorrect">Correct Answer</mat-checkbox>
+              <div class="checkbox-group">
+                <mat-checkbox formControlName="isCorrect" (change)="validateOptionUniqueness()">Correct Answer</mat-checkbox>
+                <mat-error *ngIf="option.get('isCorrect')?.hasError('multipleCorrect')" class="checkbox-error">
+                  Radio questions can only have one correct answer
+                </mat-error>
+              </div>
               <mat-checkbox formControlName="isActive">Active</mat-checkbox>
 
               <button type="button" mat-icon-button color="warn" (click)="removeOption(i)" [disabled]="optionsArray.length <= 1">
@@ -208,6 +246,18 @@ export interface QuestionDialogData {
       border: 1px solid #e0e0e0;
       border-radius: 4px;
       background-color: #fafafa;
+    }
+
+    .checkbox-group {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .checkbox-error {
+      color: #f44336;
+      font-size: 12px;
+      margin-top: 4px;
     }
     
     mat-form-field {
@@ -307,19 +357,27 @@ export class QuestionDialogComponent implements OnInit {
   }
 
   addOption(option?: QuestionOption): void {
+    // Calculate the next available display order
+    const existingOrders = this.optionsArray.controls.map(control => control.get('displayOrder')?.value || 0);
+    const nextOrder = existingOrders.length > 0 ? Math.max(...existingOrders) + 1 : 1;
+    
     const optionGroup = this.fb.group({
       optionText: [option?.optionText || '', [Validators.required]],
       optionValue: [option?.optionValue || '', [Validators.required]],
-      displayOrder: [option?.displayOrder || this.optionsArray.length],
+      displayOrder: [option?.displayOrder || nextOrder],
       isCorrect: [option?.isCorrect || false],
       isActive: [option?.isActive !== false]
     });
     this.optionsArray.push(optionGroup);
+    
+    // Add comprehensive validation
+    this.validateAll();
   }
 
   removeOption(index: number): void {
     if (this.optionsArray.length > 1) {
       this.optionsArray.removeAt(index);
+      this.validateAll();
     }
   }
 
@@ -328,18 +386,28 @@ export class QuestionDialogComponent implements OnInit {
     if (!questionTypeId || !this.data.questionTypes || this.data.questionTypes.length === 0) return false;
     
     const questionType = this.data.questionTypes.find(t => t.id === questionTypeId);
-    return questionType?.typeName?.toLowerCase().includes('radio') || 
-           questionType?.typeName?.toLowerCase().includes('checkbox') || 
-           questionType?.typeName?.toLowerCase().includes('select') ||
-           questionType?.typeName?.toLowerCase().includes('multiselect') || false;
+    if (!questionType) return false;
+    
+    const typeName = questionType.typeName?.toLowerCase() || '';
+    
+    // Only show options for question types that actually need options
+    return typeName.includes('radio') || 
+           typeName.includes('checkbox') || 
+           typeName.includes('select') ||
+           typeName.includes('multiselect') || 
+           typeName.includes('choice') || false;
   }
 
   onQuestionTypeChange(): void {
-    // Reset options when question type changes
+    // Clear options when switching to question types that don't need options
     if (!this.showOptionsSection()) {
       this.optionsArray.clear();
     } else if (this.optionsArray.length === 0) {
+      // Add a default option for question types that need options
       this.addOption();
+    } else {
+      // Validate existing options when question type changes
+      this.validateAll();
     }
   }
 
@@ -393,6 +461,204 @@ export class QuestionDialogComponent implements OnInit {
         this.dialogRef.close({ action: 'update', data: updateDto, options: formValue.options });
       }
     }
+  }
+
+  validateOptionUniqueness(): void {
+    const options = this.optionsArray.controls;
+    const optionValues = options.map(control => control.get('optionValue')?.value?.toLowerCase().trim()).filter(v => v);
+    const uniqueValues = [...new Set(optionValues)];
+    
+    if (optionValues.length !== uniqueValues.length) {
+      // Mark all options as invalid
+      options.forEach(control => {
+        const optionValueControl = control.get('optionValue');
+        if (optionValueControl) {
+          optionValueControl.setErrors({ duplicate: true });
+        }
+      });
+    } else {
+      // Clear errors
+      options.forEach(control => {
+        const optionValueControl = control.get('optionValue');
+        if (optionValueControl && optionValueControl.hasError('duplicate')) {
+          optionValueControl.setErrors(null);
+        }
+      });
+    }
+
+    // Validate radio question has only one correct answer
+    const questionTypeId = this.questionForm.get('questionTypeId')?.value;
+    if (questionTypeId) {
+      const questionType = this.data.questionTypes.find(t => t.id === questionTypeId);
+      if (questionType?.typeName?.toLowerCase() === 'radio') {
+        const correctOptions = options.filter(control => control.get('isCorrect')?.value).length;
+        if (correctOptions > 1) {
+          options.forEach(control => {
+            const isCorrectControl = control.get('isCorrect');
+            if (isCorrectControl && isCorrectControl.value) {
+              isCorrectControl.setErrors({ multipleCorrect: true });
+            }
+          });
+        } else {
+          options.forEach(control => {
+            const isCorrectControl = control.get('isCorrect');
+            if (isCorrectControl && isCorrectControl.hasError('multipleCorrect')) {
+              isCorrectControl.setErrors(null);
+            }
+          });
+        }
+      }
+    }
+  }
+
+  validateOptionOrders(): void {
+    const options = this.optionsArray.controls;
+    const totalOptions = options.length;
+    
+    if (totalOptions === 0) return;
+    
+    // Get all display orders
+    const displayOrders = options.map(control => control.get('displayOrder')?.value || 0);
+    const providedOrders = displayOrders.filter(order => order > 0);
+    const uniqueOrders = [...new Set(providedOrders)];
+    
+    // Check for duplicate orders
+    if (providedOrders.length !== uniqueOrders.length) {
+      const duplicateOrders = providedOrders.filter((order, index) => providedOrders.indexOf(order) !== index);
+      options.forEach(control => {
+        const displayOrderControl = control.get('displayOrder');
+        if (displayOrderControl && duplicateOrders.includes(displayOrderControl.value)) {
+          displayOrderControl.setErrors({ duplicate: true });
+        }
+      });
+      return;
+    }
+    
+    // Check if orders are within valid range (1 to totalOptions)
+    const invalidOrders = providedOrders.filter(order => order < 1 || order > totalOptions);
+    if (invalidOrders.length > 0) {
+      options.forEach(control => {
+        const displayOrderControl = control.get('displayOrder');
+        if (displayOrderControl && invalidOrders.includes(displayOrderControl.value)) {
+          displayOrderControl.setErrors({ invalidRange: true });
+        }
+      });
+      return;
+    }
+    
+    // Check if all orders from 1 to totalOptions are provided
+    const expectedOrders = Array.from({length: totalOptions}, (_, i) => i + 1);
+    const missingOrders = expectedOrders.filter(order => !providedOrders.includes(order));
+    if (missingOrders.length > 0) {
+      options.forEach(control => {
+        const displayOrderControl = control.get('displayOrder');
+        if (displayOrderControl && displayOrderControl.value === 0) {
+          displayOrderControl.setErrors({ missing: true });
+        }
+      });
+      return;
+    }
+    
+    // Clear all errors if validation passes
+    options.forEach(control => {
+      const displayOrderControl = control.get('displayOrder');
+      if (displayOrderControl) {
+        displayOrderControl.setErrors(null);
+      }
+    });
+  }
+
+  validateQuestionText(): void {
+    const questionTextControl = this.questionForm.get('questionText');
+    if (questionTextControl) {
+      const value = questionTextControl.value;
+      if (value && value.length > 1000) {
+        questionTextControl.setErrors({ maxLength: true });
+      } else if (questionTextControl.hasError('maxLength')) {
+        questionTextControl.setErrors(null);
+      }
+    }
+  }
+
+  validateMinMaxValues(): void {
+    const minValueControl = this.questionForm.get('minValue');
+    const maxValueControl = this.questionForm.get('maxValue');
+    
+    if (minValueControl && maxValueControl) {
+      const minValue = minValueControl.value;
+      const maxValue = maxValueControl.value;
+      
+      if (minValue !== null && maxValue !== null && minValue > maxValue) {
+        minValueControl.setErrors({ invalidRange: true });
+        maxValueControl.setErrors({ invalidRange: true });
+      } else {
+        if (minValueControl.hasError('invalidRange')) {
+          minValueControl.setErrors(null);
+        }
+        if (maxValueControl.hasError('invalidRange')) {
+          maxValueControl.setErrors(null);
+        }
+      }
+    }
+  }
+
+  validateMinMaxLength(): void {
+    const minLengthControl = this.questionForm.get('minLength');
+    const maxLengthControl = this.questionForm.get('maxLength');
+    
+    if (minLengthControl && maxLengthControl) {
+      const minLength = minLengthControl.value;
+      const maxLength = maxLengthControl.value;
+      
+      if (minLength !== null && maxLength !== null && minLength > maxLength) {
+        minLengthControl.setErrors({ invalidRange: true });
+        maxLengthControl.setErrors({ invalidRange: true });
+      } else {
+        if (minLengthControl.hasError('invalidRange')) {
+          minLengthControl.setErrors(null);
+        }
+        if (maxLengthControl.hasError('invalidRange')) {
+          maxLengthControl.setErrors(null);
+        }
+      }
+    }
+  }
+
+  validateOptionTextLength(): void {
+    const options = this.optionsArray.controls;
+    options.forEach(control => {
+      const optionTextControl = control.get('optionText');
+      if (optionTextControl) {
+        const value = optionTextControl.value;
+        if (value && value.length > 500) {
+          optionTextControl.setErrors({ maxLength: true });
+        } else if (optionTextControl.hasError('maxLength')) {
+          optionTextControl.setErrors(null);
+        }
+      }
+    });
+  }
+
+  validateQuestionType(): void {
+    const questionTypeId = this.questionForm.get('questionTypeId')?.value;
+    if (questionTypeId) {
+      const questionType = this.data.questionTypes.find(t => t.id === questionTypeId);
+      if (questionType && !questionType.isActive) {
+        this.questionForm.get('questionTypeId')?.setErrors({ inactiveType: true });
+      } else if (this.questionForm.get('questionTypeId')?.hasError('inactiveType')) {
+        this.questionForm.get('questionTypeId')?.setErrors(null);
+      }
+    }
+  }
+
+  validateAll(): void {
+    this.validateQuestionText();
+    this.validateMinMaxValues();
+    this.validateMinMaxLength();
+    this.validateOptionTextLength();
+    this.validateQuestionType();
+    this.validateOptionUniqueness();
+    this.validateOptionOrders();
   }
 
   onCancel(): void {

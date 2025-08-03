@@ -329,17 +329,24 @@ export class QuestionDialogComponent implements OnInit {
     if (!questionTypeId || !this.data.questionTypes || this.data.questionTypes.length === 0) return false;
     
     const questionType = this.data.questionTypes.find(t => t.id === questionTypeId);
-    return questionType?.typeName?.toLowerCase().includes('radio') || 
-           questionType?.typeName?.toLowerCase().includes('checkbox') || 
-           questionType?.typeName?.toLowerCase().includes('select') ||
-           questionType?.typeName?.toLowerCase().includes('multiselect') || false;
+    if (!questionType) return false;
+    
+    const typeName = questionType.typeName?.toLowerCase() || '';
+    
+    // Only show options for question types that actually need options
+    return typeName.includes('radio') || 
+           typeName.includes('checkbox') || 
+           typeName.includes('select') ||
+           typeName.includes('multiselect') || 
+           typeName.includes('choice') || false;
   }
 
   onQuestionTypeChange(): void {
-    // Reset options when question type changes
+    // Clear options when switching to question types that don't need options
     if (!this.showOptionsSection()) {
       this.optionsArray.clear();
     } else if (this.optionsArray.length === 0) {
+      // Add a default option for question types that need options
       this.addOption();
     }
   }

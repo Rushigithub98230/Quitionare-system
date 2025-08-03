@@ -34,19 +34,17 @@ import { PreviewResultsComponent } from './components/preview-results/preview-re
 import { QuestionDialogComponent } from './dialogs/question-dialog/question-dialog.component';
 import { QuestionnaireDialogComponent } from './dialogs/questionnaire-dialog/questionnaire-dialog.component';
 
-// Services
-import { QuestionService } from './services/question.service';
-import { QuestionnaireService } from './services/questionnaire.service';
-import { OrderService } from './services/order.service';
+// Services - Updated to use core services
+import { QuestionService } from '../core/services/question.service';
+import { OrderService } from '../core/services/order.service';
 
-// Models
-export * from './models/question.model';
-export * from './models/questionnaire.model';
+// Models - Removed since they were deleted
+// export * from './models/question.model';
+// export * from './models/questionnaire.model';
 
-// Services
-export { QuestionService } from './services/question.service';
-export { QuestionnaireService } from './services/questionnaire.service';
-export { OrderService } from './services/order.service';
+// Services - Updated exports
+export { QuestionService } from '../core/services/question.service';
+export { OrderService } from '../core/services/order.service';
 
 // Components
 export { QuestionListComponent } from './components/question-list/question-list.component';
@@ -107,7 +105,6 @@ export { QuestionnaireDialogComponent } from './dialogs/questionnaire-dialog/que
     
     // Services
     QuestionService,
-    QuestionnaireService,
     OrderService,
     
     // Models
@@ -115,7 +112,6 @@ export { QuestionnaireDialogComponent } from './dialogs/questionnaire-dialog/que
   ],
   providers: [
     QuestionService,
-    QuestionnaireService,
     OrderService
   ]
 })

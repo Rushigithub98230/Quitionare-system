@@ -36,14 +36,14 @@ export interface CategoryDialogData {
     <form [formGroup]="categoryForm" (ngSubmit)="onSubmit()">
       <mat-dialog-content>
         <div class="form-row">
-          <mat-form-field appearance="outline" class="full-width">
-            <mat-label>Category Name</mat-label>
+          <mat-form-field appearance="outline">
+            <mat-label>Name</mat-label>
             <input matInput formControlName="name" placeholder="Enter category name">
             <mat-error *ngIf="categoryForm.get('name')?.hasError('required')">
-              Category name is required
+              Name is required
             </mat-error>
             <mat-error *ngIf="categoryForm.get('name')?.hasError('maxlength')">
-              Category name must be less than 255 characters
+              Name must be less than 100 characters
             </mat-error>
           </mat-form-field>
         </div>
@@ -53,7 +53,7 @@ export interface CategoryDialogData {
             <mat-label>Description</mat-label>
             <textarea matInput formControlName="description" placeholder="Enter category description" rows="3"></textarea>
             <mat-error *ngIf="categoryForm.get('description')?.hasError('maxlength')">
-              Description must be less than 1000 characters
+              Description must be less than 500 characters
             </mat-error>
           </mat-form-field>
         </div>
@@ -64,6 +64,9 @@ export interface CategoryDialogData {
             <input matInput formControlName="color" placeholder="#007bff">
             <mat-error *ngIf="categoryForm.get('color')?.hasError('pattern')">
               Please enter a valid hex color
+            </mat-error>
+            <mat-error *ngIf="categoryForm.get('color')?.hasError('maxlength')">
+              Color must be less than 100 characters
             </mat-error>
           </mat-form-field>
         </div>
@@ -90,6 +93,9 @@ export interface CategoryDialogData {
           <mat-form-field appearance="outline" class="full-width">
             <mat-label>Consultation Description</mat-label>
             <textarea matInput formControlName="consultationDescription" placeholder="Enter consultation description" rows="2"></textarea>
+            <mat-error *ngIf="categoryForm.get('consultationDescription')?.hasError('maxlength')">
+              Consultation description must be less than 500 characters
+            </mat-error>
           </mat-form-field>
         </div>
 
@@ -97,6 +103,9 @@ export interface CategoryDialogData {
           <mat-form-field appearance="outline" class="full-width">
             <mat-label>Features</mat-label>
             <textarea matInput formControlName="features" placeholder="Enter features (comma separated)" rows="2"></textarea>
+            <mat-error *ngIf="categoryForm.get('features')?.hasError('maxlength')">
+              Features must be less than 1000 characters
+            </mat-error>
           </mat-form-field>
         </div>
 
@@ -104,6 +113,9 @@ export interface CategoryDialogData {
           <mat-form-field appearance="outline">
             <mat-label>Icon</mat-label>
             <input matInput formControlName="icon" placeholder="Enter icon name">
+            <mat-error *ngIf="categoryForm.get('icon')?.hasError('maxlength')">
+              Icon must be less than 100 characters
+            </mat-error>
           </mat-form-field>
         </div>
 
@@ -164,14 +176,14 @@ export class CategoryDialogComponent implements OnInit {
     @Inject(MAT_DIALOG_DATA) public data: CategoryDialogData
   ) {
     this.categoryForm = this.fb.group({
-      name: ['', [Validators.required, Validators.maxLength(255)]],
-      description: ['', [Validators.maxLength(1000)]],
-      color: ['#007bff', [Validators.pattern(/^#[0-9A-F]{6}$/i)]],
+      name: ['', [Validators.required, Validators.maxLength(100)]],
+      description: ['', [Validators.maxLength(500)]],
+      color: ['#007bff', [Validators.pattern(/^#[0-9A-F]{6}$/i), Validators.maxLength(100)]],
       basePrice: [0, [Validators.min(0)]],
       oneTimeConsultationDurationMinutes: [30, [Validators.min(1)]],
-      consultationDescription: [''],
-      features: [''],
-      icon: [''],
+      consultationDescription: ['', [Validators.maxLength(500)]],
+      features: ['', [Validators.maxLength(1000)]],
+      icon: ['', [Validators.maxLength(100)]],
       isActive: [true],
       allowsFollowUpMessaging: [false],
       allowsMedicationDelivery: [false],

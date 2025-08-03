@@ -55,7 +55,7 @@ export interface QuestionnaireDialogData {
             <mat-label>Description</mat-label>
             <textarea matInput formControlName="description" placeholder="Enter questionnaire description" rows="3"></textarea>
             <mat-error *ngIf="questionnaireForm.get('description')?.hasError('maxlength')">
-              Description must be less than 1000 characters
+              Description must be less than 500 characters
             </mat-error>
           </mat-form-field>
         </div>
@@ -145,7 +145,7 @@ export class QuestionnaireDialogComponent implements OnInit {
   ) {
     this.questionnaireForm = this.fb.group({
       title: ['', [Validators.required, Validators.maxLength(255)]],
-      description: ['', [Validators.maxLength(1000)]],
+      description: ['', [Validators.maxLength(500)]],
       categoryId: ['', [Validators.required]],
       displayOrder: [0, [Validators.required, Validators.min(0)]],
       version: [1, [Validators.min(1)]],
@@ -165,6 +165,24 @@ export class QuestionnaireDialogComponent implements OnInit {
         isActive: this.data.questionnaire.isActive,
         isMandatory: this.data.questionnaire.isMandatory
       });
+    }
+
+    // Add custom validation for category uniqueness
+    this.questionnaireForm.get('categoryId')?.valueChanges.subscribe(categoryId => {
+      if (categoryId && this.data.mode === 'create') {
+        this.validateCategoryUniqueness(categoryId);
+      }
+    });
+  }
+
+  validateCategoryUniqueness(categoryId: string): void {
+    // This validation will be handled by the backend, but we can add frontend validation
+    // to provide immediate feedback if we have access to existing questionnaires
+    const categoryControl = this.questionnaireForm.get('categoryId');
+    if (categoryControl) {
+      // For now, we'll rely on backend validation
+      // In a real application, you might want to fetch existing questionnaires
+      // and validate here as well
     }
   }
 

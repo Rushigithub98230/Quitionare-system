@@ -1,14 +1,13 @@
 // Questionnaire Module - Complete Questionnaire System
 // This module contains all questionnaire-related functionality for easy extraction and reuse
 
-// Models
-export * from './models/question.model';
-export * from './models/questionnaire.model';
+// Models - Removed since they were deleted
+// export * from './models/question.model';
+// export * from './models/questionnaire.model';
 
-// Services
-export { QuestionService } from './services/question.service';
-export { QuestionnaireService } from './services/questionnaire.service';
-export { OrderService } from './services/order.service';
+// Services - Updated to use core services
+export { QuestionService } from '../core/services/question.service';
+export { OrderService } from '../core/services/order.service';
 
 // Components
 export { QuestionListComponent } from './components/question-list/question-list.component';
