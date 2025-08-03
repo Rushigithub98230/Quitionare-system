@@ -109,4 +109,13 @@ public class UserQuestionResponseRepository : IUserQuestionResponseRepository
         await _context.SaveChangesAsync();
         return responses;
     }
+
+    public async Task<List<QuestionResponse>> GetByResponseIdAsync(Guid responseId)
+    {
+        return await _context.QuestionResponses
+            .Include(qr => qr.OptionResponses)
+            .ThenInclude(qor => qor.Option)
+            .Where(qr => qr.ResponseId == responseId)
+            .ToListAsync();
+    }
 } 

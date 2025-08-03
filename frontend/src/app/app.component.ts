@@ -5,8 +5,8 @@ import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
-import { AuthService } from './core/services/auth.service';
-import { User } from './core/models/user.model';
+import { AuthService } from './category-questionnaire/services/auth.service';
+import { User } from './category-questionnaire/models/user.model';
 
 @Component({
   selector: 'app-root',

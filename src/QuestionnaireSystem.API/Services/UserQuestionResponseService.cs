@@ -11,6 +11,7 @@ public class UserQuestionResponseService : IUserQuestionResponseService
     private readonly ICategoryQuestionnaireTemplateRepository _questionnaireRepository;
     private readonly ICategoryQuestionRepository _questionRepository;
     private readonly IQuestionTypeRepository _questionTypeRepository;
+    private readonly ICategoryRepository _categoryRepository;
     private readonly IMapper _mapper;
 
     public UserQuestionResponseService(
@@ -18,12 +19,14 @@ public class UserQuestionResponseService : IUserQuestionResponseService
         ICategoryQuestionnaireTemplateRepository questionnaireRepository,
         ICategoryQuestionRepository questionRepository,
         IQuestionTypeRepository questionTypeRepository,
+        ICategoryRepository categoryRepository,
         IMapper mapper)
     {
         _responseRepository = responseRepository;
         _questionnaireRepository = questionnaireRepository;
         _questionRepository = questionRepository;
         _questionTypeRepository = questionTypeRepository;
+        _categoryRepository = categoryRepository;
         _mapper = mapper;
     }
 
@@ -243,7 +246,18 @@ public class UserQuestionResponseService : IUserQuestionResponseService
         {
             // For admin, get all responses from all questionnaires
             var responses = await _responseRepository.GetAllAsync();
-            var responseDtos = _mapper.Map<List<ResponseSummaryDto>>(responses);
+            var responseDtos = new List<ResponseSummaryDto>();
+
+            foreach (var response in responses)
+            {
+                var responseDto = _mapper.Map<ResponseSummaryDto>(response);
+                
+                // Get question responses for this response and count answered questions
+                var questionResponses = await _responseRepository.GetByResponseIdAsync(response.Id);
+                responseDto.QuestionCount = questionResponses.Count(qr => IsQuestionAnswered(qr));
+                
+                responseDtos.Add(responseDto);
+            }
 
             return new JsonModel
             {
@@ -511,5 +525,230 @@ public class UserQuestionResponseService : IUserQuestionResponseService
     private bool IsValidNumber(string number)
     {
         return decimal.TryParse(number, out _);
+    }
+
+    private bool IsQuestionAnswered(QuestionResponse questionResponse)
+    {
+        // Check if any response field has a value
+        return !string.IsNullOrEmpty(questionResponse.TextResponse) ||
+               questionResponse.NumberResponse.HasValue ||
+               questionResponse.DateResponse.HasValue ||
+               questionResponse.DatetimeResponse.HasValue ||
+               questionResponse.BooleanResponse.HasValue ||
+               !string.IsNullOrEmpty(questionResponse.FilePath) ||
+               !string.IsNullOrEmpty(questionResponse.JsonResponse) ||
+               (questionResponse.OptionResponses != null && questionResponse.OptionResponses.Count > 0);
+    }
+
+    // Analytics Methods
+    public async Task<JsonModel> GetAnalyticsSummaryAsync(TokenModel tokenModel)
+    {
+        try
+        {
+            var trends = await GetAnalyticsTrendsAsync(tokenModel);
+            var categories = await GetCategoryAnalyticsAsync(tokenModel);
+            var questionnaires = await GetQuestionnaireAnalyticsAsync(tokenModel);
+
+            if (!trends.Success || !categories.Success || !questionnaires.Success)
+            {
+                return new JsonModel
+                {
+                    Success = false,
+                    Message = "Error calculating analytics",
+                    StatusCode = HttpStatusCodes.InternalServerError
+                };
+            }
+
+            var summary = new AnalyticsSummaryDto
+            {
+                Trends = (AnalyticsTrendsDto)trends.Data,
+                TopCategories = ((List<CategoryAnalyticsDto>)categories.Data).Take(5).ToList(),
+                TopQuestionnaires = ((List<QuestionnaireAnalyticsDto>)questionnaires.Data).Take(5).ToList()
+            };
+
+            return new JsonModel
+            {
+                Success = true,
+                Data = summary,
+                Message = "Analytics summary retrieved successfully",
+                StatusCode = HttpStatusCodes.OK
+            };
+        }
+        catch (Exception ex)
+        {
+            return new JsonModel
+            {
+                Success = false,
+                Message = $"Error retrieving analytics summary: {ex.Message}",
+                StatusCode = HttpStatusCodes.InternalServerError
+            };
+        }
+    }
+
+    public async Task<JsonModel> GetAnalyticsTrendsAsync(TokenModel tokenModel)
+    {
+        try
+        {
+            var allResponses = await _responseRepository.GetAllAsync();
+            var now = DateTime.UtcNow;
+            var today = new DateTime(now.Year, now.Month, now.Day);
+            var weekStart = today.AddDays(-(int)today.DayOfWeek);
+            var monthStart = new DateTime(now.Year, now.Month, 1);
+
+            var trends = new AnalyticsTrendsDto
+            {
+                Total = allResponses.Count,
+                Today = allResponses.Count(r => r.CompletedAt.HasValue && r.CompletedAt.Value >= today),
+                ThisWeek = allResponses.Count(r => r.CompletedAt.HasValue && r.CompletedAt.Value >= weekStart),
+                ThisMonth = allResponses.Count(r => r.CompletedAt.HasValue && r.CompletedAt.Value >= monthStart)
+            };
+
+            return new JsonModel
+            {
+                Success = true,
+                Data = trends,
+                Message = "Analytics trends retrieved successfully",
+                StatusCode = HttpStatusCodes.OK
+            };
+        }
+        catch (Exception ex)
+        {
+            return new JsonModel
+            {
+                Success = false,
+                Message = $"Error retrieving analytics trends: {ex.Message}",
+                StatusCode = HttpStatusCodes.InternalServerError
+            };
+        }
+    }
+
+    public async Task<JsonModel> GetCategoryAnalyticsAsync(TokenModel tokenModel)
+    {
+        try
+        {
+            var allResponses = await _responseRepository.GetAllAsync();
+            var allQuestionnaires = await _questionnaireRepository.GetAllAsync();
+            var allCategories = await _categoryRepository.GetAllAsync();
+
+            var categoryStats = new Dictionary<Guid, CategoryAnalyticsDto>();
+
+            foreach (var response in allResponses)
+            {
+                var questionnaire = allQuestionnaires.FirstOrDefault(q => q.Id == response.QuestionnaireId);
+                if (questionnaire == null) continue;
+
+                var category = allCategories.FirstOrDefault(c => c.Id == questionnaire.CategoryId);
+                if (category == null) continue;
+
+                if (!categoryStats.ContainsKey(category.Id))
+                {
+                    categoryStats[category.Id] = new CategoryAnalyticsDto
+                    {
+                        CategoryId = category.Id,
+                        CategoryName = category.Name,
+                        ResponseCount = 0,
+                        QuestionnaireCount = 0,
+                        TotalQuestionsAnswered = 0,
+                        Questionnaires = new List<string>()
+                    };
+                }
+
+                var stats = categoryStats[category.Id];
+                stats.ResponseCount++;
+
+                // Count questions answered for this response
+                var questionResponses = await _responseRepository.GetByResponseIdAsync(response.Id);
+                stats.TotalQuestionsAnswered += questionResponses.Count(qr => IsQuestionAnswered(qr));
+
+                // Add questionnaire to list if not already present
+                if (!stats.Questionnaires.Contains(questionnaire.Title))
+                {
+                    stats.Questionnaires.Add(questionnaire.Title);
+                    stats.QuestionnaireCount++;
+                }
+            }
+
+            var result = categoryStats.Values
+                .OrderByDescending(c => c.ResponseCount)
+                .ToList();
+
+            return new JsonModel
+            {
+                Success = true,
+                Data = result,
+                Message = "Category analytics retrieved successfully",
+                StatusCode = HttpStatusCodes.OK
+            };
+        }
+        catch (Exception ex)
+        {
+            return new JsonModel
+            {
+                Success = false,
+                Message = $"Error retrieving category analytics: {ex.Message}",
+                StatusCode = HttpStatusCodes.InternalServerError
+            };
+        }
+    }
+
+    public async Task<JsonModel> GetQuestionnaireAnalyticsAsync(TokenModel tokenModel)
+    {
+        try
+        {
+            var allResponses = await _responseRepository.GetAllAsync();
+            var allQuestionnaires = await _questionnaireRepository.GetAllAsync();
+            var allCategories = await _categoryRepository.GetAllAsync();
+
+            var questionnaireStats = new Dictionary<Guid, QuestionnaireAnalyticsDto>();
+
+            foreach (var response in allResponses)
+            {
+                var questionnaire = allQuestionnaires.FirstOrDefault(q => q.Id == response.QuestionnaireId);
+                if (questionnaire == null) continue;
+
+                var category = allCategories.FirstOrDefault(c => c.Id == questionnaire.CategoryId);
+                if (category == null) continue;
+
+                if (!questionnaireStats.ContainsKey(questionnaire.Id))
+                {
+                    questionnaireStats[questionnaire.Id] = new QuestionnaireAnalyticsDto
+                    {
+                        QuestionnaireId = questionnaire.Id,
+                        QuestionnaireName = questionnaire.Title,
+                        CategoryName = category.Name,
+                        ResponseCount = 0,
+                        TotalQuestionsAnswered = 0
+                    };
+                }
+
+                var stats = questionnaireStats[questionnaire.Id];
+                stats.ResponseCount++;
+
+                // Count questions answered for this response
+                var questionResponses = await _responseRepository.GetByResponseIdAsync(response.Id);
+                stats.TotalQuestionsAnswered += questionResponses.Count(qr => IsQuestionAnswered(qr));
+            }
+
+            var result = questionnaireStats.Values
+                .OrderByDescending(q => q.ResponseCount)
+                .ToList();
+
+            return new JsonModel
+            {
+                Success = true,
+                Data = result,
+                Message = "Questionnaire analytics retrieved successfully",
+                StatusCode = HttpStatusCodes.OK
+            };
+        }
+        catch (Exception ex)
+        {
+            return new JsonModel
+            {
+                Success = false,
+                Message = $"Error retrieving questionnaire analytics: {ex.Message}",
+                StatusCode = HttpStatusCodes.InternalServerError
+            };
+        }
     }
 } 

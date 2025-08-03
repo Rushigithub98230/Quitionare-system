@@ -94,4 +94,49 @@ public class ResponsesController : ControllerBase
         });
         return Ok(result);
     }
+
+    // Analytics Endpoints
+    [HttpGet("analytics/summary")]
+    public async Task<ActionResult<JsonModel>> GetAnalyticsSummary()
+    {
+        var result = await _responseService.GetAnalyticsSummaryAsync(new TokenModel { 
+            UserId = AdminConstants.AdminUserId,
+            Role = AdminConstants.AdminRole,
+            Category = "Default"
+        });
+        return Ok(result);
+    }
+
+    [HttpGet("analytics/trends")]
+    public async Task<ActionResult<JsonModel>> GetAnalyticsTrends()
+    {
+        var result = await _responseService.GetAnalyticsTrendsAsync(new TokenModel { 
+            UserId = AdminConstants.AdminUserId,
+            Role = AdminConstants.AdminRole,
+            Category = "Default"
+        });
+        return Ok(result);
+    }
+
+    [HttpGet("analytics/categories")]
+    public async Task<ActionResult<JsonModel>> GetCategoryAnalytics()
+    {
+        var result = await _responseService.GetCategoryAnalyticsAsync(new TokenModel { 
+            UserId = AdminConstants.AdminUserId,
+            Role = AdminConstants.AdminRole,
+            Category = "Default"
+        });
+        return Ok(result);
+    }
+
+    [HttpGet("analytics/questionnaires")]
+    public async Task<ActionResult<JsonModel>> GetQuestionnaireAnalytics()
+    {
+        var result = await _responseService.GetQuestionnaireAnalyticsAsync(new TokenModel { 
+            UserId = AdminConstants.AdminUserId,
+            Role = AdminConstants.AdminRole,
+            Category = "Default"
+        });
+        return Ok(result);
+    }
 } 

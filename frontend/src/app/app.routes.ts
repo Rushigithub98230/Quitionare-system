@@ -1,6 +1,6 @@
 import { Routes } from '@angular/router';
 import { inject } from '@angular/core';
-import { AuthService } from './core/services/auth.service';
+import { AuthService } from './category-questionnaire/services/auth.service';
 import { Router } from '@angular/router';
 
 const authGuard = () => {
@@ -30,20 +30,20 @@ const adminGuard = () => {
 export const routes: Routes = [
   {
     path: 'login',
-    loadComponent: () => import('./shared/components/login/login.component').then(m => m.LoginComponent)
+    loadComponent: () => import('./category-questionnaire/components/login/login.component').then(m => m.LoginComponent)
   },
   {
     path: 'register',
-    loadComponent: () => import('./shared/components/register/register.component').then(m => m.RegisterComponent)
+    loadComponent: () => import('./category-questionnaire/components/register/register.component').then(m => m.RegisterComponent)
   },
   {
     path: 'admin',
-    loadComponent: () => import('./admin/components/admin-dashboard.component').then(m => m.AdminDashboardComponent),
+    loadComponent: () => import('./category-questionnaire/components/category-questionnaire.component').then(m => m.CategoryQuestionnaireComponent),
     canActivate: [adminGuard]
   },
   {
     path: 'profile',
-    loadComponent: () => import('./shared/components/profile/profile.component').then(m => m.ProfileComponent),
+    loadComponent: () => import('./category-questionnaire/components/profile/profile.component').then(m => m.ProfileComponent),
     canActivate: [authGuard]
   },
   {

@@ -14,4 +14,5 @@ public interface IUserQuestionResponseRepository
     void AddOptionResponses(List<QuestionOptionResponse> optionResponses);
     Task SaveChangesAsync();
     Task<List<QuestionResponse>> AddQuestionResponsesAsync(List<QuestionResponse> responses);
+    Task<List<QuestionResponse>> GetByResponseIdAsync(Guid responseId);
 } 

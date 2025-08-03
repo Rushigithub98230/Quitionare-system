@@ -22,6 +22,7 @@ public class ResponseSummaryDto
     public bool IsDraft { get; set; }
     public int? TimeTaken { get; set; }
     public DateTime CreatedAt { get; set; }
+    public int QuestionCount { get; set; }
 }
 
 public class ResponseDetailDto : ResponseSummaryDto
