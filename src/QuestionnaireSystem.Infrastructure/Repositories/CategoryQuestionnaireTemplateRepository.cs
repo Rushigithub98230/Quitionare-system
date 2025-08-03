@@ -160,6 +160,19 @@ public class CategoryQuestionnaireTemplateRepository : ICategoryQuestionnaireTem
             .AnyAsync(r => r.QuestionnaireId == questionnaireId);
     }
 
+    public async Task<bool> TitleExistsAsync(string title, Guid? excludeId = null)
+    {
+        var query = _context.CategoryQuestionnaireTemplates
+            .Where(q => q.Title == title && q.DeletedAt == null);
+        
+        if (excludeId.HasValue)
+        {
+            query = query.Where(q => q.Id != excludeId.Value);
+        }
+        
+        return await query.AnyAsync();
+    }
+
     public async Task<IEnumerable<CategoryQuestionnaireTemplateSummaryDto>> GetSummaryAsync()
     {
         return await _context.CategoryQuestionnaireTemplates

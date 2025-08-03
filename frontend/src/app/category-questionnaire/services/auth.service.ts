@@ -1,6 +1,5 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
 import { ApiService } from './api.service';
 import { User, LoginDto, RegisterDto, AuthResponseDto } from '../models/user.model';
 import { ApiResponse } from '../models/api-response.model';
@@ -98,29 +97,16 @@ export class AuthService {
     return true;
   }
 
-  refreshToken(): Observable<AuthResponseDto> {
+  refreshToken(): Observable<ApiResponse<AuthResponseDto>> {
     const refreshToken = localStorage.getItem('refreshToken');
     if (!refreshToken) {
       throw new Error('No refresh token available');
     }
 
-    return this.apiService.post<AuthResponseDto>('/auth/refresh', { refreshToken }).pipe(
-      map(response => {
-        if (response.success && response.data) {
-          localStorage.setItem('token', response.data.token);
-          localStorage.setItem('refreshToken', response.data.refreshToken);
-          localStorage.setItem('user', JSON.stringify(response.data.user));
-          this.currentUserSubject.next(response.data.user);
-          return response.data;
-        }
-        throw new Error(response.message || 'Token refresh failed');
-      })
-    );
+    return this.apiService.post<AuthResponseDto>('/auth/refresh', { refreshToken });
   }
 
-  validateToken(): Observable<boolean> {
-    return this.apiService.post<ApiResponse>('/auth/validate', {}).pipe(
-      map(response => response.success)
-    );
+  validateToken(): Observable<ApiResponse<any>> {
+    return this.apiService.post<any>('/auth/validate', {});
   }
 } 

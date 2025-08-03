@@ -67,9 +67,9 @@
                   <mat-icon>edit</mat-icon>
                   Edit
                 </button>
-                <button mat-button color="warn" (click)="deleteCategory(category)">
-                  <mat-icon>delete</mat-icon>
-                  Delete
+                <button mat-button color="warn" (click)="deactivateCategory(category)">
+                  <mat-icon>inactive</mat-icon>
+                  Deactivate
                 </button>
               </mat-card-actions>
             </mat-card>
@@ -211,6 +211,68 @@
                 <button mat-raised-button color="primary" (click)="restoreCategory(category)">
                   <mat-icon>restore</mat-icon>
                   Restore
+                </button>
+                <button mat-button color="accent" (click)="viewCategoryDetails(category)">
+                  <mat-icon>visibility</mat-icon>
+                  View Details
+                </button>
+              </mat-card-actions>
+            </mat-card>
+          </div>
+        </div>
+      </div>
+    </mat-tab>
+
+    <!-- Deactivated Categories Tab -->
+    <mat-tab label="Deactivated Categories">
+      <div class="tab-content">
+        <div class="actions-bar">
+          <button mat-raised-button color="primary" (click)="loadDeactivatedCategories()">
+            <mat-icon>refresh</mat-icon>
+            Refresh
+          </button>
+        </div>
+
+        <div class="content-area">
+          <div *ngIf="loadingDeactivated" class="loading">
+            <mat-spinner></mat-spinner>
+            <p>Loading deactivated categories...</p>
+          </div>
+
+          <div *ngIf="errorDeactivated" class="error">
+            <p>{{ errorDeactivated }}</p>
+          </div>
+
+          <div *ngIf="!loadingDeactivated && !errorDeactivated" class="deactivated-categories-grid">
+            <div *ngIf="deactivatedCategories.length === 0" class="no-data">
+              <mat-icon>inactive</mat-icon>
+              <p>No deactivated categories found</p>
+            </div>
+
+            <mat-card *ngFor="let category of deactivatedCategories" class="deactivated-category-card">
+              <mat-card-header>
+                <mat-card-title>{{ category.name }}</mat-card-title>
+                <mat-card-subtitle>{{ category.description }}</mat-card-subtitle>
+                <div class="deactivated-badge">
+                  <mat-chip color="accent" selected>Deactivated</mat-chip>
+                </div>
+              </mat-card-header>
+              
+              <mat-card-content>
+                <p><strong>Deactivated At:</strong> {{ category.updatedAt | date:'medium' }}</p>
+                <p><strong>Display Order:</strong> {{ category.displayOrder }}</p>
+                <p><strong>Questionnaires:</strong> {{ getCategoryQuestionnaireCount(category.id) }}</p>
+                <p><strong>Status:</strong> {{ category.isActive ? 'Active' : 'Inactive' }}</p>
+              </mat-card-content>
+              
+              <mat-card-actions>
+                <button mat-raised-button color="primary" (click)="reactivateCategory(category)">
+                  <mat-icon>restore</mat-icon>
+                  Reactivate
+                </button>
+                <button mat-button color="warn" (click)="deleteCategory(category)">
+                  <mat-icon>delete_forever</mat-icon>
+                  Permanently Delete
                 </button>
                 <button mat-button color="accent" (click)="viewCategoryDetails(category)">
                   <mat-icon>visibility</mat-icon>

@@ -17,6 +17,7 @@ public interface ICategoryQuestionnaireTemplateService
     Task<JsonModel> DeleteAsync(Guid id);
     Task<JsonModel> ExistsAsync(Guid id);
     Task<JsonModel> GetCountByCategoryIdAsync(Guid categoryId);
+    Task<JsonModel> CheckTitleExistsAsync(string title);
     Task<JsonModel> HasResponsesAsync(Guid questionnaireId);
     
     // Question management methods

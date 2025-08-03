@@ -1,9 +1,8 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, BehaviorSubject } from 'rxjs';
-import { map, tap } from 'rxjs/operators';
-import { environment } from '../../environments/environment';
+import { ApiService } from './api.service';
 import { Response, ResponseAnalytics, ResponseFilter, ResponseExportOptions } from '../models/response.model';
+import { ApiResponse } from '../models/api-response.model';
 
 export interface AnalyticsTrends {
   total: number;
@@ -70,145 +69,122 @@ export interface FilteredAnalytics {
   summary: AnalyticsSummary;
 }
 
-export interface ApiResponse<T> {
-  success: boolean;
-  data: T;
-  message: string;
-  statusCode: number;
-}
-
 @Injectable({
   providedIn: 'root'
 })
 export class AnalyticsService {
-  private apiUrl = `${environment.apiUrl}/responses`;
   private analyticsCache = new BehaviorSubject<AnalyticsSummary | null>(null);
   private lastFetchTime = 0;
   private readonly CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 
-  constructor(private http: HttpClient) {}
+  constructor(private apiService: ApiService) {}
 
   // Get cached analytics or fetch from server
-  getAnalyticsSummary(forceRefresh = false): Observable<AnalyticsSummary> {
+  getAnalyticsSummary(forceRefresh = false): Observable<ApiResponse<AnalyticsSummary>> {
     const now = Date.now();
     const cached = this.analyticsCache.value;
     
     if (!forceRefresh && cached && (now - this.lastFetchTime) < this.CACHE_DURATION) {
       return new Observable(observer => {
-        observer.next(cached);
+        observer.next({ success: true, data: cached, message: 'Cached data', statusCode: 200 });
         observer.complete();
       });
     }
 
-    return this.http.get<ApiResponse<AnalyticsSummary>>(`${this.apiUrl}/analytics/summary`)
-      .pipe(
-        map(response => response.data),
-        tap(data => {
-          this.analyticsCache.next(data);
-          this.lastFetchTime = now;
-        })
-      );
+    return this.apiService.get<AnalyticsSummary>('/responses/analytics/summary');
   }
 
-  getAnalyticsTrends(): Observable<AnalyticsTrends> {
-    return this.http.get<ApiResponse<AnalyticsTrends>>(`${this.apiUrl}/analytics/trends`)
-      .pipe(map(response => response.data));
+  getAnalyticsTrends(): Observable<ApiResponse<AnalyticsTrends>> {
+    return this.apiService.get<AnalyticsTrends>('/responses/analytics/trends');
   }
 
-  getCategoryAnalytics(): Observable<CategoryAnalytics[]> {
-    return this.http.get<ApiResponse<CategoryAnalytics[]>>(`${this.apiUrl}/analytics/categories`)
-      .pipe(map(response => response.data));
+  getCategoryAnalytics(): Observable<ApiResponse<CategoryAnalytics[]>> {
+    return this.apiService.get<CategoryAnalytics[]>('/responses/analytics/categories');
   }
 
-  getQuestionnaireAnalytics(): Observable<QuestionnaireAnalytics[]> {
-    return this.http.get<ApiResponse<QuestionnaireAnalytics[]>>(`${this.apiUrl}/analytics/questionnaires`)
-      .pipe(map(response => response.data));
+  getQuestionnaireAnalytics(): Observable<ApiResponse<QuestionnaireAnalytics[]>> {
+    return this.apiService.get<QuestionnaireAnalytics[]>('/responses/analytics/questionnaires');
   }
 
   // Enhanced analytics with filtering
-  getFilteredAnalytics(filter: ResponseFilter): Observable<FilteredAnalytics> {
-    let params = new HttpParams();
+  getFilteredAnalytics(filter: ResponseFilter): Observable<ApiResponse<FilteredAnalytics>> {
+    let params: any = {};
     
     if (filter.categoryId) {
-      params = params.set('categoryId', filter.categoryId);
+      params.categoryId = filter.categoryId;
     }
     if (filter.questionnaireId) {
-      params = params.set('questionnaireId', filter.questionnaireId);
+      params.questionnaireId = filter.questionnaireId;
     }
     if (filter.dateRange) {
-      params = params.set('dateRange', filter.dateRange);
+      params.dateRange = filter.dateRange;
     }
     if (filter.completionStatus) {
-      params = params.set('completionStatus', filter.completionStatus);
+      params.completionStatus = filter.completionStatus;
     }
     if (filter.userId) {
-      params = params.set('userId', filter.userId);
+      params.userId = filter.userId;
     }
     if (filter.startDate) {
-      params = params.set('startDate', filter.startDate);
+      params.startDate = filter.startDate;
     }
     if (filter.endDate) {
-      params = params.set('endDate', filter.endDate);
+      params.endDate = filter.endDate;
     }
 
-    return this.http.get<ApiResponse<FilteredAnalytics>>(`${this.apiUrl}/analytics/filtered`, { params })
-      .pipe(map(response => response.data));
+    return this.apiService.get<FilteredAnalytics>('/responses/analytics/filtered', params);
   }
 
   // Get analytics for specific date range
-  getDateRangeAnalytics(startDate: string, endDate: string): Observable<DateRangeAnalytics> {
-    const params = new HttpParams()
-      .set('startDate', startDate)
-      .set('endDate', endDate);
+  getDateRangeAnalytics(startDate: string, endDate: string): Observable<ApiResponse<DateRangeAnalytics>> {
+    const params = {
+      startDate: startDate,
+      endDate: endDate
+    };
 
-    return this.http.get<ApiResponse<DateRangeAnalytics>>(`${this.apiUrl}/analytics/date-range`, { params })
-      .pipe(map(response => response.data));
+    return this.apiService.get<DateRangeAnalytics>('/responses/analytics/date-range', params);
   }
 
   // Get detailed response analytics
-  getResponseAnalytics(responseId: string): Observable<ResponseAnalytics> {
-    return this.http.get<ApiResponse<ResponseAnalytics>>(`${this.apiUrl}/analytics/response/${responseId}`)
-      .pipe(map(response => response.data));
+  getResponseAnalytics(responseId: string): Observable<ApiResponse<ResponseAnalytics>> {
+    return this.apiService.get<ResponseAnalytics>(`/responses/analytics/response/${responseId}`);
   }
 
   // Get real-time analytics
-  getRealTimeAnalytics(): Observable<AnalyticsSummary> {
-    return this.http.get<ApiResponse<AnalyticsSummary>>(`${this.apiUrl}/analytics/realtime`)
-      .pipe(map(response => response.data));
+  getRealTimeAnalytics(): Observable<ApiResponse<AnalyticsSummary>> {
+    return this.apiService.get<AnalyticsSummary>('/responses/analytics/realtime');
   }
 
   // Export analytics data
   exportAnalytics(options: ResponseExportOptions): Observable<Blob> {
-    return this.http.post(`${this.apiUrl}/analytics/export`, options, { responseType: 'blob' });
+    return this.apiService.getBlob('/responses/analytics/export', options);
   }
 
   // Get performance metrics
-  getPerformanceMetrics(): Observable<{
+  getPerformanceMetrics(): Observable<ApiResponse<{
     averageResponseTime: number;
     completionRate: number;
     userSatisfaction: number;
     topPerformingCategories: CategoryAnalytics[];
     topPerformingQuestionnaires: QuestionnaireAnalytics[];
-  }> {
-    return this.http.get<ApiResponse<any>>(`${this.apiUrl}/analytics/performance`)
-      .pipe(map(response => response.data));
+  }>> {
+    return this.apiService.get<any>('/responses/analytics/performance');
   }
 
   // Get engagement analytics
-  getEngagementAnalytics(): Observable<{
+  getEngagementAnalytics(): Observable<ApiResponse<{
     dailyActiveUsers: number;
     weeklyActiveUsers: number;
     monthlyActiveUsers: number;
     averageSessionDuration: number;
     bounceRate: number;
     retentionRate: number;
-  }> {
-    return this.http.get<ApiResponse<any>>(`${this.apiUrl}/analytics/engagement`)
-      .pipe(map(response => response.data));
+  }>> {
+    return this.apiService.get<any>('/responses/analytics/engagement');
   }
 
   // Get comparative analytics
-  getComparativeAnalytics(period1: string, period2: string): Observable<{
+  getComparativeAnalytics(period1: string, period2: string): Observable<ApiResponse<{
     period1: AnalyticsSummary;
     period2: AnalyticsSummary;
     comparison: {
@@ -218,25 +194,24 @@ export class AnalyticsService {
       topCategoriesChange: CategoryAnalytics[];
       topQuestionnairesChange: QuestionnaireAnalytics[];
     };
-  }> {
-    const params = new HttpParams()
-      .set('period1', period1)
-      .set('period2', period2);
+  }>> {
+    const params = {
+      period1: period1,
+      period2: period2
+    };
 
-    return this.http.get<ApiResponse<any>>(`${this.apiUrl}/analytics/comparative`, { params })
-      .pipe(map(response => response.data));
+    return this.apiService.get<any>('/responses/analytics/comparative', params);
   }
 
   // Get predictive analytics
-  getPredictiveAnalytics(): Observable<{
+  getPredictiveAnalytics(): Observable<ApiResponse<{
     predictedResponses: number;
     predictedCompletionRate: number;
     trendingCategories: CategoryAnalytics[];
     trendingQuestionnaires: QuestionnaireAnalytics[];
     recommendations: string[];
-  }> {
-    return this.http.get<ApiResponse<any>>(`${this.apiUrl}/analytics/predictive`)
-      .pipe(map(response => response.data));
+  }>> {
+    return this.apiService.get<any>('/responses/analytics/predictive');
   }
 
   // Clear analytics cache
@@ -257,45 +232,41 @@ export class AnalyticsService {
   }
 
   // Force refresh analytics
-  refreshAnalytics(): Observable<AnalyticsSummary> {
+  refreshAnalytics(): Observable<ApiResponse<AnalyticsSummary>> {
     return this.getAnalyticsSummary(true);
   }
 
   // Get analytics for specific category
-  getCategorySpecificAnalytics(categoryId: string): Observable<CategoryAnalytics> {
-    return this.http.get<ApiResponse<CategoryAnalytics>>(`${this.apiUrl}/analytics/categories/${categoryId}`)
-      .pipe(map(response => response.data));
+  getCategorySpecificAnalytics(categoryId: string): Observable<ApiResponse<CategoryAnalytics>> {
+    return this.apiService.get<CategoryAnalytics>(`/responses/analytics/categories/${categoryId}`);
   }
 
   // Get analytics for specific questionnaire
-  getQuestionnaireSpecificAnalytics(questionnaireId: string): Observable<QuestionnaireAnalytics> {
-    return this.http.get<ApiResponse<QuestionnaireAnalytics>>(`${this.apiUrl}/analytics/questionnaires/${questionnaireId}`)
-      .pipe(map(response => response.data));
+  getQuestionnaireSpecificAnalytics(questionnaireId: string): Observable<ApiResponse<QuestionnaireAnalytics>> {
+    return this.apiService.get<QuestionnaireAnalytics>(`/responses/analytics/questionnaires/${questionnaireId}`);
   }
 
   // Get user-specific analytics
-  getUserAnalytics(userId: string): Observable<{
+  getUserAnalytics(userId: string): Observable<ApiResponse<{
     totalResponses: number;
     completedResponses: number;
     averageCompletionTime: number;
     favoriteCategories: CategoryAnalytics[];
     favoriteQuestionnaires: QuestionnaireAnalytics[];
     activityTrend: AnalyticsTrends;
-  }> {
-    return this.http.get<ApiResponse<any>>(`${this.apiUrl}/analytics/users/${userId}`)
-      .pipe(map(response => response.data));
+  }>> {
+    return this.apiService.get<any>(`/responses/analytics/users/${userId}`);
   }
 
   // Get system health analytics
-  getSystemHealthAnalytics(): Observable<{
+  getSystemHealthAnalytics(): Observable<ApiResponse<{
     totalUsers: number;
     activeUsers: number;
     systemPerformance: number;
     errorRate: number;
     uptime: number;
     responseTime: number;
-  }> {
-    return this.http.get<ApiResponse<any>>(`${this.apiUrl}/analytics/system-health`)
-      .pipe(map(response => response.data));
+  }>> {
+    return this.apiService.get<any>('/responses/analytics/system-health');
   }
 } 

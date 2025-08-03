@@ -284,4 +284,164 @@ public class CategoryService : ICategoryService
             };
         }
     }
+
+    public async Task<JsonModel> CheckNameExistsAsync(string name, TokenModel tokenModel)
+    {
+        try
+        {
+            // TODO: Re-enable authentication for production
+            // Validate user permissions
+            // if (tokenModel.Role != "Admin")
+            //     return JsonModel.ErrorResult("Access denied", HttpStatusCodes.Forbidden);
+
+            Console.WriteLine($"Checking if category name exists: '{name}'");
+            
+            // Check if name exists in active categories
+            var existsActive = await _categoryRepository.NameExistsAsync(name, null, false);
+            Console.WriteLine($"Category name '{name}' exists in active: {existsActive}");
+            
+            // Check if name exists in inactive categories
+            var existsInactive = await _categoryRepository.NameExistsInactiveAsync(name);
+            Console.WriteLine($"Category name '{name}' exists in inactive: {existsInactive}");
+            
+            var exists = existsActive || existsInactive;
+            var message = existsActive ? "Category name already exists" : 
+                         existsInactive ? "This category already exists and is currently inactive" : 
+                         "Category name is available";
+            
+            return new JsonModel
+            {
+                Success = true,
+                Data = new { 
+                    exists = exists,
+                    existsActive = existsActive,
+                    existsInactive = existsInactive
+                },
+                Message = message,
+                StatusCode = HttpStatusCodes.OK
+            };
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error checking category name '{name}': {ex.Message}");
+            return new JsonModel
+            {
+                Success = false,
+                Message = $"Error checking category name: {ex.Message}",
+                StatusCode = HttpStatusCodes.InternalServerError
+            };
+        }
+    }
+
+    public async Task<JsonModel> DeactivateAsync(Guid id, TokenModel tokenModel)
+    {
+        try
+        {
+            // TODO: Re-enable authentication for production
+            // Validate user permissions
+            // if (tokenModel.Role != "Admin")
+            //     return JsonModel.ErrorResult("Access denied", HttpStatusCodes.Forbidden);
+
+            var success = await _categoryRepository.DeactivateAsync(id);
+            
+            if (success)
+            {
+                return new JsonModel
+                {
+                    Success = true,
+                    Message = "Category deactivated successfully",
+                    StatusCode = HttpStatusCodes.OK
+                };
+            }
+            else
+            {
+                return new JsonModel
+                {
+                    Success = false,
+                    Message = "Category not found or already deactivated",
+                    StatusCode = HttpStatusCodes.NotFound
+                };
+            }
+        }
+        catch (Exception ex)
+        {
+            return new JsonModel
+            {
+                Success = false,
+                Message = $"Error deactivating category: {ex.Message}",
+                StatusCode = HttpStatusCodes.InternalServerError
+            };
+        }
+    }
+
+    public async Task<JsonModel> ReactivateAsync(Guid id, TokenModel tokenModel)
+    {
+        try
+        {
+            // TODO: Re-enable authentication for production
+            // Validate user permissions
+            // if (tokenModel.Role != "Admin")
+            //     return JsonModel.ErrorResult("Access denied", HttpStatusCodes.Forbidden);
+
+            var success = await _categoryRepository.ReactivateAsync(id);
+            
+            if (success)
+            {
+                return new JsonModel
+                {
+                    Success = true,
+                    Message = "Category reactivated successfully",
+                    StatusCode = HttpStatusCodes.OK
+                };
+            }
+            else
+            {
+                return new JsonModel
+                {
+                    Success = false,
+                    Message = "Category not found or already active",
+                    StatusCode = HttpStatusCodes.NotFound
+                };
+            }
+        }
+        catch (Exception ex)
+        {
+            return new JsonModel
+            {
+                Success = false,
+                Message = $"Error reactivating category: {ex.Message}",
+                StatusCode = HttpStatusCodes.InternalServerError
+            };
+        }
+    }
+
+    public async Task<JsonModel> GetDeactivatedAsync(TokenModel tokenModel)
+    {
+        try
+        {
+            // TODO: Re-enable authentication for production
+            // Validate user permissions
+            // if (tokenModel.Role != "Admin")
+            //     return JsonModel.ErrorResult("Access denied", HttpStatusCodes.Forbidden);
+
+            var categories = await _categoryRepository.GetDeactivatedAsync();
+            
+            return new JsonModel
+            {
+                Success = true,
+                Data = categories,
+                Message = "Deactivated categories retrieved successfully",
+                StatusCode = HttpStatusCodes.OK
+            };
+        }
+        catch (Exception ex)
+        {
+            return new JsonModel
+            {
+                Success = false,
+                Message = $"Error retrieving deactivated categories: {ex.Message}",
+                StatusCode = HttpStatusCodes.InternalServerError
+            };
+        }
+    }
 } 

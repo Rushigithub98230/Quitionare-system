@@ -287,12 +287,37 @@ public class CategoryQuestionnaireTemplateService : ICategoryQuestionnaireTempla
                 // Validate option-based questions have options
                 if (questionType.HasOptions && (!questionDto.Options.Any() || questionDto.Options.All(o => string.IsNullOrWhiteSpace(o.OptionText))))
                 {
-                    return new JsonModel
+                    // Special handling for Yes/No questions - auto-create options
+                    if (questionType.TypeName?.ToLower() == "yes_no")
                     {
-                        Success = false,
-                        Message = "Option-based questions must have at least one option",
-                        StatusCode = HttpStatusCodes.BadRequest
-                    };
+                        // Auto-create Yes and No options
+                        questionDto.Options = new List<CreateQuestionOptionDto>
+                        {
+                            new CreateQuestionOptionDto
+                            {
+                                OptionText = "Yes",
+                                OptionValue = "yes",
+                                DisplayOrder = 1,
+                                IsActive = true
+                            },
+                            new CreateQuestionOptionDto
+                            {
+                                OptionText = "No",
+                                OptionValue = "no",
+                                DisplayOrder = 2,
+                                IsActive = true
+                            }
+                        };
+                    }
+                    else
+                    {
+                        return new JsonModel
+                        {
+                            Success = false,
+                            Message = "Option-based questions must have at least one option",
+                            StatusCode = HttpStatusCodes.BadRequest
+                        };
+                    }
                 }
 
                 // Validate option-specific rules
@@ -618,7 +643,7 @@ public class CategoryQuestionnaireTemplateService : ICategoryQuestionnaireTempla
             {
                 Success = true,
                 Data = count,
-                Message = "Count retrieved successfully",
+                Message = "Questionnaire count retrieved successfully",
                 StatusCode = HttpStatusCodes.OK
             };
         }
@@ -627,7 +652,32 @@ public class CategoryQuestionnaireTemplateService : ICategoryQuestionnaireTempla
             return new JsonModel
             {
                 Success = false,
-                Message = $"An error occurred while getting count: {ex.Message}",
+                Message = $"Error retrieving questionnaire count: {ex.Message}",
+                StatusCode = HttpStatusCodes.InternalServerError
+            };
+        }
+    }
+
+    public async Task<JsonModel> CheckTitleExistsAsync(string title)
+    {
+        try
+        {
+            var exists = await _questionnaireRepository.TitleExistsAsync(title);
+            
+            return new JsonModel
+            {
+                Success = true,
+                Data = new { exists = exists },
+                Message = exists ? "Questionnaire title already exists" : "Questionnaire title is available",
+                StatusCode = HttpStatusCodes.OK
+            };
+        }
+        catch (Exception ex)
+        {
+            return new JsonModel
+            {
+                Success = false,
+                Message = $"Error checking questionnaire title: {ex.Message}",
                 StatusCode = HttpStatusCodes.InternalServerError
             };
         }
@@ -816,12 +866,39 @@ public class CategoryQuestionnaireTemplateService : ICategoryQuestionnaireTempla
             if (questionType.HasOptions)
             {
                 if (questionDto.Options == null || !questionDto.Options.Any() || questionDto.Options.All(o => string.IsNullOrWhiteSpace(o.OptionText)))
-                    return new JsonModel
+                {
+                    // Special handling for Yes/No questions - auto-create options
+                    if (questionType.TypeName?.ToLower() == "yes_no")
                     {
-                        Success = false,
-                        Message = "Option-based questions must have at least one option",
-                        StatusCode = HttpStatusCodes.BadRequest
-                    };
+                        // Auto-create Yes and No options
+                        questionDto.Options = new List<CreateQuestionOptionDto>
+                        {
+                            new CreateQuestionOptionDto
+                            {
+                                OptionText = "Yes",
+                                OptionValue = "yes",
+                                DisplayOrder = 1,
+                                IsActive = true
+                            },
+                            new CreateQuestionOptionDto
+                            {
+                                OptionText = "No",
+                                OptionValue = "no",
+                                DisplayOrder = 2,
+                                IsActive = true
+                            }
+                        };
+                    }
+                    else
+                    {
+                        return new JsonModel
+                        {
+                            Success = false,
+                            Message = "Option-based questions must have at least one option",
+                            StatusCode = HttpStatusCodes.BadRequest
+                        };
+                    }
+                }
             }
 
             // Validate option-specific rules
@@ -1747,13 +1824,38 @@ public class CategoryQuestionnaireTemplateService : ICategoryQuestionnaireTempla
         // 5. Validate that option-based questions have options
         if (questionType.HasOptions && (questionDto.Options == null || !questionDto.Options.Any() || questionDto.Options.All(o => string.IsNullOrWhiteSpace(o.OptionText))))
         {
-            Console.WriteLine("Validation failed: Option-based questions must have at least one option");
-            return new JsonModel
+            // Special handling for Yes/No questions - auto-create options
+            if (questionType.TypeName?.ToLower() == "yes_no")
             {
-                Success = false,
-                Message = "Radio questions must have at least one option",
-                StatusCode = HttpStatusCodes.BadRequest
-            };
+                // Auto-create Yes and No options
+                questionDto.Options = new List<UpdateQuestionOptionDto>
+                {
+                    new UpdateQuestionOptionDto
+                    {
+                        OptionText = "Yes",
+                        OptionValue = "yes",
+                        DisplayOrder = 1,
+                        IsActive = true
+                    },
+                    new UpdateQuestionOptionDto
+                    {
+                        OptionText = "No",
+                        OptionValue = "no",
+                        DisplayOrder = 2,
+                        IsActive = true
+                    }
+                };
+            }
+            else
+            {
+                Console.WriteLine("Validation failed: Option-based questions must have at least one option");
+                return new JsonModel
+                {
+                    Success = false,
+                    Message = "Radio questions must have at least one option",
+                    StatusCode = HttpStatusCodes.BadRequest
+                };
+            }
         }
 
         // 6. Validate option-specific rules

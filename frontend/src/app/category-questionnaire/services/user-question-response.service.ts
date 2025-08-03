@@ -1,9 +1,8 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { switchMap } from 'rxjs/operators';
-import { environment } from '../../environments/environment';
+import { ApiService } from './api.service';
 import { QuestionType } from '../models/question.model';
+import { ApiResponse } from '../models/api-response.model';
 
 export interface UserQuestionResponse {
   id?: string;
@@ -41,12 +40,10 @@ export interface QuestionOption {
   providedIn: 'root'
 })
 export class UserQuestionResponseService {
-  private apiUrl = `${environment.apiUrl}/responses`;
-
-  constructor(private http: HttpClient) {}
+  constructor(private apiService: ApiService) {}
 
   // Improved response mapping for all question types
-  saveResponses(responses: UserQuestionResponse[]): Observable<any> {
+  saveResponses(responses: UserQuestionResponse[]): Observable<ApiResponse<any>> {
     if (responses.length === 0) {
       return new Observable(observer => {
         observer.error('No responses to save');
@@ -78,7 +75,7 @@ export class UserQuestionResponseService {
     console.log('Submitting response data:', submitDto);
     console.log('Questionnaire ID type:', typeof questionnaireId, questionnaireId);
     console.log('First question ID type:', typeof responses[0].questionId, responses[0].questionId);
-    return this.http.post(this.apiUrl, submitDto);
+    return this.apiService.post<any>('/responses', submitDto);
   }
 
   // Enhanced response mapping for all question types
@@ -187,19 +184,17 @@ export class UserQuestionResponseService {
   }
 
   // Get responses for a specific questionnaire
-  getResponsesByQuestionnaire(questionnaireId: string): Observable<any> {
-    return this.http.get(`${this.apiUrl}/questionnaire/${questionnaireId}`);
+  getResponsesByQuestionnaire(questionnaireId: string): Observable<ApiResponse<any>> {
+    return this.apiService.get<any>(`/responses/questionnaire/${questionnaireId}`);
   }
 
   // Get responses for a specific user
-  getResponsesByUser(userId: string): Observable<any> {
-    return this.http.get(`${this.apiUrl}/user/${userId}`);
+  getResponsesByUser(userId: string): Observable<ApiResponse<any>> {
+    return this.apiService.get<any>(`/responses/user/${userId}`);
   }
 
   // Export responses to CSV
-  exportResponsesToCSV(questionnaireId: string): Observable<any> {
-    return this.http.get(`${this.apiUrl}/export/${questionnaireId}`, {
-      responseType: 'blob'
-    });
+  exportResponsesToCSV(questionnaireId: string): Observable<Blob> {
+    return this.apiService.getBlob(`/responses/export/${questionnaireId}`);
   }
 } 

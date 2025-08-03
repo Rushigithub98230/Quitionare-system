@@ -20,4 +20,5 @@ public interface ICategoryQuestionnaireTemplateRepository
     Task<bool> ExistsAsync(Guid id);
     Task<int> GetCountByCategoryIdAsync(Guid categoryId);
     Task<bool> HasResponsesAsync(Guid questionnaireId);
+    Task<bool> TitleExistsAsync(string title, Guid? excludeId = null);
 } 

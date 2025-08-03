@@ -19,6 +19,7 @@ public class UserQuestionResponseRepository : IUserQuestionResponseRepository
         return await _context.UserQuestionResponses
             .Include(uqr => uqr.User)
             .Include(uqr => uqr.Questionnaire)
+            .ThenInclude(q => q.Category)
             .Include(uqr => uqr.QuestionResponses)
             .ThenInclude(qr => qr.Question)
             .Include(uqr => uqr.QuestionResponses)
@@ -33,6 +34,7 @@ public class UserQuestionResponseRepository : IUserQuestionResponseRepository
     {
         return await _context.UserQuestionResponses
             .Include(uqr => uqr.Questionnaire)
+            .ThenInclude(q => q.Category)
             .Include(uqr => uqr.QuestionResponses)
             .Where(uqr => uqr.UserId == userId)
             .OrderByDescending(uqr => uqr.CreatedAt)
@@ -43,6 +45,8 @@ public class UserQuestionResponseRepository : IUserQuestionResponseRepository
     {
         return await _context.UserQuestionResponses
             .Include(uqr => uqr.User)
+            .Include(uqr => uqr.Questionnaire)
+            .ThenInclude(q => q.Category)
             .Include(uqr => uqr.QuestionResponses)
             .Where(uqr => uqr.QuestionnaireId == questionnaireId)
             .OrderByDescending(uqr => uqr.CreatedAt)
@@ -54,6 +58,7 @@ public class UserQuestionResponseRepository : IUserQuestionResponseRepository
         return await _context.UserQuestionResponses
             .Include(uqr => uqr.User)
             .Include(uqr => uqr.Questionnaire)
+            .ThenInclude(q => q.Category)
             .Include(uqr => uqr.QuestionResponses)
             .OrderByDescending(uqr => uqr.CreatedAt)
             .ToListAsync();

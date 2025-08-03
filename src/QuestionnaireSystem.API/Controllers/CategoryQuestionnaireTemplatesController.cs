@@ -142,6 +142,22 @@ public class CategoryQuestionnaireTemplatesController : ControllerBase
         return await _questionnaireService.GetCountByCategoryIdAsync(categoryId);
     }
 
+    [HttpGet("check-title/{title}")]
+    public async Task<ActionResult<JsonModel>> CheckTitleExists(string title)
+    {
+        if (string.IsNullOrWhiteSpace(title))
+        {
+            return BadRequest(new JsonModel
+            {
+                Success = false,
+                Message = "Questionnaire title is required",
+                StatusCode = HttpStatusCodes.BadRequest
+            });
+        }
+
+        return await _questionnaireService.CheckTitleExistsAsync(title);
+    }
+
     [HttpGet("{id}/response")]
     public async Task<ActionResult<JsonModel>> GetForResponse(Guid id)
     {

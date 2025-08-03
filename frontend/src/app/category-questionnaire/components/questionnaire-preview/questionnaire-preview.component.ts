@@ -672,8 +672,14 @@ export class QuestionnairePreviewComponent implements OnInit {
 
   loadQuestionTypes(): void {
     this.questionService.getQuestionTypes().subscribe({
-      next: (types) => {
-        this.questionTypes = types || [];
+      next: (response) => {
+        if (response.statusCode === 200 && response.data) {
+          this.questionTypes = response.data;
+        } else {
+          console.error('Error loading question types:', response.message);
+          this.snackBar.open('Error loading question types: ' + response.message, 'Close', { duration: 3000 });
+          this.questionTypes = [];
+        }
       },
       error: (error) => {
         console.error('Error loading question types:', error);
@@ -691,36 +697,27 @@ export class QuestionnairePreviewComponent implements OnInit {
 
     this.loading = true;
     this.questionService.getQuestionsByQuestionnaireId(this.questionnaire.id).subscribe({
-      next: (response: any) => {
-        let questions: any[] = [];
-        if (response && typeof response === 'object' && !Array.isArray(response)) {
-          if (response.data && Array.isArray(response.data)) {
-            questions = response.data;
-          } else if (response.questions && Array.isArray(response.questions)) {
-            questions = response.questions;
-          } else {
-            questions = [];
-          }
-        } else if (Array.isArray(response)) {
-          questions = response;
+      next: (response) => {
+        if (response.statusCode === 200 && response.data) {
+          this.questions = response.data.sort((a, b) => a.displayOrder - b.displayOrder);
+          console.log('Loaded questions:', this.questions);
+          
+          // Debug: Check options for each question
+          this.questions.forEach((question, index) => {
+            console.log(`Question ${index + 1} (${question.questionTypeName}):`, {
+              questionText: question.questionText,
+              options: question.options,
+              optionsCount: question.options ? question.options.length : 0
+            });
+          });
+          
+          this.initializeForms();
         } else {
-          questions = [];
+          console.warn('Failed to load questions:', response.message);
+          this.snackBar.open('Error loading questions: ' + response.message, 'Close', { duration: 3000 });
+          this.questions = [];
         }
-        
-                 this.questions = questions.sort((a, b) => a.displayOrder - b.displayOrder);
-         console.log('Loaded questions:', this.questions);
-         
-         // Debug: Check options for each question
-         this.questions.forEach((question, index) => {
-           console.log(`Question ${index + 1} (${question.questionTypeName}):`, {
-             questionText: question.questionText,
-             options: question.options,
-             optionsCount: question.options ? question.options.length : 0
-           });
-         });
-         
-         this.initializeForms();
-         this.loading = false;
+        this.loading = false;
       },
       error: (error) => {
         console.error('Error loading questions:', error);

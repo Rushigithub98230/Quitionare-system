@@ -166,9 +166,9 @@ export interface ResponseDetailData {
                     <span class="number">{{ i + 1 }}</span>
                   </div>
                   <div class="question-info">
-                    <h4 class="question-title">{{ questionResponse?.question?.questionText }}</h4>
+                    <h4 class="question-title">{{ questionResponse?.questionText || questionResponse?.question?.questionText }}</h4>
                     <div class="question-meta">
-                      <span class="question-type">{{ questionResponse?.question?.questionTypeName }}</span>
+                      <span class="question-type">{{ questionResponse?.questionType || questionResponse?.question?.questionTypeName }}</span>
                       <mat-chip *ngIf="questionResponse?.question?.isRequired" class="required-chip">
                         Required
                       </mat-chip>
@@ -182,29 +182,35 @@ export interface ResponseDetailData {
               </mat-card-header>
               
               <mat-card-content>
-                <div class="response-content">
-                  <div class="response-value" *ngIf="isQuestionAnswered(questionResponse)">
-                    <span class="value-label">Response:</span>
-                    <div class="value-content">
-                      <span class="response-text">{{ getResponseDisplayValue(questionResponse) }}</span>
+                <div class="question-content">
+                  <div class="question-type">
+                    {{ questionResponse?.questionType || questionResponse?.question?.questionTypeName }}
+                  </div>
+                  
+                  <div class="response-content">
+                    <div class="response-value" *ngIf="isQuestionAnswered(questionResponse)">
+                      <span class="value-label">Response:</span>
+                      <div class="text-response">
+                        {{ getResponseDisplayValue(questionResponse) }}
+                      </div>
                     </div>
-                  </div>
-                  
-                  <div class="no-response" *ngIf="!isQuestionAnswered(questionResponse)">
-                    <mat-icon>info</mat-icon>
-                    <span>No response provided</span>
-                  </div>
-                  
-                  <!-- Options for multiple choice questions -->
-                  <div class="options-list" *ngIf="questionResponse?.question?.options?.length">
-                    <span class="options-label">Available Options:</span>
-                    <div class="options-grid">
-                      <div *ngFor="let option of questionResponse?.question?.options" 
-                           class="option-item"
-                           [class.selected]="isOptionSelected(questionResponse, option)">
-                        <mat-icon *ngIf="isOptionSelected(questionResponse, option)" class="selected-icon">check_circle</mat-icon>
-                        <mat-icon *ngIf="!isOptionSelected(questionResponse, option)" class="unselected-icon">radio_button_unchecked</mat-icon>
-                        <span class="option-text">{{ option.optionText }}</span>
+                    
+                    <div class="no-response" *ngIf="!isQuestionAnswered(questionResponse)">
+                      <mat-icon>info</mat-icon>
+                      <span>No response provided</span>
+                    </div>
+                    
+                    <!-- Options for multiple choice questions -->
+                    <div class="question-options" *ngIf="questionResponse?.question?.options?.length">
+                      <div class="options-label">Available Options:</div>
+                      <div class="options-grid">
+                        <div *ngFor="let option of questionResponse?.question?.options" 
+                             class="option-item"
+                             [class.selected]="isOptionSelected(questionResponse, option)">
+                          <mat-icon *ngIf="isOptionSelected(questionResponse, option)" class="option-selected">check_circle</mat-icon>
+                          <mat-icon *ngIf="!isOptionSelected(questionResponse, option)" class="option-checkbox">radio_button_unchecked</mat-icon>
+                          <span class="option-text">{{ option.optionText }}</span>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -268,11 +274,23 @@ export class ResponseDetailDialogComponent {
     // Check for date response
     if (questionResponse.dateResponse) return true;
     
-    // Check for selected options
+    // Check for datetime response
+    if (questionResponse.datetimeResponse) return true;
+    
+    // Check for boolean response (Yes/No)
+    if (questionResponse.booleanResponse !== null && questionResponse.booleanResponse !== undefined) return true;
+    
+    // Check for JSON response
+    if (questionResponse.jsonResponse && questionResponse.jsonResponse.trim()) return true;
+    
+    // Check for selected options - backend format
+    if (questionResponse.optionResponses && questionResponse.optionResponses.length > 0) return true;
+    
+    // Check for selected options - legacy frontend format
     if (questionResponse.selectedOptionIds && questionResponse.selectedOptionIds.length > 0) return true;
     
     // Check for file upload
-    if (questionResponse.fileUrl) return true;
+    if (questionResponse.filePath || questionResponse.fileName) return true;
     
     // Check for image upload
     if (questionResponse.imageUrl) return true;
@@ -290,6 +308,9 @@ export class ResponseDetailDialogComponent {
     
     // Number response
     if (questionResponse.numberResponse !== null && questionResponse.numberResponse !== undefined) {
+      // Check if it's a Yes/No question (values 1/0)
+      if (questionResponse.numberResponse === 1) return 'Yes';
+      if (questionResponse.numberResponse === 0) return 'No';
       return questionResponse.numberResponse.toString();
     }
     
@@ -298,7 +319,36 @@ export class ResponseDetailDialogComponent {
       return new Date(questionResponse.dateResponse).toLocaleDateString();
     }
     
-    // Selected options
+    // Datetime response
+    if (questionResponse.datetimeResponse) {
+      return new Date(questionResponse.datetimeResponse).toLocaleString();
+    }
+    
+    // Boolean response (Yes/No)
+    if (questionResponse.booleanResponse !== null && questionResponse.booleanResponse !== undefined) {
+      return questionResponse.booleanResponse ? 'Yes' : 'No';
+    }
+    
+    // JSON response (for complex responses)
+    if (questionResponse.jsonResponse) {
+      try {
+        const jsonData = JSON.parse(questionResponse.jsonResponse);
+        if (jsonData.value) return jsonData.value;
+        if (jsonData.text) return jsonData.text;
+        if (jsonData.selectedOptions) return jsonData.selectedOptions.join(', ');
+        return 'Complex response data';
+      } catch {
+        return questionResponse.jsonResponse;
+      }
+    }
+    
+    // Selected options - check for OptionResponses (backend format)
+    if (questionResponse.optionResponses && questionResponse.optionResponses.length > 0) {
+      const optionTexts = questionResponse.optionResponses.map((opt: any) => opt.optionText);
+      return optionTexts.join(', ');
+    }
+    
+    // Legacy format - check for selectedOptionIds (frontend format)
     if (questionResponse.selectedOptionIds && questionResponse.selectedOptionIds.length > 0) {
       const selectedOptions = questionResponse.question?.options?.filter((opt: any) => 
         questionResponse.selectedOptionIds.includes(opt.id)
@@ -307,8 +357,8 @@ export class ResponseDetailDialogComponent {
     }
     
     // File upload
-    if (questionResponse.fileUrl) {
-      return 'File uploaded';
+    if (questionResponse.filePath || questionResponse.fileName) {
+      return questionResponse.fileName || 'File uploaded';
     }
     
     // Image upload
@@ -320,6 +370,12 @@ export class ResponseDetailDialogComponent {
   }
 
   isOptionSelected(questionResponse: any, option: any): boolean {
+    // Check backend format (OptionResponses)
+    if (questionResponse?.optionResponses) {
+      return questionResponse.optionResponses.some((opt: any) => opt.optionId === option.id);
+    }
+    
+    // Check legacy frontend format (selectedOptionIds)
     return questionResponse?.selectedOptionIds?.includes(option.id) || false;
   }
 } 

@@ -76,11 +76,14 @@ export class CategoryQuestionnaireComponent implements OnInit {
   categories: Category[] = [];
   questionnaires: Questionnaire[] = [];
   deletedCategories: Category[] = [];
+  deactivatedCategories: Category[] = [];
   selectedCategory: Category | null = null;
   loading = false;
   loadingDeleted = false;
+  loadingDeactivated = false;
   error = '';
   errorDeleted = '';
+  errorDeactivated = '';
   showCategoryOrderManager = false;
   categoryOrderItems: OrderItem[] = [];
   showQuestionnaireOrderManager = false;
@@ -130,30 +133,32 @@ export class CategoryQuestionnaireComponent implements OnInit {
   ngOnInit(): void {
     this.loadCategories();
     this.loadQuestionnaires();
+    this.loadAllResponses();
     this.loadAnalytics();
   }
 
   onTabChange(event: any): void {
-    // Load deleted categories when the "Deleted Categories" tab is selected
-    if (event.index === 2) { // Index 2 is the "Deleted Categories" tab
+    if (event.index === 1) { // Deleted categories tab
       this.loadDeletedCategories();
+    } else if (event.index === 2) { // Deactivated categories tab
+      this.loadDeactivatedCategories();
     }
   }
 
   loadDeletedCategories(): void {
     this.loadingDeleted = true;
     this.errorDeleted = '';
-
+    
     this.categoryService.getDeletedCategories().subscribe({
-      next: (response) => {
-        if (response.success && response.data) {
+      next: (response: any) => {
+        if (response.statusCode === 200 && response.data) {
           this.deletedCategories = response.data;
         } else {
           this.errorDeleted = response.message || 'Failed to load deleted categories';
         }
         this.loadingDeleted = false;
       },
-      error: (error) => {
+      error: (error: any) => {
         this.errorDeleted = 'Error loading deleted categories';
         this.loadingDeleted = false;
         console.error('Error loading deleted categories:', error);
@@ -161,21 +166,43 @@ export class CategoryQuestionnaireComponent implements OnInit {
     });
   }
 
+  loadDeactivatedCategories(): void {
+    this.loadingDeactivated = true;
+    this.errorDeactivated = '';
+    
+    this.categoryService.getDeactivated().subscribe({
+      next: (response) => {
+        if (response.statusCode === 200 && response.data) {
+          this.deactivatedCategories = response.data;
+        } else {
+          this.errorDeactivated = response.message || 'Failed to load deactivated categories';
+        }
+        this.loadingDeactivated = false;
+      },
+      error: (error) => {
+        this.errorDeactivated = 'Error loading deactivated categories';
+        this.loadingDeactivated = false;
+        console.error('Error loading deactivated categories:', error);
+      }
+    });
+  }
+
   restoreCategory(category: Category): void {
-    if (confirm(`Are you sure you want to restore "${category.name}" and all its questionnaires?`)) {
+    if (confirm(`Are you sure you want to restore the category "${category.name}"?`)) {
       this.categoryService.restoreCategory(category.id).subscribe({
         next: (response) => {
-          if (response.success) {
-            this.snackBar.open('Category restored successfully', 'Close', { duration: 3000 });
-            this.loadDeletedCategories(); // Refresh deleted categories list
-            this.loadCategories(); // Refresh active categories list
+          if (response.statusCode === 200) {
+            // Remove from deleted categories
+            this.deletedCategories = this.deletedCategories.filter(c => c.id !== category.id);
+            // Add back to active categories
+            this.categories.push(category);
+            this.snackBar.open('Category restored successfully!', 'Close', { duration: 3000 });
           } else {
-            this.snackBar.open(response.message || 'Failed to restore category', 'Close', { duration: 3000 });
+            this.snackBar.open('Error restoring category: ' + response.message, 'Close', { duration: 5000 });
           }
         },
         error: (error) => {
-          this.snackBar.open('Error restoring category', 'Close', { duration: 3000 });
-          console.error('Error restoring category:', error);
+          this.snackBar.open('Error restoring category: ' + error.message, 'Close', { duration: 5000 });
         }
       });
     }
@@ -194,10 +221,15 @@ export class CategoryQuestionnaireComponent implements OnInit {
     this.error = '';
 
     this.categoryService.getAll().subscribe({
-      next: (categories) => {
-        this.categories = categories;
-        this.categoriesDataSource = categories;
-        this.loading = false;
+      next: (response) => {
+        if (response.statusCode === 200 && response.data) {
+          this.categories = response.data;
+          this.categoriesDataSource = response.data;
+          this.loading = false;
+        } else {
+          this.error = response.message || 'Failed to load categories';
+          this.loading = false;
+        }
       },
       error: (error) => {
         this.error = 'Failed to load categories: ' + error.message;
@@ -211,10 +243,15 @@ export class CategoryQuestionnaireComponent implements OnInit {
     this.error = '';
 
     this.questionnaireService.getAll().subscribe({
-      next: (questionnaires) => {
-        this.questionnaires = questionnaires;
-        this.questionnairesDataSource = questionnaires;
-        this.loading = false;
+      next: (response) => {
+        if (response.statusCode === 200 && response.data) {
+          this.questionnaires = response.data;
+          this.questionnairesDataSource = response.data;
+          this.loading = false;
+        } else {
+          this.error = response.message || 'Failed to load questionnaires';
+          this.loading = false;
+        }
       },
       error: (error) => {
         this.error = 'Failed to load questionnaires: ' + error.message;
@@ -233,10 +270,15 @@ export class CategoryQuestionnaireComponent implements OnInit {
     this.error = '';
 
     this.questionnaireService.getByCategoryId(categoryId).subscribe({
-      next: (questionnaires) => {
-        this.questionnaires = questionnaires;
-        this.questionnairesDataSource = questionnaires;
-        this.loading = false;
+      next: (response) => {
+        if (response.statusCode === 200 && response.data) {
+          this.questionnaires = response.data;
+          this.questionnairesDataSource = response.data;
+          this.loading = false;
+        } else {
+          this.error = response.message || 'Failed to load questionnaires for category';
+          this.loading = false;
+        }
       },
       error: (error) => {
         this.error = 'Failed to load questionnaires for category: ' + error.message;
@@ -254,9 +296,13 @@ export class CategoryQuestionnaireComponent implements OnInit {
     dialogRef.afterClosed().subscribe(result => {
       if (result && result.action === 'create') {
         this.categoryService.create(result.data).subscribe({
-          next: (category) => {
-            this.categories.push(category);
-            this.snackBar.open('Category created successfully!', 'Close', { duration: 3000 });
+          next: (response) => {
+            if ((response.statusCode === 200 || response.statusCode === 201) && response.data) {
+              this.categories.push(response.data);
+              this.snackBar.open('Category created successfully!', 'Close', { duration: 3000 });
+            } else {
+              this.snackBar.open('Error creating category: ' + response.message, 'Close', { duration: 5000 });
+            }
           },
           error: (error) => {
             this.snackBar.open('Error creating category: ' + error.message, 'Close', { duration: 5000 });
@@ -275,12 +321,16 @@ export class CategoryQuestionnaireComponent implements OnInit {
     dialogRef.afterClosed().subscribe(result => {
       if (result && result.action === 'update') {
         this.categoryService.update(category.id, result.data).subscribe({
-          next: (updatedCategory) => {
-            const index = this.categories.findIndex(c => c.id === category.id);
-            if (index !== -1) {
-              this.categories[index] = updatedCategory;
+          next: (response) => {
+            if (response.statusCode === 200 && response.data) {
+              const index = this.categories.findIndex(c => c.id === category.id);
+              if (index !== -1) {
+                this.categories[index] = response.data;
+              }
+              this.snackBar.open('Category updated successfully!', 'Close', { duration: 3000 });
+            } else {
+              this.snackBar.open('Error updating category: ' + response.message, 'Close', { duration: 5000 });
             }
-            this.snackBar.open('Category updated successfully!', 'Close', { duration: 3000 });
           },
           error: (error) => {
             this.snackBar.open('Error updating category: ' + error.message, 'Close', { duration: 5000 });
@@ -291,14 +341,58 @@ export class CategoryQuestionnaireComponent implements OnInit {
   }
 
   deleteCategory(category: Category): void {
-    if (confirm(`Are you sure you want to delete the category "${category.name}"?`)) {
+    if (confirm(`Are you sure you want to delete the category "${category.name}"? This action cannot be undone.`)) {
       this.categoryService.delete(category.id).subscribe({
-        next: () => {
-          this.categories = this.categories.filter(c => c.id !== category.id);
-          this.snackBar.open('Category deleted successfully!', 'Close', { duration: 3000 });
+        next: (response) => {
+          if (response.statusCode === 200) {
+            this.categories = this.categories.filter(c => c.id !== category.id);
+            this.snackBar.open('Category deleted successfully', 'Close', { duration: 3000 });
+          } else {
+            this.snackBar.open('Error deleting category: ' + response.message, 'Close', { duration: 5000 });
+          }
         },
         error: (error) => {
           this.snackBar.open('Error deleting category: ' + error.message, 'Close', { duration: 5000 });
+        }
+      });
+    }
+  }
+
+  deactivateCategory(category: Category): void {
+    if (confirm(`Are you sure you want to deactivate the category "${category.name}"? This will also deactivate all associated questionnaires.`)) {
+      this.categoryService.deactivate(category.id).subscribe({
+        next: (response) => {
+          if (response.statusCode === 200) {
+            this.categories = this.categories.filter(c => c.id !== category.id);
+            this.snackBar.open('Category deactivated successfully', 'Close', { duration: 3000 });
+            // Reload deactivated categories
+            this.loadDeactivatedCategories();
+          } else {
+            this.snackBar.open('Error deactivating category: ' + response.message, 'Close', { duration: 5000 });
+          }
+        },
+        error: (error) => {
+          this.snackBar.open('Error deactivating category: ' + error.message, 'Close', { duration: 5000 });
+        }
+      });
+    }
+  }
+
+  reactivateCategory(category: Category): void {
+    if (confirm(`Are you sure you want to reactivate the category "${category.name}"? This will also reactivate all associated questionnaires.`)) {
+      this.categoryService.reactivate(category.id).subscribe({
+        next: (response) => {
+          if (response.statusCode === 200) {
+            this.deactivatedCategories = this.deactivatedCategories.filter(c => c.id !== category.id);
+            this.snackBar.open('Category reactivated successfully', 'Close', { duration: 3000 });
+            // Reload active categories
+            this.loadCategories();
+          } else {
+            this.snackBar.open('Error reactivating category: ' + response.message, 'Close', { duration: 5000 });
+          }
+        },
+        error: (error) => {
+          this.snackBar.open('Error reactivating category: ' + error.message, 'Close', { duration: 5000 });
         }
       });
     }
@@ -313,9 +407,13 @@ export class CategoryQuestionnaireComponent implements OnInit {
     dialogRef.afterClosed().subscribe(result => {
       if (result && result.action === 'create') {
         this.questionnaireService.create(result.data).subscribe({
-          next: (questionnaire) => {
-            this.questionnaires.push(questionnaire);
-            this.snackBar.open('Questionnaire created successfully!', 'Close', { duration: 3000 });
+          next: (response) => {
+            if ((response.statusCode === 200 || response.statusCode === 201) && response.data) {
+              this.questionnaires.push(response.data);
+              this.snackBar.open('Questionnaire created successfully!', 'Close', { duration: 3000 });
+            } else {
+              this.snackBar.open('Error creating questionnaire: ' + response.message, 'Close', { duration: 5000 });
+            }
           },
           error: (error) => {
             this.snackBar.open('Error creating questionnaire: ' + error.message, 'Close', { duration: 5000 });
@@ -334,12 +432,16 @@ export class CategoryQuestionnaireComponent implements OnInit {
     dialogRef.afterClosed().subscribe(result => {
       if (result && result.action === 'update') {
         this.questionnaireService.update(questionnaire.id, result.data).subscribe({
-          next: (updatedQuestionnaire) => {
-            const index = this.questionnaires.findIndex(q => q.id === questionnaire.id);
-            if (index !== -1) {
-              this.questionnaires[index] = updatedQuestionnaire;
+          next: (response) => {
+            if (response.statusCode === 200 && response.data) {
+              const index = this.questionnaires.findIndex(q => q.id === questionnaire.id);
+              if (index !== -1) {
+                this.questionnaires[index] = response.data;
+              }
+              this.snackBar.open('Questionnaire updated successfully!', 'Close', { duration: 3000 });
+            } else {
+              this.snackBar.open('Error updating questionnaire: ' + response.message, 'Close', { duration: 5000 });
             }
-            this.snackBar.open('Questionnaire updated successfully!', 'Close', { duration: 3000 });
           },
           error: (error) => {
             this.snackBar.open('Error updating questionnaire: ' + error.message, 'Close', { duration: 5000 });
@@ -352,9 +454,13 @@ export class CategoryQuestionnaireComponent implements OnInit {
   deleteQuestionnaire(questionnaire: Questionnaire): void {
     if (confirm(`Are you sure you want to delete the questionnaire "${questionnaire.title}"?`)) {
       this.questionnaireService.delete(questionnaire.id).subscribe({
-        next: () => {
-          this.questionnaires = this.questionnaires.filter(q => q.id !== questionnaire.id);
-          this.snackBar.open('Questionnaire deleted successfully!', 'Close', { duration: 3000 });
+        next: (response) => {
+          if (response.statusCode === 200) {
+            this.questionnaires = this.questionnaires.filter(q => q.id !== questionnaire.id);
+            this.snackBar.open('Questionnaire deleted successfully!', 'Close', { duration: 3000 });
+          } else {
+            this.snackBar.open('Error deleting questionnaire: ' + response.message, 'Close', { duration: 5000 });
+          }
         },
         error: (error) => {
           this.snackBar.open('Error deleting questionnaire: ' + error.message, 'Close', { duration: 5000 });
@@ -482,10 +588,14 @@ export class CategoryQuestionnaireComponent implements OnInit {
 
   saveCategoryOrder(): void {
     this.categoryService.updateOrder(this.categories).subscribe({
-      next: (updatedCategories) => {
-        this.categories = updatedCategories;
-        this.snackBar.open('Category order updated successfully!', 'Close', { duration: 3000 });
-        this.showCategoryOrderManager = false;
+      next: (response) => {
+        if (response.statusCode === 200 && response.data) {
+          this.categories = response.data;
+          this.snackBar.open('Category order updated successfully!', 'Close', { duration: 3000 });
+          this.showCategoryOrderManager = false;
+        } else {
+          this.snackBar.open('Error updating category order: ' + response.message, 'Close', { duration: 5000 });
+        }
       },
       error: (error) => {
         this.snackBar.open('Error updating category order: ' + error.message, 'Close', { duration: 5000 });
@@ -528,10 +638,14 @@ export class CategoryQuestionnaireComponent implements OnInit {
 
   saveQuestionnaireOrder(): void {
     this.questionnaireService.updateOrder(this.questionnaires).subscribe({
-      next: (updatedQuestionnaires: Questionnaire[]) => {
-        this.questionnaires = updatedQuestionnaires;
-        this.snackBar.open('Questionnaire order updated successfully!', 'Close', { duration: 3000 });
-        this.showQuestionnaireOrderManager = false;
+      next: (response) => {
+        if (response.statusCode === 200 && response.data) {
+          this.questionnaires = response.data;
+          this.snackBar.open('Questionnaire order updated successfully!', 'Close', { duration: 3000 });
+          this.showQuestionnaireOrderManager = false;
+        } else {
+          this.snackBar.open('Error updating questionnaire order: ' + response.message, 'Close', { duration: 5000 });
+        }
       },
       error: (error: any) => {
         this.snackBar.open('Error updating questionnaire order: ' + error.message, 'Close', { duration: 5000 });
@@ -546,10 +660,10 @@ export class CategoryQuestionnaireComponent implements OnInit {
 
     // Use enhanced getAllResponses method with no filters for initial load
     this.responseService.getAllResponses().subscribe({
-      next: (response: any) => {
-        if (response.success && response.data) {
+      next: (response) => {
+        if (response.statusCode === 200 && response.data) {
           this.filteredResponses = response.data;
-          this.totalResponsesCount = response.totalCount || 0; // Set total count
+          this.totalResponsesCount = response.data.length; // Set total count
           console.log(`Loaded ${this.filteredResponses.length} responses from backend`);
         } else {
           this.errorResponses = response.message || 'Failed to load responses';
@@ -563,7 +677,6 @@ export class CategoryQuestionnaireComponent implements OnInit {
         this.loadingResponses = false;
         this.filteredResponses = [];
         this.totalResponsesCount = 0;
-        console.error('Error loading responses:', error);
       }
     });
   }
@@ -590,10 +703,10 @@ export class CategoryQuestionnaireComponent implements OnInit {
 
     // Use the enhanced getAllResponses method with filters
     this.responseService.getAllResponses(filters).subscribe({
-      next: (response: any) => {
-        if (response.success && response.data) {
+      next: (response) => {
+        if (response.statusCode === 200 && response.data) {
           this.filteredResponses = response.data;
-          this.totalResponsesCount = response.totalCount || 0; // Set total count
+          this.totalResponsesCount = response.data.length; // Set total count
           console.log(`Loaded ${this.filteredResponses.length} filtered responses from backend`);
         } else {
           this.errorResponses = response.message || 'Failed to load responses';
@@ -607,7 +720,6 @@ export class CategoryQuestionnaireComponent implements OnInit {
         this.loadingResponses = false;
         this.filteredResponses = [];
         this.totalResponsesCount = 0;
-        console.error('Error loading responses:', error);
       }
     });
   }
@@ -627,8 +739,8 @@ export class CategoryQuestionnaireComponent implements OnInit {
     }
 
     this.responseService.getResponseStatistics(filters).subscribe({
-      next: (response: any) => {
-        if (response.success && response.data) {
+      next: (response) => {
+        if (response.statusCode === 200 && response.data) {
           // Update statistics from backend
           this.responseStatistics = response.data;
         }
@@ -644,8 +756,8 @@ export class CategoryQuestionnaireComponent implements OnInit {
     this.errorAnalytics = '';
 
     this.analyticsService.getAnalyticsSummary().subscribe({
-      next: (response: any) => {
-        if (response.success && response.data) {
+      next: (response) => {
+        if (response.statusCode === 200 && response.data) {
           this.analyticsSummary = response.data;
           this.analyticsTrends = response.data.trends;
           this.categoryAnalytics = response.data.topCategories;
@@ -660,7 +772,6 @@ export class CategoryQuestionnaireComponent implements OnInit {
       error: (error: any) => {
         this.errorAnalytics = 'Error loading analytics: ' + error.message;
         this.loadingAnalytics = false;
-        console.error('Error loading analytics:', error);
       }
     });
   }

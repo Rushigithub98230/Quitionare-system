@@ -1,6 +1,5 @@
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
 import { ApiService } from './api.service';
 import { 
   Questionnaire, 
@@ -17,141 +16,61 @@ import { ApiResponse } from '../models/api-response.model';
 export class QuestionnaireService {
   constructor(private apiService: ApiService) {}
 
-  getAll(): Observable<Questionnaire[]> {
-    return this.apiService.get<Questionnaire[]>('/categoryquestionnairetemplates').pipe(
-      map(response => {
-        if (response.success && response.data) {
-          return response.data;
-        }
-        throw new Error(response.message || 'Failed to fetch questionnaires');
-      })
-    );
+  getAll(): Observable<ApiResponse<Questionnaire[]>> {
+    return this.apiService.get<Questionnaire[]>('/categoryquestionnairetemplates');
   }
 
-  getById(id: string): Observable<Questionnaire> {
-    return this.apiService.get<Questionnaire>(`/categoryquestionnairetemplates/${id}`).pipe(
-      map(response => {
-        if (response.success && response.data) {
-          return response.data;
-        }
-        throw new Error(response.message || 'Failed to fetch questionnaire');
-      })
-    );
+  getById(id: string): Observable<ApiResponse<Questionnaire>> {
+    return this.apiService.get<Questionnaire>(`/categoryquestionnairetemplates/${id}`);
   }
 
-  getByCategoryId(categoryId: string): Observable<Questionnaire[]> {
-    return this.apiService.get<Questionnaire[]>(`/categoryquestionnairetemplates/category/${categoryId}`).pipe(
-      map(response => {
-        if (response.success && response.data) {
-          return response.data;
-        }
-        throw new Error(response.message || 'Failed to fetch questionnaires by category');
-      })
-    );
+  getByCategoryId(categoryId: string): Observable<ApiResponse<Questionnaire[]>> {
+    return this.apiService.get<Questionnaire[]>(`/categoryquestionnairetemplates/category/${categoryId}`);
   }
 
-  create(questionnaire: CreateQuestionnaireDto): Observable<Questionnaire> {
-    return this.apiService.post<Questionnaire>('/categoryquestionnairetemplates', questionnaire).pipe(
-      map(response => {
-        if (response.success && response.data) {
-          return response.data;
-        }
-        throw new Error(response.message || 'Failed to create questionnaire');
-      })
-    );
+  create(questionnaire: CreateQuestionnaireDto): Observable<ApiResponse<Questionnaire>> {
+    return this.apiService.post<Questionnaire>('/categoryquestionnairetemplates', questionnaire);
   }
 
-  update(id: string, questionnaire: UpdateQuestionnaireDto): Observable<Questionnaire> {
-    return this.apiService.put<Questionnaire>(`/categoryquestionnairetemplates/${id}`, questionnaire).pipe(
-      map(response => {
-        if (response.success && response.data) {
-          return response.data;
-        }
-        throw new Error(response.message || 'Failed to update questionnaire');
-      })
-    );
+  update(id: string, questionnaire: UpdateQuestionnaireDto): Observable<ApiResponse<Questionnaire>> {
+    return this.apiService.put<Questionnaire>(`/categoryquestionnairetemplates/${id}`, questionnaire);
   }
 
-  delete(id: string): Observable<boolean> {
-    return this.apiService.delete<ApiResponse>(`/categoryquestionnairetemplates/${id}`).pipe(
-      map(response => {
-        if (response.success) {
-          return true;
-        }
-        throw new Error(response.message || 'Failed to delete questionnaire');
-      })
-    );
+  delete(id: string): Observable<ApiResponse<any>> {
+    return this.apiService.delete<any>(`/categoryquestionnairetemplates/${id}`);
   }
 
-  getActive(): Observable<Questionnaire[]> {
-    return this.apiService.get<Questionnaire[]>('/categoryquestionnairetemplates/active').pipe(
-      map(response => {
-        if (response.success && response.data) {
-          return response.data;
-        }
-        throw new Error(response.message || 'Failed to fetch active questionnaires');
-      })
-    );
+  getActive(): Observable<ApiResponse<Questionnaire[]>> {
+    return this.apiService.get<Questionnaire[]>('/categoryquestionnairetemplates/active');
   }
 
   // Question management
-  addQuestion(questionnaireId: string, question: CreateQuestionDto): Observable<any> {
-    return this.apiService.post<any>(`/categoryquestionnairetemplates/${questionnaireId}/questions`, question).pipe(
-      map(response => {
-        if (response.success && response.data) {
-          return response.data;
-        }
-        throw new Error(response.message || 'Failed to add question');
-      })
-    );
+  addQuestion(questionnaireId: string, question: CreateQuestionDto): Observable<ApiResponse<any>> {
+    return this.apiService.post<any>(`/categoryquestionnairetemplates/${questionnaireId}/questions`, question);
   }
 
-  updateQuestion(questionnaireId: string, questionId: string, question: UpdateQuestionDto): Observable<any> {
-    return this.apiService.put<any>(`/categoryquestionnairetemplates/${questionnaireId}/questions/${questionId}`, question).pipe(
-      map(response => {
-        if (response.success && response.data) {
-          return response.data;
-        }
-        throw new Error(response.message || 'Failed to update question');
-      })
-    );
+  updateQuestion(questionnaireId: string, questionId: string, question: UpdateQuestionDto): Observable<ApiResponse<any>> {
+    return this.apiService.put<any>(`/categoryquestionnairetemplates/${questionnaireId}/questions/${questionId}`, question);
   }
 
-  deleteQuestion(questionnaireId: string, questionId: string): Observable<boolean> {
-    return this.apiService.delete<ApiResponse>(`/categoryquestionnairetemplates/${questionnaireId}/questions/${questionId}`).pipe(
-      map(response => {
-        if (response.success) {
-          return true;
-        }
-        throw new Error(response.message || 'Failed to delete question');
-      })
-    );
+  deleteQuestion(questionnaireId: string, questionId: string): Observable<ApiResponse<any>> {
+    return this.apiService.delete<any>(`/categoryquestionnairetemplates/${questionnaireId}/questions/${questionId}`);
   }
 
-  getCountByCategoryId(categoryId: string): Observable<number> {
-    return this.apiService.get<number>(`/categoryquestionnairetemplates/category/${categoryId}/count`).pipe(
-      map(response => {
-        if (response.success && response.data !== undefined) {
-          return response.data;
-        }
-        throw new Error(response.message || 'Failed to get questionnaire count');
-      })
-    );
+  getCountByCategoryId(categoryId: string): Observable<ApiResponse<number>> {
+    return this.apiService.get<number>(`/categoryquestionnairetemplates/category/${categoryId}/count`);
   }
 
-  updateOrder(questionnaires: Questionnaire[]): Observable<Questionnaire[]> {
+  updateOrder(questionnaires: Questionnaire[]): Observable<ApiResponse<Questionnaire[]>> {
     const orderUpdates = questionnaires.map(questionnaire => ({
       id: questionnaire.id,
       displayOrder: questionnaire.displayOrder
     }));
 
-    return this.apiService.put<Questionnaire[]>('/categoryquestionnairetemplates/order', orderUpdates).pipe(
-      map(response => {
-        if (response.success && response.data) {
-          return response.data;
-        }
-        throw new Error(response.message || 'Failed to update questionnaire order');
-      })
-    );
+    return this.apiService.put<Questionnaire[]>('/categoryquestionnairetemplates/order', orderUpdates);
+  }
+
+  checkTitleExists(title: string): Observable<ApiResponse<{exists: boolean}>> {
+    return this.apiService.get<{exists: boolean}>(`/categoryquestionnairetemplates/check-title/${encodeURIComponent(title)}`);
   }
 } 

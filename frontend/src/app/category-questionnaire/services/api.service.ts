@@ -37,6 +37,23 @@ export class ApiService {
     });
   }
 
+  getBlob(endpoint: string, params?: any): Observable<Blob> {
+    let httpParams = new HttpParams();
+    if (params) {
+      Object.keys(params).forEach(key => {
+        if (params[key] !== null && params[key] !== undefined) {
+          httpParams = httpParams.set(key, params[key].toString());
+        }
+      });
+    }
+
+    return this.http.get(`${this.baseUrl}${endpoint}`, {
+      headers: this.getHeaders(),
+      params: httpParams,
+      responseType: 'blob'
+    });
+  }
+
   post<T>(endpoint: string, data: any): Observable<ApiResponse<T>> {
     return this.http.post<ApiResponse<T>>(`${this.baseUrl}${endpoint}`, data, {
       headers: this.getHeaders()

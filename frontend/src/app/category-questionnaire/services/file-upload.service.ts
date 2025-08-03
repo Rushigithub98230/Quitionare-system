@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { environment } from '../../environments/environment';
+import { ApiService } from './api.service';
+import { ApiResponse } from '../models/api-response.model';
 
 export interface FileUploadResponse {
   success: boolean;
@@ -14,23 +14,21 @@ export interface FileUploadResponse {
   providedIn: 'root'
 })
 export class FileUploadService {
-  private apiUrl = `${environment.apiUrl}/upload`;
+  constructor(private apiService: ApiService) {}
 
-  constructor(private http: HttpClient) {}
-
-  uploadFile(file: File): Observable<FileUploadResponse> {
+  uploadFile(file: File): Observable<ApiResponse<FileUploadResponse>> {
     const formData = new FormData();
     formData.append('file', file);
     
-    return this.http.post<FileUploadResponse>(this.apiUrl, formData);
+    return this.apiService.post<FileUploadResponse>('/upload', formData);
   }
 
-  uploadMultipleFiles(files: File[]): Observable<FileUploadResponse[]> {
+  uploadMultipleFiles(files: File[]): Observable<ApiResponse<FileUploadResponse[]>> {
     const formData = new FormData();
     files.forEach((file, index) => {
       formData.append(`files[${index}]`, file);
     });
     
-    return this.http.post<FileUploadResponse[]>(`${this.apiUrl}/multiple`, formData);
+    return this.apiService.post<FileUploadResponse[]>('/upload/multiple', formData);
   }
 } 

@@ -40,6 +40,23 @@ public class CategoriesController : ControllerBase
         return await _categoryService.GetByIdAsync(id, null);
     }
 
+    [HttpGet("check-name/{name}")]
+    public async Task<ActionResult<JsonModel>> CheckNameExists(string name)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            return BadRequest(new JsonModel
+            {
+                Success = false,
+                Message = "Category name is required",
+                StatusCode = HttpStatusCodes.BadRequest
+            });
+        }
+
+        // TODO: Re-enable authentication for production
+        return await _categoryService.CheckNameExistsAsync(name, null);
+    }
+
     [HttpPost]
     public async Task<ActionResult<JsonModel>> Create(CreateCategoryDto dto)
     {
@@ -94,6 +111,24 @@ public class CategoriesController : ControllerBase
     {
         // TODO: Re-enable authentication for production
         return await _categoryService.RestoreAsync(id, null);
+    }
+
+    [HttpPost("{id}/deactivate")]
+    public async Task<ActionResult<JsonModel>> Deactivate(Guid id)
+    {
+        return await _categoryService.DeactivateAsync(id, null);
+    }
+
+    [HttpPost("{id}/reactivate")]
+    public async Task<ActionResult<JsonModel>> Reactivate(Guid id)
+    {
+        return await _categoryService.ReactivateAsync(id, null);
+    }
+
+    [HttpGet("deactivated")]
+    public async Task<ActionResult<JsonModel>> GetDeactivated()
+    {
+        return await _categoryService.GetDeactivatedAsync(null);
     }
 
     // Category order management endpoint

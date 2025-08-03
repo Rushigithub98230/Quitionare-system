@@ -367,8 +367,14 @@ export class QuestionListComponent implements OnInit {
 
   loadQuestionTypes(): void {
     this.questionService.getQuestionTypes().subscribe({
-      next: (types) => {
-        this.questionTypes = types || [];
+      next: (response) => {
+        if (response.statusCode === 200 && response.data) {
+          this.questionTypes = response.data;
+        } else {
+          console.error('Error loading question types:', response.message);
+          this.snackBar.open('Error loading question types: ' + response.message, 'Close', { duration: 3000 });
+          this.questionTypes = [];
+        }
       },
       error: (error) => {
         console.error('Error loading question types:', error);
@@ -386,27 +392,14 @@ export class QuestionListComponent implements OnInit {
     
     this.loading = true;
     this.questionService.getQuestionsByQuestionnaireId(this.questionnaire.id).subscribe({
-      next: (response: any) => {
-        // Handle both array and object responses
-        let questions: any[] = [];
-        if (response && typeof response === 'object' && !Array.isArray(response)) {
-          // If response is an object, try to extract questions from it
-          if (response.data && Array.isArray(response.data)) {
-            questions = response.data;
-          } else if (response.questions && Array.isArray(response.questions)) {
-            questions = response.questions;
-          } else {
-            console.warn('Unexpected response format:', response);
-            questions = [];
-          }
-        } else if (Array.isArray(response)) {
-          questions = response;
+      next: (response) => {
+        if (response.statusCode === 200 && response.data) {
+          this.questions = response.data.sort((a, b) => a.displayOrder - b.displayOrder);
         } else {
-          console.warn('Response is not an array:', response);
-          questions = [];
+          console.warn('Failed to load questions:', response.message);
+          this.snackBar.open('Error loading questions: ' + response.message, 'Close', { duration: 3000 });
+          this.questions = [];
         }
-        
-        this.questions = questions.sort((a, b) => a.displayOrder - b.displayOrder);
         this.loading = false;
       },
       error: (error) => {
@@ -574,23 +567,31 @@ export class QuestionListComponent implements OnInit {
     // For simplicity, we'll delete existing options and create new ones
     // In a production app, you'd want to handle updates more efficiently
     this.questionService.getQuestionOptions(this.questionnaire.id, questionId).subscribe({
-      next: (existingOptions) => {
-        // Delete existing options
-        const deletePromises = existingOptions.map(option => 
-          this.questionService.deleteQuestionOption(this.questionnaire.id, questionId, option.id)
-        );
-
-        Promise.all(deletePromises).then(() => {
-          // Create new options
-          const createPromises = options.map(option => 
-            this.questionService.createQuestionOption(this.questionnaire.id, questionId, option)
+      next: (response) => {
+        if (response.statusCode === 200 && response.data) {
+          const existingOptions = response.data;
+          // Delete existing options
+          const deletePromises = existingOptions.map(option => 
+            this.questionService.deleteQuestionOption(this.questionnaire.id, questionId, option.id)
           );
 
-          Promise.all(createPromises).then(() => {
-            this.loadQuestions(); // Refresh the questions list
-            this.snackBar.open('Question and options updated successfully', 'Close', { duration: 3000 });
+          Promise.all(deletePromises).then(() => {
+            // Create new options
+            const createPromises = options.map(option => 
+              this.questionService.createQuestionOption(this.questionnaire.id, questionId, option)
+            );
+
+            Promise.all(createPromises).then(() => {
+              this.loadQuestions(); // Refresh the questions list
+              this.snackBar.open('Question and options updated successfully', 'Close', { duration: 3000 });
+            });
           });
-        });
+        } else {
+          this.snackBar.open('Error loading question options: ' + response.message, 'Close', { duration: 3000 });
+        }
+      },
+      error: (error) => {
+        this.snackBar.open('Error loading question options: ' + error.message, 'Close', { duration: 3000 });
       }
     });
   }
@@ -666,10 +667,14 @@ export class QuestionListComponent implements OnInit {
     }
 
     this.questionService.updateQuestionOrder(this.questionnaire.id, this.questions).subscribe({
-      next: (updatedQuestions) => {
-        this.questions = updatedQuestions;
-        this.snackBar.open('Question order updated successfully!', 'Close', { duration: 3000 });
-        this.showQuestionOrderManager = false;
+      next: (response) => {
+        if (response.statusCode === 200 && response.data) {
+          this.questions = response.data;
+          this.snackBar.open('Question order updated successfully!', 'Close', { duration: 3000 });
+          this.showQuestionOrderManager = false;
+        } else {
+          this.snackBar.open('Error updating question order: ' + response.message, 'Close', { duration: 5000 });
+        }
       },
       error: (error) => {
         this.snackBar.open('Error updating question order: ' + error.message, 'Close', { duration: 5000 });

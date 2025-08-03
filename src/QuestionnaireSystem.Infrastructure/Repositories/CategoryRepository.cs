@@ -172,15 +172,111 @@ public class CategoryRepository : ICategoryRepository
             .AnyAsync(c => c.Id == id);
     }
 
-    public async Task<bool> NameExistsAsync(string name, Guid? excludeId = null)
+    public async Task<bool> NameExistsAsync(string name, Guid? excludeId = null, bool includeInactive = true)
     {
+        Console.WriteLine($"Repository: Checking name '{name}' with excludeId: {excludeId}, includeInactive: {includeInactive}");
+        
         var query = _context.Categories.AsQueryable();
+        
+        // Exclude soft-deleted categories
+        query = query.Where(c => c.DeletedAt == null);
         
         if (excludeId.HasValue)
             query = query.Where(c => c.Id != excludeId.Value);
 
-        return await query
-            .AnyAsync(c => c.Name == name);
+        // If includeInactive is false, only check active categories
+        if (!includeInactive)
+            query = query.Where(c => c.IsActive);
+
+        // Log the SQL query
+        var sql = query.Where(c => c.Name == name).ToQueryString();
+        Console.WriteLine($"Repository: SQL Query: {sql}");
+        
+        var exists = await query.AnyAsync(c => c.Name == name);
+        Console.WriteLine($"Repository: Name '{name}' exists: {exists}");
+        
+        return exists;
+    }
+
+    public async Task<bool> NameExistsInactiveAsync(string name, Guid? excludeId = null)
+    {
+        Console.WriteLine($"Repository: Checking inactive name '{name}' with excludeId: {excludeId}");
+        
+        var query = _context.Categories.AsQueryable();
+        
+        // Exclude soft-deleted categories and only check inactive ones
+        query = query.Where(c => c.DeletedAt == null && !c.IsActive);
+        
+        if (excludeId.HasValue)
+            query = query.Where(c => c.Id != excludeId.Value);
+
+        var exists = await query.AnyAsync(c => c.Name == name);
+        Console.WriteLine($"Repository: Inactive name '{name}' exists: {exists}");
+        
+        return exists;
+    }
+
+    public async Task<bool> DeactivateAsync(Guid id)
+    {
+        var category = await _context.Categories
+            .Include(c => c.QuestionnaireTemplate)
+            .FirstOrDefaultAsync(c => c.Id == id && c.DeletedAt == null);
+        
+        if (category == null) return false;
+
+        // Deactivate the category
+        category.IsActive = false;
+        category.UpdatedAt = DateTime.UtcNow;
+
+        // Deactivate all questionnaires associated with this category
+        var questionnaires = await _context.CategoryQuestionnaireTemplates
+            .Where(qt => qt.CategoryId == id && qt.DeletedAt == null)
+            .ToListAsync();
+
+        foreach (var questionnaire in questionnaires)
+        {
+            questionnaire.IsActive = false;
+            questionnaire.UpdatedAt = DateTime.UtcNow;
+        }
+
+        await _context.SaveChangesAsync();
+        return true;
+    }
+
+    public async Task<bool> ReactivateAsync(Guid id)
+    {
+        var category = await _context.Categories
+            .Include(c => c.QuestionnaireTemplate)
+            .FirstOrDefaultAsync(c => c.Id == id && c.DeletedAt == null);
+        
+        if (category == null) return false;
+
+        // Reactivate the category
+        category.IsActive = true;
+        category.UpdatedAt = DateTime.UtcNow;
+
+        // Reactivate all questionnaires associated with this category
+        var questionnaires = await _context.CategoryQuestionnaireTemplates
+            .Where(qt => qt.CategoryId == id && qt.DeletedAt == null)
+            .ToListAsync();
+
+        foreach (var questionnaire in questionnaires)
+        {
+            questionnaire.IsActive = true;
+            questionnaire.UpdatedAt = DateTime.UtcNow;
+        }
+
+        await _context.SaveChangesAsync();
+        return true;
+    }
+
+    public async Task<IEnumerable<Category>> GetDeactivatedAsync()
+    {
+        return await _context.Categories
+            .Where(c => c.DeletedAt == null && !c.IsActive)
+            .Include(c => c.QuestionnaireTemplate)
+            .OrderBy(c => c.UpdatedAt)
+            .ToListAsync();
     }
 
     public async Task<int> GetMaxDisplayOrderAsync()
