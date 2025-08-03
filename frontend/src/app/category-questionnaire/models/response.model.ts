@@ -1,6 +1,6 @@
 export interface Response {
   id: string;
-  userId: string;
+  userId: number;
   userName?: string;
   questionnaireId: string;
   questionnaireTitle?: string;
@@ -11,9 +11,9 @@ export interface Response {
   isCompleted: boolean;
   isDraft: boolean;
   timeTaken?: number; // in minutes
-  createdAt: string;
-  updatedAt: string;
-  deletedAt?: string;
+  createdDate: string;
+  updatedDate: string;
+  deletedDate?: string;
   questionCount?: number;
   answeredQuestions?: number;
   completionPercentage?: number;
@@ -107,7 +107,7 @@ export interface ResponseFilter {
   questionnaireId?: string;
   dateRange?: string;
   completionStatus?: string;
-  userId?: string;
+  userId?: number;
   startDate?: string;
   endDate?: string;
 }

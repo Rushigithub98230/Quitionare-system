@@ -70,8 +70,7 @@ public class UserQuestionResponseService : IUserQuestionResponseService
                 CompletedAt = now,
                 IsCompleted = true,
                 IsDraft = false,
-                CreatedAt = now,
-                UpdatedAt = now,
+
                 QuestionResponses = dto.Responses.Select(r => 
                 {
                     var questionResponseId = Guid.NewGuid();
@@ -94,14 +93,13 @@ public class UserQuestionResponseService : IUserQuestionResponseService
                         FileName = r.FileUrl?.Split('/').LastOrDefault(),
                         FileSize = null, // TODO: Implement file size tracking
                         FileType = r.FileUrl?.Split('.').LastOrDefault(),
-                        CreatedAt = now,
-                        UpdatedAt = now,
+                        
                         OptionResponses = r.SelectedOptionIds?.Select(optionId => new QuestionOptionResponse
                         {
                             Id = Guid.NewGuid(),
                             QuestionResponseId = questionResponseId,
                             OptionId = optionId,
-                            CreatedAt = now
+
                         }).ToList() ?? new List<QuestionOptionResponse>()
                     };
                 }).ToList()

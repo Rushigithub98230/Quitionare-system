@@ -31,13 +31,13 @@ export class AuthService {
   login(loginDto: LoginDto): Observable<User> {
     // Return seeded admin user since authentication is disabled
     const adminUser: User = {
-      id: '00000000-0000-0000-0000-000000000001',
+      id: 1,
       firstName: 'Admin',
       lastName: 'User',
       email: 'admin@questionnaire.com',
       role: 'Admin',
       category: 'System Administrator',
-      createdAt: new Date().toISOString()
+      createdDate: new Date().toISOString()
     };
 
     localStorage.setItem('token', 'hardcoded-admin-token');
@@ -54,13 +54,13 @@ export class AuthService {
   register(registerDto: RegisterDto): Observable<User> {
     // Return seeded admin user since authentication is disabled
     const adminUser: User = {
-      id: '00000000-0000-0000-0000-000000000001',
+      id: 1,
       firstName: 'Admin',
       lastName: 'User',
       email: 'admin@questionnaire.com',
       role: 'Admin',
       category: 'System Administrator',
-      createdAt: new Date().toISOString()
+      createdDate: new Date().toISOString()
     };
 
     localStorage.setItem('token', 'hardcoded-admin-token');

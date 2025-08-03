@@ -30,6 +30,174 @@ public class QuestionnaireDbContext : DbContext
         modelBuilder.Entity<CategoryQuestion>()
             .ToTable("Questions");
 
+        // Configure User entity with int ID
+        modelBuilder.Entity<User>()
+            .Property(u => u.Id)
+            .ValueGeneratedOnAdd();
+
+        // Configure BaseEntity relationships
+        modelBuilder.Entity<CategoryQuestionnaireTemplate>()
+            .HasOne(b => b.CreatedByUser)
+            .WithMany()
+            .HasForeignKey(b => b.CreatedBy)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<CategoryQuestionnaireTemplate>()
+            .HasOne(b => b.UpdatedByUser)
+            .WithMany()
+            .HasForeignKey(b => b.UpdatedBy)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<CategoryQuestionnaireTemplate>()
+            .HasOne(b => b.DeletedByUser)
+            .WithMany()
+            .HasForeignKey(b => b.DeletedBy)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<Category>()
+            .HasOne(b => b.CreatedByUser)
+            .WithMany()
+            .HasForeignKey(b => b.CreatedBy)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<Category>()
+            .HasOne(b => b.UpdatedByUser)
+            .WithMany()
+            .HasForeignKey(b => b.UpdatedBy)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<Category>()
+            .HasOne(b => b.DeletedByUser)
+            .WithMany()
+            .HasForeignKey(b => b.DeletedBy)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<CategoryQuestion>()
+            .HasOne(b => b.CreatedByUser)
+            .WithMany()
+            .HasForeignKey(b => b.CreatedBy)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<CategoryQuestion>()
+            .HasOne(b => b.UpdatedByUser)
+            .WithMany()
+            .HasForeignKey(b => b.UpdatedBy)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<CategoryQuestion>()
+            .HasOne(b => b.DeletedByUser)
+            .WithMany()
+            .HasForeignKey(b => b.DeletedBy)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<QuestionOption>()
+            .HasOne(b => b.CreatedByUser)
+            .WithMany()
+            .HasForeignKey(b => b.CreatedBy)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<QuestionOption>()
+            .HasOne(b => b.UpdatedByUser)
+            .WithMany()
+            .HasForeignKey(b => b.UpdatedBy)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<QuestionOption>()
+            .HasOne(b => b.DeletedByUser)
+            .WithMany()
+            .HasForeignKey(b => b.DeletedBy)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<UserQuestionResponse>()
+            .HasOne(b => b.CreatedByUser)
+            .WithMany()
+            .HasForeignKey(b => b.CreatedBy)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<UserQuestionResponse>()
+            .HasOne(b => b.UpdatedByUser)
+            .WithMany()
+            .HasForeignKey(b => b.UpdatedBy)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<UserQuestionResponse>()
+            .HasOne(b => b.DeletedByUser)
+            .WithMany()
+            .HasForeignKey(b => b.DeletedBy)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<QuestionResponse>()
+            .HasOne(b => b.CreatedByUser)
+            .WithMany()
+            .HasForeignKey(b => b.CreatedBy)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<QuestionResponse>()
+            .HasOne(b => b.UpdatedByUser)
+            .WithMany()
+            .HasForeignKey(b => b.UpdatedBy)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<QuestionResponse>()
+            .HasOne(b => b.DeletedByUser)
+            .WithMany()
+            .HasForeignKey(b => b.DeletedBy)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<QuestionOptionResponse>()
+            .HasOne(b => b.CreatedByUser)
+            .WithMany()
+            .HasForeignKey(b => b.CreatedBy)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<QuestionOptionResponse>()
+            .HasOne(b => b.UpdatedByUser)
+            .WithMany()
+            .HasForeignKey(b => b.UpdatedBy)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<QuestionOptionResponse>()
+            .HasOne(b => b.DeletedByUser)
+            .WithMany()
+            .HasForeignKey(b => b.DeletedBy)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<QuestionType>()
+            .HasOne(b => b.CreatedByUser)
+            .WithMany()
+            .HasForeignKey(b => b.CreatedBy)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<QuestionType>()
+            .HasOne(b => b.UpdatedByUser)
+            .WithMany()
+            .HasForeignKey(b => b.UpdatedBy)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<QuestionType>()
+            .HasOne(b => b.DeletedByUser)
+            .WithMany()
+            .HasForeignKey(b => b.DeletedBy)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<User>()
+            .HasOne(b => b.CreatedByUser)
+            .WithMany()
+            .HasForeignKey(b => b.CreatedBy)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<User>()
+            .HasOne(b => b.UpdatedByUser)
+            .WithMany()
+            .HasForeignKey(b => b.UpdatedBy)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<User>()
+            .HasOne(b => b.DeletedByUser)
+            .WithMany()
+            .HasForeignKey(b => b.DeletedBy)
+            .OnDelete(DeleteBehavior.Restrict);
+
         // Configure relationships and constraints
         modelBuilder.Entity<CategoryQuestionnaireTemplate>()
             .HasOne(q => q.Category)
@@ -37,14 +205,7 @@ public class QuestionnaireDbContext : DbContext
             .HasForeignKey<CategoryQuestionnaireTemplate>(q => q.CategoryId)
             .OnDelete(DeleteBehavior.Cascade);
 
-        // TODO: Re-enable authentication for production
-        // Make CreatedBy relationship optional temporarily
-        modelBuilder.Entity<CategoryQuestionnaireTemplate>()
-            .HasOne(q => q.CreatedByUser)
-            .WithMany(u => u.CreatedQuestionnaires)
-            .HasForeignKey(q => q.CreatedBy)
-            .OnDelete(DeleteBehavior.Restrict)
-            .IsRequired(false);
+
 
         modelBuilder.Entity<CategoryQuestion>()
             .HasOne(q => q.Questionnaire)
@@ -111,15 +272,6 @@ public class QuestionnaireDbContext : DbContext
         modelBuilder.Entity<CategoryQuestionnaireTemplate>()
             .HasIndex(qt => qt.IsActive);
 
-        // Temporarily comment out unique constraints to allow migration
-        // modelBuilder.Entity<QuestionnaireTemplate>()
-        //     .HasIndex(qt => qt.CategoryId)
-        //     .IsUnique(); // Ensure one template per category
-
-        // modelBuilder.Entity<Question>()
-        //     .HasIndex(q => new { q.QuestionnaireId, q.DisplayOrder })
-        //     .IsUnique(); // Ensure unique question order within template
-
         modelBuilder.Entity<QuestionOption>()
             .HasIndex(qo => new { qo.QuestionId, qo.DisplayOrder });
 
@@ -131,13 +283,25 @@ public class QuestionnaireDbContext : DbContext
 
         // Global query filters for soft deletes
         modelBuilder.Entity<Category>()
-            .HasQueryFilter(c => c.DeletedAt == null);
+            .HasQueryFilter(c => c.DeletedDate == null);
 
         modelBuilder.Entity<CategoryQuestionnaireTemplate>()
-            .HasQueryFilter(qt => qt.DeletedAt == null);
+            .HasQueryFilter(qt => qt.DeletedDate == null);
 
         modelBuilder.Entity<CategoryQuestion>()
-            .HasQueryFilter(q => q.DeletedAt == null);
+            .HasQueryFilter(q => q.DeletedDate == null);
+
+        modelBuilder.Entity<QuestionOption>()
+            .HasQueryFilter(qo => qo.DeletedDate == null);
+
+        modelBuilder.Entity<QuestionResponse>()
+            .HasQueryFilter(qr => qr.DeletedDate == null);
+
+        modelBuilder.Entity<UserQuestionResponse>()
+            .HasQueryFilter(uqr => uqr.DeletedDate == null);
+
+        modelBuilder.Entity<QuestionOptionResponse>()
+            .HasQueryFilter(qor => qor.DeletedDate == null);
 
         // Seed question types
         modelBuilder.Entity<QuestionType>().HasData(
@@ -175,20 +339,21 @@ public class QuestionnaireDbContext : DbContext
     private void UpdateTimestamps()
     {
         var entries = ChangeTracker.Entries()
-            .Where(e => e.State == EntityState.Modified);
+            .Where(e => e.State == EntityState.Added || e.State == EntityState.Modified);
 
         foreach (var entry in entries)
         {
-            if (entry.Entity is Category category)
-                category.UpdatedAt = DateTime.UtcNow;
-            else if (entry.Entity is CategoryQuestionnaireTemplate template)
-                template.UpdatedAt = DateTime.UtcNow;
-            else if (entry.Entity is CategoryQuestion question)
-                question.UpdatedAt = DateTime.UtcNow;
-            else if (entry.Entity is UserQuestionResponse response)
-                response.UpdatedAt = DateTime.UtcNow;
-            else if (entry.Entity is QuestionResponse questionResponse)
-                questionResponse.UpdatedAt = DateTime.UtcNow;
+            if (entry.Entity is BaseEntity entity)
+            {
+                if (entry.State == EntityState.Added)
+                {
+                    entity.CreatedDate = DateTime.UtcNow;
+                }
+                else if (entry.State == EntityState.Modified)
+                {
+                    entity.UpdatedDate = DateTime.UtcNow;
+                }
+            }
         }
     }
 } 

@@ -236,8 +236,8 @@ public class CategoriesController : ControllerBase
                         IsMostPopular = updatedCategory.IsMostPopular,
                         IsTrending = updatedCategory.IsTrending,
                         IsActive = updatedCategory.IsActive,
-                        CreatedAt = updatedCategory.CreatedAt,
-                        UpdatedAt = updatedCategory.UpdatedAt
+                        CreatedDate = updatedCategory.CreatedDate,
+                        UpdatedDate = updatedCategory.UpdatedDate
                     });
                 }
             }
@@ -261,9 +261,9 @@ public class CategoriesController : ControllerBase
                 isMostPopular = c.IsMostPopular,
                 isTrending = c.IsTrending,
                 isActive = c.IsActive,
-                createdAt = c.CreatedAt,
-                updatedAt = c.UpdatedAt,
-                deletedAt = c.DeletedAt
+                createdDate = c.CreatedDate,
+                updatedDate = c.UpdatedDate,
+                deletedDate = c.DeletedDate
             }).ToList();
 
             return Ok(new JsonModel

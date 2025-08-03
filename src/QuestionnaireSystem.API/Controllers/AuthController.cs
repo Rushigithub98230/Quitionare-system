@@ -68,7 +68,7 @@ public class AuthController : ControllerBase
             Email = AdminConstants.AdminEmail,
             Role = AdminConstants.AdminRole,
             Category = "System Administrator",
-            CreatedAt = DateTime.UtcNow.AddDays(-30)
+            CreatedDate = DateTime.UtcNow.AddDays(-30)
         };
         
         return Ok(new JsonModel

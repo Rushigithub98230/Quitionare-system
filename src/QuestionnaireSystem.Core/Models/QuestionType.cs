@@ -2,7 +2,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace QuestionnaireSystem.Core.Models;
 
-public class QuestionType
+public class QuestionType : BaseEntity
 {
     public Guid Id { get; set; } = Guid.NewGuid();
     
@@ -21,8 +21,6 @@ public class QuestionType
     public bool SupportsImage { get; set; } = false;
     
     public string? ValidationRules { get; set; } // JSON string
-    
-    public bool IsActive { get; set; } = true;
     
     // Navigation properties
     public virtual ICollection<CategoryQuestion> Questions { get; set; } = new List<CategoryQuestion>();

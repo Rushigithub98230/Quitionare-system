@@ -2,7 +2,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace QuestionnaireSystem.Core.Models;
 
-public class CategoryQuestion
+public class CategoryQuestion : BaseEntity
 {
     public Guid Id { get; set; } = Guid.NewGuid();
     
@@ -44,12 +44,6 @@ public class CategoryQuestion
     public string? ConditionalLogic { get; set; } // JSON string
     
     public string? Settings { get; set; } // JSON string
-    
-    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-    
-    public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
-    
-    public DateTime? DeletedAt { get; set; }
     
     // Navigation properties
     [System.Text.Json.Serialization.JsonIgnore]

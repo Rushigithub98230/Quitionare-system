@@ -2,7 +2,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace QuestionnaireSystem.Core.Models;
 
-public class Category
+public class Category : BaseEntity
 {
     public Guid Id { get; set; } = Guid.NewGuid();
     
@@ -18,8 +18,6 @@ public class Category
     
     [MaxLength(100)]
     public string? Color { get; set; }
-    
-    public bool IsActive { get; set; } = true;
     
     public int DisplayOrder { get; set; }
     
@@ -43,12 +41,6 @@ public class Category
     public bool IsMostPopular { get; set; } = false;
     
     public bool IsTrending { get; set; } = false;
-    
-    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-    
-    public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
-    
-    public DateTime? DeletedAt { get; set; }
     
     // Navigation properties - One-to-One relationship
     [System.Text.Json.Serialization.JsonIgnore]

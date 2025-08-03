@@ -11,7 +11,7 @@ public interface ICategoryQuestionnaireTemplateService
     Task<JsonModel> GetAllAsync();
     Task<JsonModel> GetByCategoryIdAsync(Guid categoryId);
     Task<JsonModel> GetActiveAsync();
-    Task<JsonModel> GetByUserIdAsync(Guid userId);
+    Task<JsonModel> GetByUserIdAsync(int userId);
     Task<JsonModel> CreateAsync(CreateCategoryQuestionnaireTemplateDto createDto);
     Task<JsonModel> UpdateAsync(Guid id, UpdateCategoryQuestionnaireTemplateDto updateDto);
     Task<JsonModel> DeleteAsync(Guid id);

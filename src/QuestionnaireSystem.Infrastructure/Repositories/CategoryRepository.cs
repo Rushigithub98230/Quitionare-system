@@ -18,7 +18,7 @@ public class CategoryRepository : ICategoryRepository
     {
         return await _context.Categories
             .Include(c => c.QuestionnaireTemplate)
-            .FirstOrDefaultAsync(c => c.Id == id && c.DeletedAt == null);
+            .FirstOrDefaultAsync(c => c.Id == id && c.DeletedDate == null);
     }
 
     public async Task<Category?> GetByNameAsync(string name)
@@ -32,7 +32,7 @@ public class CategoryRepository : ICategoryRepository
         var query = _context.Categories.AsQueryable();
         
         // Always exclude soft-deleted categories
-        query = query.Where(c => c.DeletedAt == null);
+        query = query.Where(c => c.DeletedDate == null);
         
         if (!includeInactive)
             query = query.Where(c => c.IsActive);
@@ -48,9 +48,9 @@ public class CategoryRepository : ICategoryRepository
     {
         return await _context.Categories
             .IgnoreQueryFilters()
-            .Where(c => c.DeletedAt != null)
+            .Where(c => c.DeletedDate != null)
             .Include(c => c.QuestionnaireTemplate)
-            .OrderBy(c => c.DeletedAt)
+            .OrderBy(c => c.DeletedDate)
             .ToListAsync();
     }
 
@@ -77,38 +77,38 @@ public class CategoryRepository : ICategoryRepository
         if (category == null) return false;
 
         // Soft delete the category
-        category.DeletedAt = DateTime.UtcNow;
-        category.UpdatedAt = DateTime.UtcNow;
+        category.DeletedDate = DateTime.UtcNow;
+        category.IsDeleted = true;
 
         // Cascade soft delete all questionnaires associated with this category
         var questionnaires = await _context.CategoryQuestionnaireTemplates
-            .Where(qt => qt.CategoryId == id && qt.DeletedAt == null)
+            .Where(qt => qt.CategoryId == id && qt.DeletedDate == null)
             .ToListAsync();
 
         foreach (var questionnaire in questionnaires)
         {
-            questionnaire.DeletedAt = DateTime.UtcNow;
-            questionnaire.UpdatedAt = DateTime.UtcNow;
+            questionnaire.DeletedDate = DateTime.UtcNow;
+            questionnaire.IsDeleted = true;
 
             // Cascade soft delete all questions in this questionnaire
             var questions = await _context.CategoryQuestions
-                .Where(q => q.QuestionnaireId == questionnaire.Id && q.DeletedAt == null)
+                .Where(q => q.QuestionnaireId == questionnaire.Id && q.DeletedDate == null)
                 .ToListAsync();
 
             foreach (var question in questions)
             {
-                question.DeletedAt = DateTime.UtcNow;
-                question.UpdatedAt = DateTime.UtcNow;
+                question.DeletedDate = DateTime.UtcNow;
+                question.IsDeleted = true;
 
                 // Cascade soft delete all options for this question
                 var options = await _context.QuestionOptions
-                    .Where(qo => qo.QuestionId == question.Id && qo.DeletedAt == null)
+                    .Where(o => o.QuestionId == question.Id)
                     .ToListAsync();
 
                 foreach (var option in options)
                 {
-                    option.DeletedAt = DateTime.UtcNow;
-                    option.UpdatedAt = DateTime.UtcNow;
+                    option.DeletedDate = DateTime.UtcNow;
+                    option.IsDeleted = true;
                 }
             }
         }
@@ -121,43 +121,46 @@ public class CategoryRepository : ICategoryRepository
     {
         var category = await _context.Categories
             .IgnoreQueryFilters()
-            .FirstOrDefaultAsync(c => c.Id == id && c.DeletedAt != null);
-        
+            .Include(c => c.QuestionnaireTemplate)
+            .FirstOrDefaultAsync(c => c.Id == id);
         if (category == null) return false;
 
         // Restore the category
-        category.DeletedAt = null;
-        category.UpdatedAt = DateTime.UtcNow;
+        category.DeletedDate = null;
+        category.IsDeleted = false;
 
         // Cascade restore all questionnaires associated with this category
         var questionnaires = await _context.CategoryQuestionnaireTemplates
-            .Where(qt => qt.CategoryId == id && qt.DeletedAt != null)
+            .IgnoreQueryFilters()
+            .Where(qt => qt.CategoryId == id && qt.DeletedDate != null)
             .ToListAsync();
 
         foreach (var questionnaire in questionnaires)
         {
-            questionnaire.DeletedAt = null;
-            questionnaire.UpdatedAt = DateTime.UtcNow;
+            questionnaire.DeletedDate = null;
+            questionnaire.IsDeleted = false;
 
             // Cascade restore all questions in this questionnaire
             var questions = await _context.CategoryQuestions
-                .Where(q => q.QuestionnaireId == questionnaire.Id && q.DeletedAt != null)
+                .IgnoreQueryFilters()
+                .Where(q => q.QuestionnaireId == questionnaire.Id && q.DeletedDate != null)
                 .ToListAsync();
 
             foreach (var question in questions)
             {
-                question.DeletedAt = null;
-                question.UpdatedAt = DateTime.UtcNow;
+                question.DeletedDate = null;
+                question.IsDeleted = false;
 
                 // Cascade restore all options for this question
                 var options = await _context.QuestionOptions
-                    .Where(qo => qo.QuestionId == question.Id && qo.DeletedAt != null)
+                    .IgnoreQueryFilters()
+                    .Where(o => o.QuestionId == question.Id && o.DeletedDate != null)
                     .ToListAsync();
 
                 foreach (var option in options)
                 {
-                    option.DeletedAt = null;
-                    option.UpdatedAt = DateTime.UtcNow;
+                    option.DeletedDate = null;
+                    option.IsDeleted = false;
                 }
             }
         }
@@ -169,76 +172,42 @@ public class CategoryRepository : ICategoryRepository
     public async Task<bool> ExistsAsync(Guid id)
     {
         return await _context.Categories
-            .AnyAsync(c => c.Id == id);
+            .AnyAsync(c => c.Id == id && c.DeletedDate == null);
     }
 
     public async Task<bool> NameExistsAsync(string name, Guid? excludeId = null, bool includeInactive = true)
     {
-        Console.WriteLine($"Repository: Checking name '{name}' with excludeId: {excludeId}, includeInactive: {includeInactive}");
-        
         var query = _context.Categories.AsQueryable();
         
-        // Exclude soft-deleted categories
-        query = query.Where(c => c.DeletedAt == null);
-        
+        if (includeInactive)
+            query = query.IgnoreQueryFilters();
+        else
+            query = query.Where(c => c.DeletedDate == null);
+
         if (excludeId.HasValue)
             query = query.Where(c => c.Id != excludeId.Value);
 
-        // If includeInactive is false, only check active categories
-        if (!includeInactive)
-            query = query.Where(c => c.IsActive);
-
-        // Log the SQL query
-        var sql = query.Where(c => c.Name == name).ToQueryString();
-        Console.WriteLine($"Repository: SQL Query: {sql}");
-        
-        var exists = await query.AnyAsync(c => c.Name == name);
-        Console.WriteLine($"Repository: Name '{name}' exists: {exists}");
-        
-        return exists;
+        return await query.AnyAsync(c => c.Name == name);
     }
 
     public async Task<bool> NameExistsInactiveAsync(string name, Guid? excludeId = null)
     {
-        Console.WriteLine($"Repository: Checking inactive name '{name}' with excludeId: {excludeId}");
-        
-        var query = _context.Categories.AsQueryable();
-        
-        // Exclude soft-deleted categories and only check inactive ones
-        query = query.Where(c => c.DeletedAt == null && !c.IsActive);
-        
+        var query = _context.Categories
+            .IgnoreQueryFilters()
+            .Where(c => c.DeletedDate != null);
+
         if (excludeId.HasValue)
             query = query.Where(c => c.Id != excludeId.Value);
 
-        var exists = await query.AnyAsync(c => c.Name == name);
-        Console.WriteLine($"Repository: Inactive name '{name}' exists: {exists}");
-        
-        return exists;
+        return await query.AnyAsync(c => c.Name == name);
     }
 
     public async Task<bool> DeactivateAsync(Guid id)
     {
-        var category = await _context.Categories
-            .Include(c => c.QuestionnaireTemplate)
-            .FirstOrDefaultAsync(c => c.Id == id && c.DeletedAt == null);
-        
+        var category = await GetByIdAsync(id);
         if (category == null) return false;
 
-        // Deactivate the category
         category.IsActive = false;
-        category.UpdatedAt = DateTime.UtcNow;
-
-        // Deactivate all questionnaires associated with this category
-        var questionnaires = await _context.CategoryQuestionnaireTemplates
-            .Where(qt => qt.CategoryId == id && qt.DeletedAt == null)
-            .ToListAsync();
-
-        foreach (var questionnaire in questionnaires)
-        {
-            questionnaire.IsActive = false;
-            questionnaire.UpdatedAt = DateTime.UtcNow;
-        }
-
         await _context.SaveChangesAsync();
         return true;
     }
@@ -246,26 +215,11 @@ public class CategoryRepository : ICategoryRepository
     public async Task<bool> ReactivateAsync(Guid id)
     {
         var category = await _context.Categories
-            .Include(c => c.QuestionnaireTemplate)
-            .FirstOrDefaultAsync(c => c.Id == id && c.DeletedAt == null);
-        
+            .IgnoreQueryFilters()
+            .FirstOrDefaultAsync(c => c.Id == id);
         if (category == null) return false;
 
-        // Reactivate the category
         category.IsActive = true;
-        category.UpdatedAt = DateTime.UtcNow;
-
-        // Reactivate all questionnaires associated with this category
-        var questionnaires = await _context.CategoryQuestionnaireTemplates
-            .Where(qt => qt.CategoryId == id && qt.DeletedAt == null)
-            .ToListAsync();
-
-        foreach (var questionnaire in questionnaires)
-        {
-            questionnaire.IsActive = true;
-            questionnaire.UpdatedAt = DateTime.UtcNow;
-        }
-
         await _context.SaveChangesAsync();
         return true;
     }
@@ -273,16 +227,18 @@ public class CategoryRepository : ICategoryRepository
     public async Task<IEnumerable<Category>> GetDeactivatedAsync()
     {
         return await _context.Categories
-            .Where(c => c.DeletedAt == null && !c.IsActive)
+            .IgnoreQueryFilters()
+            .Where(c => !c.IsActive && c.DeletedDate == null)
             .Include(c => c.QuestionnaireTemplate)
-            .OrderBy(c => c.UpdatedAt)
+            .OrderBy(c => c.DisplayOrder)
+            .ThenBy(c => c.Name)
             .ToListAsync();
     }
 
     public async Task<int> GetMaxDisplayOrderAsync()
     {
         var maxOrder = await _context.Categories
-            .Where(c => c.DeletedAt == null)
+            .Where(c => c.DeletedDate == null)
             .MaxAsync(c => (int?)c.DisplayOrder);
         
         return maxOrder ?? 0;

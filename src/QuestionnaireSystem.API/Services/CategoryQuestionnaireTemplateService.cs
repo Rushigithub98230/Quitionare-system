@@ -206,11 +206,11 @@ public class CategoryQuestionnaireTemplateService : ICategoryQuestionnaireTempla
         }
     }
 
-    public async Task<JsonModel> GetByUserIdAsync(Guid userId)
+    public async Task<JsonModel> GetByUserIdAsync(int userId)
     {
         try
-    {
-        var questionnaires = await _questionnaireRepository.GetByUserIdAsync(userId);
+        {
+            var questionnaires = await _questionnaireRepository.GetByUserIdAsync(userId);
             var dtos = _mapper.Map<IEnumerable<CategoryQuestionnaireTemplateSummaryDto>>(questionnaires);
             return new JsonModel
             {
@@ -401,8 +401,7 @@ public class CategoryQuestionnaireTemplateService : ICategoryQuestionnaireTempla
 
         // Create questionnaire
         var questionnaire = _mapper.Map<CategoryQuestionnaireTemplate>(createDto);
-        questionnaire.CreatedAt = DateTime.UtcNow;
-        questionnaire.UpdatedAt = DateTime.UtcNow;
+        
         
         // Set seeded admin user ID since authentication is disabled
         questionnaire.CreatedBy = AdminConstants.AdminUserId;
@@ -416,8 +415,8 @@ public class CategoryQuestionnaireTemplateService : ICategoryQuestionnaireTempla
             {
                 var question = _mapper.Map<CategoryQuestion>(questionDto);
                 question.QuestionnaireId = questionnaire.Id;
-                question.CreatedAt = DateTime.UtcNow;
-                question.UpdatedAt = DateTime.UtcNow;
+                question.CreatedDate = DateTime.UtcNow;
+                question.UpdatedDate = DateTime.UtcNow;
                     
                     // Create the question first
                     var createdQuestion = await _questionRepository.CreateAsync(question);
@@ -436,8 +435,8 @@ public class CategoryQuestionnaireTemplateService : ICategoryQuestionnaireTempla
                                 DisplayOrder = optionDto.DisplayOrder,
                                 IsCorrect = optionDto.IsCorrect,
                                 IsActive = optionDto.IsActive,
-                                CreatedAt = DateTime.UtcNow,
-                                UpdatedAt = DateTime.UtcNow
+                                CreatedDate = DateTime.UtcNow,
+                                UpdatedDate = DateTime.UtcNow
                             };
                             await _questionRepository.CreateOptionAsync(option);
                         }
@@ -500,7 +499,7 @@ public class CategoryQuestionnaireTemplateService : ICategoryQuestionnaireTempla
 
         // Update questionnaire properties
         _mapper.Map(updateDto, existingQuestionnaire);
-        existingQuestionnaire.UpdatedAt = DateTime.UtcNow;
+        existingQuestionnaire.UpdatedDate = DateTime.UtcNow;
         existingQuestionnaire = await _questionnaireRepository.UpdateAsync(existingQuestionnaire);
 
         // Update questions
@@ -518,8 +517,8 @@ public class CategoryQuestionnaireTemplateService : ICategoryQuestionnaireTempla
             {
                 var question = _mapper.Map<CategoryQuestion>(questionDto);
                 question.QuestionnaireId = id;
-                question.CreatedAt = DateTime.UtcNow;
-                question.UpdatedAt = DateTime.UtcNow;
+                question.CreatedDate = DateTime.UtcNow;
+                question.UpdatedDate = DateTime.UtcNow;
                     
                     // Create the question first
                     var createdQuestion = await _questionRepository.CreateAsync(question);
@@ -538,8 +537,8 @@ public class CategoryQuestionnaireTemplateService : ICategoryQuestionnaireTempla
                                 DisplayOrder = optionDto.DisplayOrder,
                                 IsCorrect = optionDto.IsCorrect,
                                 IsActive = optionDto.IsActive,
-                                CreatedAt = DateTime.UtcNow,
-                                UpdatedAt = DateTime.UtcNow
+                                CreatedDate = DateTime.UtcNow,
+                                UpdatedDate = DateTime.UtcNow
                             };
                             await _questionRepository.CreateOptionAsync(option);
                         }
@@ -745,9 +744,9 @@ public class CategoryQuestionnaireTemplateService : ICategoryQuestionnaireTempla
                 validationRules = q.ValidationRules,
                 conditionalLogic = q.ConditionalLogic,
                 settings = q.Settings,
-                createdAt = q.CreatedAt,
-                updatedAt = q.UpdatedAt,
-                deletedAt = q.DeletedAt,
+                createdDate = q.CreatedDate,
+                updatedDate = q.UpdatedDate,
+                deletedDate = q.DeletedDate,
                 options = q.Options == null ? new List<object>() : q.Options.Select(o => new
                 {
                     id = o.Id,
@@ -757,8 +756,8 @@ public class CategoryQuestionnaireTemplateService : ICategoryQuestionnaireTempla
                     displayOrder = o.DisplayOrder,
                     isCorrect = o.IsCorrect,
                     isActive = o.IsActive,
-                    createdAt = o.CreatedAt,
-                    updatedAt = o.UpdatedAt
+                    createdDate = o.CreatedDate,
+                    updatedDate = o.UpdatedDate
                 }).Cast<object>().ToList()
             }).ToList();
 
@@ -1024,8 +1023,8 @@ public class CategoryQuestionnaireTemplateService : ICategoryQuestionnaireTempla
             // Create the question with options
             var question = _mapper.Map<CategoryQuestion>(questionDto);
             question.QuestionnaireId = questionnaireId;
-            question.CreatedAt = DateTime.UtcNow;
-            question.UpdatedAt = DateTime.UtcNow;
+            question.CreatedDate = DateTime.UtcNow;
+            question.UpdatedDate = DateTime.UtcNow;
 
             var createdQuestion = await _questionRepository.CreateAsync(question);
 
@@ -1043,8 +1042,8 @@ public class CategoryQuestionnaireTemplateService : ICategoryQuestionnaireTempla
                         DisplayOrder = optionDto.DisplayOrder,
                         IsCorrect = optionDto.IsCorrect,
                         IsActive = optionDto.IsActive,
-                        CreatedAt = DateTime.UtcNow,
-                        UpdatedAt = DateTime.UtcNow
+                        CreatedDate = DateTime.UtcNow,
+                        UpdatedDate = DateTime.UtcNow
                     };
                     await _questionRepository.CreateOptionAsync(option);
                 }
@@ -1154,9 +1153,9 @@ public class CategoryQuestionnaireTemplateService : ICategoryQuestionnaireTempla
                 ValidationRules = questionDto.ValidationRules,
                 ConditionalLogic = questionDto.ConditionalLogic,
                 Settings = questionDto.Settings,
-                CreatedAt = existingQuestion.CreatedAt,
-                UpdatedAt = DateTime.UtcNow,
-                DeletedAt = existingQuestion.DeletedAt
+                CreatedDate = existingQuestion.CreatedDate,
+                UpdatedDate = DateTime.UtcNow,
+                DeletedDate = existingQuestion.DeletedDate
             };
 
             var result = await _questionRepository.UpdateAsync(updatedQuestion);
@@ -1255,8 +1254,8 @@ public class CategoryQuestionnaireTemplateService : ICategoryQuestionnaireTempla
                             DisplayOrder = optionDto.DisplayOrder,
                             IsCorrect = optionDto.IsCorrect,
                             IsActive = optionDto.IsActive,
-                            CreatedAt = DateTime.UtcNow,
-                            UpdatedAt = DateTime.UtcNow
+                            CreatedDate = DateTime.UtcNow,
+                            UpdatedDate = DateTime.UtcNow
                         };
                         await _questionRepository.CreateOptionAsync(option);
                     }
@@ -1337,8 +1336,8 @@ public class CategoryQuestionnaireTemplateService : ICategoryQuestionnaireTempla
                             DisplayOrder = optionDto.DisplayOrder,
                             IsCorrect = optionDto.IsCorrect,
                             IsActive = optionDto.IsActive,
-                            CreatedAt = DateTime.UtcNow,
-                            UpdatedAt = DateTime.UtcNow
+                            CreatedDate = DateTime.UtcNow,
+                            UpdatedDate = DateTime.UtcNow
                         };
                         await _questionRepository.CreateOptionAsync(option);
                     }
@@ -1563,8 +1562,8 @@ public class CategoryQuestionnaireTemplateService : ICategoryQuestionnaireTempla
 
             var option = _mapper.Map<QuestionOption>(optionDto);
             option.QuestionId = questionId;
-            option.CreatedAt = DateTime.UtcNow;
-            option.UpdatedAt = DateTime.UtcNow;
+            option.CreatedDate = DateTime.UtcNow;
+            option.UpdatedDate = DateTime.UtcNow;
 
             var createdOption = await _questionRepository.CreateOptionAsync(option);
 
@@ -1622,7 +1621,7 @@ public class CategoryQuestionnaireTemplateService : ICategoryQuestionnaireTempla
                 };
 
             _mapper.Map(optionDto, option);
-            option.UpdatedAt = DateTime.UtcNow;
+            option.UpdatedDate = DateTime.UtcNow;
             var updatedOption = await _questionRepository.UpdateOptionAsync(option);
 
             return new JsonModel
@@ -1738,7 +1737,7 @@ public class CategoryQuestionnaireTemplateService : ICategoryQuestionnaireTempla
             {
                 var question = await _questionRepository.GetByIdAsync(orderUpdate.Id);
                 question.DisplayOrder = orderUpdate.DisplayOrder;
-                question.UpdatedAt = DateTime.UtcNow;
+                question.UpdatedDate = DateTime.UtcNow;
                 await _questionRepository.UpdateAsync(question);
             }
 

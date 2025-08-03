@@ -20,12 +20,26 @@ namespace QuestionnaireSystem.API.Migrations
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     Name = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
                     Description = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true),
-                    Color = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: true),
-                    IsActive = table.Column<bool>(type: "bit", nullable: false),
+                    Icon = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
+                    Color = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
                     DisplayOrder = table.Column<int>(type: "int", nullable: false),
-                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    DeletedAt = table.Column<DateTime>(type: "datetime2", nullable: true)
+                    Features = table.Column<string>(type: "nvarchar(1000)", maxLength: 1000, nullable: true),
+                    ConsultationDescription = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true),
+                    BasePrice = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
+                    RequiresQuestionnaireAssessment = table.Column<bool>(type: "bit", nullable: false),
+                    AllowsMedicationDelivery = table.Column<bool>(type: "bit", nullable: false),
+                    AllowsFollowUpMessaging = table.Column<bool>(type: "bit", nullable: false),
+                    OneTimeConsultationDurationMinutes = table.Column<int>(type: "int", nullable: false),
+                    IsMostPopular = table.Column<bool>(type: "bit", nullable: false),
+                    IsTrending = table.Column<bool>(type: "bit", nullable: false),
+                    IsActive = table.Column<bool>(type: "bit", nullable: false),
+                    IsDeleted = table.Column<bool>(type: "bit", nullable: false),
+                    CreatedBy = table.Column<int>(type: "int", nullable: true),
+                    CreatedDate = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    UpdatedBy = table.Column<int>(type: "int", nullable: true),
+                    UpdatedDate = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    DeletedBy = table.Column<int>(type: "int", nullable: true),
+                    DeletedDate = table.Column<DateTime>(type: "datetime2", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -44,11 +58,45 @@ namespace QuestionnaireSystem.API.Migrations
                     SupportsFileUpload = table.Column<bool>(type: "bit", nullable: false),
                     SupportsImage = table.Column<bool>(type: "bit", nullable: false),
                     ValidationRules = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    IsActive = table.Column<bool>(type: "bit", nullable: false)
+                    IsActive = table.Column<bool>(type: "bit", nullable: false),
+                    IsDeleted = table.Column<bool>(type: "bit", nullable: false),
+                    CreatedBy = table.Column<int>(type: "int", nullable: true),
+                    CreatedDate = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    UpdatedBy = table.Column<int>(type: "int", nullable: true),
+                    UpdatedDate = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    DeletedBy = table.Column<int>(type: "int", nullable: true),
+                    DeletedDate = table.Column<DateTime>(type: "datetime2", nullable: true)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_QuestionTypes", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Users",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    FirstName = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
+                    LastName = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
+                    Email = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    PasswordHash = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Role = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Category = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    LastLoginAt = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    IsActive = table.Column<bool>(type: "bit", nullable: false),
+                    IsDeleted = table.Column<bool>(type: "bit", nullable: false),
+                    CreatedBy = table.Column<int>(type: "int", nullable: true),
+                    CreatedDate = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    UpdatedBy = table.Column<int>(type: "int", nullable: true),
+                    UpdatedDate = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    DeletedBy = table.Column<int>(type: "int", nullable: true),
+                    DeletedDate = table.Column<DateTime>(type: "datetime2", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Users", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -59,14 +107,17 @@ namespace QuestionnaireSystem.API.Migrations
                     Title = table.Column<string>(type: "nvarchar(255)", maxLength: 255, nullable: false),
                     Description = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     CategoryId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    IsActive = table.Column<bool>(type: "bit", nullable: false),
                     IsMandatory = table.Column<bool>(type: "bit", nullable: false),
                     DisplayOrder = table.Column<int>(type: "int", nullable: false),
                     Version = table.Column<int>(type: "int", nullable: false),
-                    CreatedBy = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    DeletedAt = table.Column<DateTime>(type: "datetime2", nullable: true)
+                    IsActive = table.Column<bool>(type: "bit", nullable: false),
+                    IsDeleted = table.Column<bool>(type: "bit", nullable: false),
+                    CreatedBy = table.Column<int>(type: "int", nullable: true),
+                    CreatedDate = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    UpdatedBy = table.Column<int>(type: "int", nullable: true),
+                    UpdatedDate = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    DeletedBy = table.Column<int>(type: "int", nullable: true),
+                    DeletedDate = table.Column<DateTime>(type: "datetime2", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -76,33 +127,7 @@ namespace QuestionnaireSystem.API.Migrations
                         column: x => x.CategoryId,
                         principalTable: "Categories",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "PatientQuestionnaireAssignments",
-                columns: table => new
-                {
-                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    PatientId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    QuestionnaireId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    AssignedBy = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    AssignedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    DueDate = table.Column<DateTime>(type: "datetime2", nullable: true),
-                    Status = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
-                    NotificationSent = table.Column<bool>(type: "bit", nullable: false),
-                    ReminderCount = table.Column<int>(type: "int", nullable: false),
-                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_PatientQuestionnaireAssignments", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_PatientQuestionnaireAssignments_QuestionnaireTemplates_QuestionnaireId",
-                        column: x => x.QuestionnaireId,
-                        principalTable: "QuestionnaireTemplates",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -118,14 +143,23 @@ namespace QuestionnaireSystem.API.Migrations
                     SectionName = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
                     HelpText = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     Placeholder = table.Column<string>(type: "nvarchar(255)", maxLength: 255, nullable: true),
+                    MinLength = table.Column<int>(type: "int", nullable: true),
+                    MaxLength = table.Column<int>(type: "int", nullable: true),
+                    MinValue = table.Column<decimal>(type: "decimal(18,2)", nullable: true),
+                    MaxValue = table.Column<decimal>(type: "decimal(18,2)", nullable: true),
                     ImageUrl = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     ImageAltText = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     ValidationRules = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     ConditionalLogic = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     Settings = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    DeletedAt = table.Column<DateTime>(type: "datetime2", nullable: true)
+                    IsActive = table.Column<bool>(type: "bit", nullable: false),
+                    IsDeleted = table.Column<bool>(type: "bit", nullable: false),
+                    CreatedBy = table.Column<int>(type: "int", nullable: true),
+                    CreatedDate = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    UpdatedBy = table.Column<int>(type: "int", nullable: true),
+                    UpdatedDate = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    DeletedBy = table.Column<int>(type: "int", nullable: true),
+                    DeletedDate = table.Column<DateTime>(type: "datetime2", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -145,12 +179,11 @@ namespace QuestionnaireSystem.API.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "PatientResponses",
+                name: "UserQuestionResponses",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    AssignmentId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    PatientId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    UserId = table.Column<int>(type: "int", nullable: false),
                     QuestionnaireId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     StartedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
                     CompletedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
@@ -159,24 +192,30 @@ namespace QuestionnaireSystem.API.Migrations
                     SubmissionIp = table.Column<string>(type: "nvarchar(45)", maxLength: 45, nullable: true),
                     UserAgent = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     TimeTaken = table.Column<int>(type: "int", nullable: true),
-                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: false)
+                    IsActive = table.Column<bool>(type: "bit", nullable: false),
+                    IsDeleted = table.Column<bool>(type: "bit", nullable: false),
+                    CreatedBy = table.Column<int>(type: "int", nullable: true),
+                    CreatedDate = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    UpdatedBy = table.Column<int>(type: "int", nullable: true),
+                    UpdatedDate = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    DeletedBy = table.Column<int>(type: "int", nullable: true),
+                    DeletedDate = table.Column<DateTime>(type: "datetime2", nullable: true)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_PatientResponses", x => x.Id);
+                    table.PrimaryKey("PK_UserQuestionResponses", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_PatientResponses_PatientQuestionnaireAssignments_AssignmentId",
-                        column: x => x.AssignmentId,
-                        principalTable: "PatientQuestionnaireAssignments",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_PatientResponses_QuestionnaireTemplates_QuestionnaireId",
+                        name: "FK_UserQuestionResponses_QuestionnaireTemplates_QuestionnaireId",
                         column: x => x.QuestionnaireId,
                         principalTable: "QuestionnaireTemplates",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_UserQuestionResponses_Users_UserId",
+                        column: x => x.UserId,
+                        principalTable: "Users",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -188,9 +227,16 @@ namespace QuestionnaireSystem.API.Migrations
                     OptionText = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: false),
                     OptionValue = table.Column<string>(type: "nvarchar(255)", maxLength: 255, nullable: false),
                     DisplayOrder = table.Column<int>(type: "int", nullable: false),
-                    IsActive = table.Column<bool>(type: "bit", nullable: false),
+                    IsCorrect = table.Column<bool>(type: "bit", nullable: false),
                     HasTextInput = table.Column<bool>(type: "bit", nullable: false),
-                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false)
+                    IsActive = table.Column<bool>(type: "bit", nullable: false),
+                    IsDeleted = table.Column<bool>(type: "bit", nullable: false),
+                    CreatedBy = table.Column<int>(type: "int", nullable: true),
+                    CreatedDate = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    UpdatedBy = table.Column<int>(type: "int", nullable: true),
+                    UpdatedDate = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    DeletedBy = table.Column<int>(type: "int", nullable: true),
+                    DeletedDate = table.Column<DateTime>(type: "datetime2", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -220,24 +266,30 @@ namespace QuestionnaireSystem.API.Migrations
                     FileName = table.Column<string>(type: "nvarchar(255)", maxLength: 255, nullable: true),
                     FileSize = table.Column<int>(type: "int", nullable: true),
                     FileType = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
-                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: false)
+                    IsActive = table.Column<bool>(type: "bit", nullable: false),
+                    IsDeleted = table.Column<bool>(type: "bit", nullable: false),
+                    CreatedBy = table.Column<int>(type: "int", nullable: true),
+                    CreatedDate = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    UpdatedBy = table.Column<int>(type: "int", nullable: true),
+                    UpdatedDate = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    DeletedBy = table.Column<int>(type: "int", nullable: true),
+                    DeletedDate = table.Column<DateTime>(type: "datetime2", nullable: true)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_QuestionResponses", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_QuestionResponses_PatientResponses_ResponseId",
-                        column: x => x.ResponseId,
-                        principalTable: "PatientResponses",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
                         name: "FK_QuestionResponses_Questions_QuestionId",
                         column: x => x.QuestionId,
                         principalTable: "Questions",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_QuestionResponses_UserQuestionResponses_ResponseId",
+                        column: x => x.ResponseId,
+                        principalTable: "UserQuestionResponses",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -248,7 +300,14 @@ namespace QuestionnaireSystem.API.Migrations
                     QuestionResponseId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     OptionId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     CustomText = table.Column<string>(type: "nvarchar(1000)", maxLength: 1000, nullable: true),
-                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false)
+                    IsActive = table.Column<bool>(type: "bit", nullable: false),
+                    IsDeleted = table.Column<bool>(type: "bit", nullable: false),
+                    CreatedBy = table.Column<int>(type: "int", nullable: true),
+                    CreatedDate = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    UpdatedBy = table.Column<int>(type: "int", nullable: true),
+                    UpdatedDate = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    DeletedBy = table.Column<int>(type: "int", nullable: true),
+                    DeletedDate = table.Column<DateTime>(type: "datetime2", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -269,23 +328,23 @@ namespace QuestionnaireSystem.API.Migrations
 
             migrationBuilder.InsertData(
                 table: "QuestionTypes",
-                columns: new[] { "Id", "Description", "DisplayName", "HasOptions", "IsActive", "SupportsFileUpload", "SupportsImage", "TypeName", "ValidationRules" },
+                columns: new[] { "Id", "CreatedBy", "CreatedDate", "DeletedBy", "DeletedDate", "Description", "DisplayName", "HasOptions", "IsActive", "IsDeleted", "SupportsFileUpload", "SupportsImage", "TypeName", "UpdatedBy", "UpdatedDate", "ValidationRules" },
                 values: new object[,]
                 {
-                    { new Guid("11111111-1111-1111-1111-111111111111"), null, "Text Input", false, true, false, true, "text", null },
-                    { new Guid("22222222-2222-2222-2222-222222222222"), null, "Text Area", false, true, false, true, "textarea", null },
-                    { new Guid("33333333-3333-3333-3333-333333333333"), null, "Radio Button", true, true, false, true, "radio", null },
-                    { new Guid("44444444-4444-4444-4444-444444444444"), null, "Checkbox", true, true, false, true, "checkbox", null },
-                    { new Guid("55555555-5555-5555-5555-555555555555"), null, "Dropdown", true, true, false, true, "select", null },
-                    { new Guid("66666666-6666-6666-6666-666666666666"), null, "Multi-Select", true, true, false, true, "multiselect", null },
-                    { new Guid("77777777-7777-7777-7777-777777777777"), null, "Number", false, true, false, true, "number", null },
-                    { new Guid("88888888-8888-8888-8888-888888888888"), null, "Date", false, true, false, true, "date", null },
-                    { new Guid("99999999-9999-9999-9999-999999999999"), null, "Email", false, true, false, true, "email", null },
-                    { new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"), null, "Phone", false, true, false, true, "phone", null },
-                    { new Guid("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"), null, "File Upload", false, true, true, true, "file", null },
-                    { new Guid("cccccccc-cccc-cccc-cccc-cccccccccccc"), null, "Rating Scale", false, true, false, true, "rating", null },
-                    { new Guid("dddddddd-dddd-dddd-dddd-dddddddddddd"), null, "Slider", false, true, false, true, "slider", null },
-                    { new Guid("eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee"), null, "Yes/No", true, true, false, true, "yes_no", null }
+                    { new Guid("11111111-1111-1111-1111-111111111111"), null, null, null, null, null, "Text Input", false, true, false, false, true, "text", null, null, null },
+                    { new Guid("22222222-2222-2222-2222-222222222222"), null, null, null, null, null, "Text Area", false, true, false, false, true, "textarea", null, null, null },
+                    { new Guid("33333333-3333-3333-3333-333333333333"), null, null, null, null, null, "Radio Button", true, true, false, false, true, "radio", null, null, null },
+                    { new Guid("44444444-4444-4444-4444-444444444444"), null, null, null, null, null, "Checkbox", true, true, false, false, true, "checkbox", null, null, null },
+                    { new Guid("55555555-5555-5555-5555-555555555555"), null, null, null, null, null, "Dropdown", true, true, false, false, true, "select", null, null, null },
+                    { new Guid("66666666-6666-6666-6666-666666666666"), null, null, null, null, null, "Multi-Select", true, true, false, false, true, "multiselect", null, null, null },
+                    { new Guid("77777777-7777-7777-7777-777777777777"), null, null, null, null, null, "Number", false, true, false, false, true, "number", null, null, null },
+                    { new Guid("88888888-8888-8888-8888-888888888888"), null, null, null, null, null, "Date", false, true, false, false, true, "date", null, null, null },
+                    { new Guid("99999999-9999-9999-9999-999999999999"), null, null, null, null, null, "Email", false, true, false, false, true, "email", null, null, null },
+                    { new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"), null, null, null, null, null, "Phone", false, true, false, false, true, "phone", null, null, null },
+                    { new Guid("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"), null, null, null, null, null, "File Upload", false, true, false, true, true, "file", null, null, null },
+                    { new Guid("cccccccc-cccc-cccc-cccc-cccccccccccc"), null, null, null, null, null, "Rating Scale", false, true, false, false, true, "rating", null, null, null },
+                    { new Guid("dddddddd-dddd-dddd-dddd-dddddddddddd"), null, null, null, null, null, "Slider", false, true, false, false, true, "slider", null, null, null },
+                    { new Guid("eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee"), null, null, null, null, null, "Yes/No", true, true, false, false, true, "yes_no", null, null, null }
                 });
 
             migrationBuilder.CreateIndex(
@@ -300,34 +359,10 @@ namespace QuestionnaireSystem.API.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "IX_PatientQuestionnaireAssignments_PatientId",
-                table: "PatientQuestionnaireAssignments",
-                column: "PatientId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_PatientQuestionnaireAssignments_QuestionnaireId",
-                table: "PatientQuestionnaireAssignments",
-                column: "QuestionnaireId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_PatientQuestionnaireAssignments_Status",
-                table: "PatientQuestionnaireAssignments",
-                column: "Status");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_PatientResponses_AssignmentId",
-                table: "PatientResponses",
-                column: "AssignmentId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_PatientResponses_QuestionnaireId",
-                table: "PatientResponses",
-                column: "QuestionnaireId");
-
-            migrationBuilder.CreateIndex(
                 name: "IX_QuestionnaireTemplates_CategoryId",
                 table: "QuestionnaireTemplates",
-                column: "CategoryId");
+                column: "CategoryId",
+                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_QuestionnaireTemplates_IsActive",
@@ -360,14 +395,24 @@ namespace QuestionnaireSystem.API.Migrations
                 column: "ResponseId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Questions_QuestionnaireId_DisplayOrder",
+                name: "IX_Questions_QuestionnaireId",
                 table: "Questions",
-                columns: new[] { "QuestionnaireId", "DisplayOrder" });
+                column: "QuestionnaireId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Questions_QuestionTypeId",
                 table: "Questions",
                 column: "QuestionTypeId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_UserQuestionResponses_QuestionnaireId",
+                table: "UserQuestionResponses",
+                column: "QuestionnaireId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_UserQuestionResponses_UserId",
+                table: "UserQuestionResponses",
+                column: "UserId");
         }
 
         /// <inheritdoc />
@@ -383,19 +428,19 @@ namespace QuestionnaireSystem.API.Migrations
                 name: "QuestionResponses");
 
             migrationBuilder.DropTable(
-                name: "PatientResponses");
-
-            migrationBuilder.DropTable(
                 name: "Questions");
 
             migrationBuilder.DropTable(
-                name: "PatientQuestionnaireAssignments");
+                name: "UserQuestionResponses");
 
             migrationBuilder.DropTable(
                 name: "QuestionTypes");
 
             migrationBuilder.DropTable(
                 name: "QuestionnaireTemplates");
+
+            migrationBuilder.DropTable(
+                name: "Users");
 
             migrationBuilder.DropTable(
                 name: "Categories");

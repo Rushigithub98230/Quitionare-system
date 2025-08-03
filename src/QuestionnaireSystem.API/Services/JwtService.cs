@@ -98,7 +98,7 @@ namespace QuestionnaireSystem.API.Services
 
                 var user = new UserDto
                 {
-                    Id = Guid.Parse(userIdClaim.Value),
+                    Id = int.Parse(userIdClaim.Value),
                     Email = emailClaim.Value,
                     FirstName = firstNameClaim?.Value ?? "",
                     LastName = lastNameClaim?.Value ?? "",

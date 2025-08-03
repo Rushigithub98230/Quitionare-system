@@ -135,8 +135,7 @@ public class CategoryService : ICategoryService
                 category.DisplayOrder = maxOrder + 1;
             }
             
-            category.CreatedAt = DateTime.UtcNow;
-            category.UpdatedAt = DateTime.UtcNow;
+
 
             var createdCategory = await _categoryRepository.CreateAsync(category);
             var categoryDto = _mapper.Map<CategoryDto>(createdCategory);
@@ -180,7 +179,7 @@ public class CategoryService : ICategoryService
                 };
 
             _mapper.Map(dto, existingCategory);
-            existingCategory.UpdatedAt = DateTime.UtcNow;
+
 
             var updatedCategory = await _categoryRepository.UpdateAsync(existingCategory);
             var categoryDto = _mapper.Map<CategoryDto>(updatedCategory);

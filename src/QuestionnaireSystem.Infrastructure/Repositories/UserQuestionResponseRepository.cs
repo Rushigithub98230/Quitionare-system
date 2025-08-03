@@ -30,14 +30,20 @@ public class UserQuestionResponseRepository : IUserQuestionResponseRepository
             .FirstOrDefaultAsync(uqr => uqr.Id == id);
     }
 
-    public async Task<List<UserQuestionResponse>> GetByUserAsync(Guid userId)
+    public async Task<List<UserQuestionResponse>> GetByUserAsync(int userId)
     {
         return await _context.UserQuestionResponses
             .Include(uqr => uqr.Questionnaire)
             .ThenInclude(q => q.Category)
             .Include(uqr => uqr.QuestionResponses)
+            .ThenInclude(qr => qr.Question)
+            .Include(uqr => uqr.QuestionResponses)
+            .ThenInclude(qr => qr.Question.QuestionType)
+            .Include(uqr => uqr.QuestionResponses)
+            .ThenInclude(qr => qr.OptionResponses)
+            .ThenInclude(qor => qor.Option)
             .Where(uqr => uqr.UserId == userId)
-            .OrderByDescending(uqr => uqr.CreatedAt)
+            .OrderByDescending(uqr => uqr.CreatedDate)
             .ToListAsync();
     }
 
@@ -48,8 +54,14 @@ public class UserQuestionResponseRepository : IUserQuestionResponseRepository
             .Include(uqr => uqr.Questionnaire)
             .ThenInclude(q => q.Category)
             .Include(uqr => uqr.QuestionResponses)
+            .ThenInclude(qr => qr.Question)
+            .Include(uqr => uqr.QuestionResponses)
+            .ThenInclude(qr => qr.Question.QuestionType)
+            .Include(uqr => uqr.QuestionResponses)
+            .ThenInclude(qr => qr.OptionResponses)
+            .ThenInclude(qor => qor.Option)
             .Where(uqr => uqr.QuestionnaireId == questionnaireId)
-            .OrderByDescending(uqr => uqr.CreatedAt)
+            .OrderByDescending(uqr => uqr.CreatedDate)
             .ToListAsync();
     }
 
@@ -60,7 +72,13 @@ public class UserQuestionResponseRepository : IUserQuestionResponseRepository
             .Include(uqr => uqr.Questionnaire)
             .ThenInclude(q => q.Category)
             .Include(uqr => uqr.QuestionResponses)
-            .OrderByDescending(uqr => uqr.CreatedAt)
+            .ThenInclude(qr => qr.Question)
+            .Include(uqr => uqr.QuestionResponses)
+            .ThenInclude(qr => qr.Question.QuestionType)
+            .Include(uqr => uqr.QuestionResponses)
+            .ThenInclude(qr => qr.OptionResponses)
+            .ThenInclude(qor => qor.Option)
+            .OrderByDescending(uqr => uqr.CreatedDate)
             .ToListAsync();
     }
 
@@ -68,8 +86,6 @@ public class UserQuestionResponseRepository : IUserQuestionResponseRepository
     {
         try
         {
-
-
             _context.UserQuestionResponses.Add(response);
             await _context.SaveChangesAsync();
             return response;
@@ -118,6 +134,7 @@ public class UserQuestionResponseRepository : IUserQuestionResponseRepository
     public async Task<List<QuestionResponse>> GetByResponseIdAsync(Guid responseId)
     {
         return await _context.QuestionResponses
+            .Include(qr => qr.Question)
             .Include(qr => qr.OptionResponses)
             .ThenInclude(qor => qor.Option)
             .Where(qr => qr.ResponseId == responseId)

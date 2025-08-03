@@ -18,9 +18,9 @@ export interface Question {
   validationRules?: string;
   conditionalLogic?: string;
   settings?: string;
-  createdAt: string;
-  updatedAt: string;
-  deletedAt?: string;
+  createdDate: string;
+  updatedDate: string;
+  deletedDate?: string;
   questionnaire?: Questionnaire;
   questionType?: QuestionType;
   options: QuestionOption[];
@@ -88,8 +88,8 @@ export interface QuestionOption {
   displayOrder: number;
   isCorrect?: boolean;
   isActive: boolean;
-  createdAt: string;
-  updatedAt: string;
+  createdDate: string;
+  updatedDate: string;
   question?: Question;
 }
 
@@ -119,9 +119,9 @@ export interface QuestionResponse {
   selectedOptionIds: string[];
   fileUrl?: string;
   imageUrl?: string;
-  createdAt: string;
-  updatedAt: string;
-  deletedAt?: string;
+  createdDate: string;
+  updatedDate: string;
+  deletedDate?: string;
   question?: Question;
   userQuestionResponse?: UserQuestionResponse;
 }

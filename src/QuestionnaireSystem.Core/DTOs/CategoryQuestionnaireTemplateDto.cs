@@ -25,15 +25,15 @@ public class CategoryQuestionnaireTemplateDto
     public int Version { get; set; } = 1;
     
     [Required]
-    public Guid CreatedBy { get; set; }
+    public int CreatedBy { get; set; }
     
     public string CreatedByUserName { get; set; } = string.Empty;
     
-    public DateTime CreatedAt { get; set; }
+    public DateTime? CreatedDate { get; set; }
     
-    public DateTime UpdatedAt { get; set; }
+    public DateTime? UpdatedDate { get; set; }
     
-    public DateTime? DeletedAt { get; set; }
+    public DateTime? DeletedDate { get; set; }
     
     public int QuestionCount { get; set; }
     
@@ -63,7 +63,7 @@ public class CreateCategoryQuestionnaireTemplateDto
     public int Version { get; set; } = 1;
     
     // TODO: Re-enable authentication for production
-    public Guid? CreatedBy { get; set; }
+    public int? CreatedBy { get; set; }
     
     public List<CreateCategoryQuestionDto> Questions { get; set; } = new List<CreateCategoryQuestionDto>();
 }
@@ -110,13 +110,13 @@ public class CategoryQuestionnaireTemplateSummaryDto
     public int Version { get; set; } = 1;
     
     // TODO: Re-enable authentication for production
-    public Guid? CreatedBy { get; set; }
+    public int? CreatedBy { get; set; }
     
-    public DateTime CreatedAt { get; set; }
+    public DateTime? CreatedDate { get; set; }
     
-    public DateTime UpdatedAt { get; set; }
+    public DateTime? UpdatedDate { get; set; }
     
-    public DateTime? DeletedAt { get; set; }
+    public DateTime? DeletedDate { get; set; }
     
     // Navigation properties
     public CategoryDto? Category { get; set; }
@@ -146,13 +146,13 @@ public class CategoryQuestionnaireTemplateWithCategoryDto
     public int Version { get; set; } = 1;
     
     [Required]
-    public Guid CreatedBy { get; set; }
+    public int CreatedBy { get; set; }
     
-    public DateTime CreatedAt { get; set; }
+    public DateTime? CreatedDate { get; set; }
     
-    public DateTime UpdatedAt { get; set; }
+    public DateTime? UpdatedDate { get; set; }
     
-    public DateTime? DeletedAt { get; set; }
+    public DateTime? DeletedDate { get; set; }
     
     // Navigation properties
     public CategoryDto? Category { get; set; }
@@ -181,13 +181,13 @@ public class CategoryQuestionnaireTemplateWithResponsesDto
     public int Version { get; set; } = 1;
     
     [Required]
-    public Guid CreatedBy { get; set; }
+    public int CreatedBy { get; set; }
     
-    public DateTime CreatedAt { get; set; }
+    public DateTime? CreatedDate { get; set; }
     
-    public DateTime UpdatedAt { get; set; }
+    public DateTime? UpdatedDate { get; set; }
     
-    public DateTime? DeletedAt { get; set; }
+    public DateTime? DeletedDate { get; set; }
     
     // Navigation properties
     public CategoryDto? Category { get; set; }

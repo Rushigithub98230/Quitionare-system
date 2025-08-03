@@ -8,11 +8,11 @@ export interface Questionnaire {
   isMandatory: boolean;
   displayOrder: number;
   version: number;
-  createdBy: string;
+  createdBy: number;
   createdByUserName: string;
-  createdAt: string;
-  updatedAt: string;
-  deletedAt?: string;
+  createdDate: string;
+  updatedDate: string;
+  deletedDate?: string;
   questionCount: number;
   category?: Category;
   createdByUser?: User;
@@ -28,7 +28,7 @@ export interface CreateQuestionnaireDto {
   isMandatory: boolean;
   displayOrder: number;
   version: number;
-  createdBy?: string;
+  createdBy?: number;
   questions?: CreateQuestionDto[];
 }
 
@@ -52,10 +52,10 @@ export interface QuestionnaireSummary {
   isMandatory: boolean;
   displayOrder: number;
   version: number;
-  createdBy: string;
-  createdAt: string;
-  updatedAt: string;
-  deletedAt?: string;
+  createdBy: number;
+  createdDate: string;
+  updatedDate: string;
+  deletedDate?: string;
   category?: Category;
   createdByUser?: User;
   questionCount: number;

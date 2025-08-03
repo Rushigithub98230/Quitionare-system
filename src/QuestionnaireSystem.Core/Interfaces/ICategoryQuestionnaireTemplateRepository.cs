@@ -13,7 +13,7 @@ public interface ICategoryQuestionnaireTemplateRepository
     Task<IEnumerable<CategoryQuestionnaireTemplateSummaryDto>> GetSummaryAsync();
     Task<IEnumerable<CategoryQuestionnaireTemplate>> GetByCategoryIdAsync(Guid categoryId);
     Task<IEnumerable<CategoryQuestionnaireTemplate>> GetActiveAsync();
-    Task<IEnumerable<CategoryQuestionnaireTemplate>> GetByUserIdAsync(Guid userId);
+    Task<IEnumerable<CategoryQuestionnaireTemplate>> GetByUserIdAsync(int userId);
     Task<CategoryQuestionnaireTemplate> CreateAsync(CategoryQuestionnaireTemplate questionnaire);
     Task<CategoryQuestionnaireTemplate> UpdateAsync(CategoryQuestionnaireTemplate questionnaire);
     Task<bool> DeleteAsync(Guid id);

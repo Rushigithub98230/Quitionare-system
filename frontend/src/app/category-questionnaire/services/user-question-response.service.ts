@@ -189,7 +189,7 @@ export class UserQuestionResponseService {
   }
 
   // Get responses for a specific user
-  getResponsesByUser(userId: string): Observable<ApiResponse<any>> {
+  getResponsesByUser(userId: number): Observable<ApiResponse<any>> {
     return this.apiService.get<any>(`/responses/user/${userId}`);
   }
 

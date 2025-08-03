@@ -2,7 +2,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace QuestionnaireSystem.Core.Models;
 
-public class QuestionResponse
+public class QuestionResponse : BaseEntity
 {
     public Guid Id { get; set; } = Guid.NewGuid();
     
@@ -34,10 +34,6 @@ public class QuestionResponse
     
     [MaxLength(100)]
     public string? FileType { get; set; }
-    
-    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-    
-    public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
     
     // Navigation properties
     [System.Text.Json.Serialization.JsonIgnore]

@@ -41,7 +41,7 @@ public class CategoryQuestionnaireTemplatesController : ControllerBase
     }
 
     [HttpGet("user/{userId}")]
-    public async Task<ActionResult<JsonModel>> GetByUserId(Guid userId)
+    public async Task<ActionResult<JsonModel>> GetByUserId(int userId)
     {
         return await _questionnaireService.GetByUserIdAsync(userId);
     }

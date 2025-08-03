@@ -1,6 +1,6 @@
 export interface UserQuestionResponse {
   id: string;
-  userId: string;
+  userId: number;
   questionnaireId: string;
   questionnaireTitle: string;
   categoryName: string;
@@ -9,16 +9,16 @@ export interface UserQuestionResponse {
   isCompleted: boolean;
   isDraft: boolean;
   timeTaken?: number;
-  createdAt: string;
-  updatedAt: string;
-  deletedAt?: string;
+  createdDate: string;
+  updatedDate: string;
+  deletedDate?: string;
   user?: User;
   questionnaire?: Questionnaire;
   questionResponses: QuestionResponse[];
 }
 
 export interface CreateUserQuestionResponseDto {
-  userId: string;
+  userId: number;
   questionnaireId: string;
   isDraft: boolean;
 }

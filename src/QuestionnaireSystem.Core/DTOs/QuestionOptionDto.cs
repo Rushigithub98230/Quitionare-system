@@ -22,11 +22,11 @@ public class QuestionOptionDto
     
     public bool IsActive { get; set; } = true;
     
-    public DateTime CreatedAt { get; set; }
+    public DateTime? CreatedDate { get; set; }
     
-    public DateTime UpdatedAt { get; set; }
+    public DateTime? UpdatedDate { get; set; }
     
-    public DateTime? DeletedAt { get; set; }
+    public DateTime? DeletedDate { get; set; }
     
     // Navigation properties
     public CategoryQuestionDto? Question { get; set; }

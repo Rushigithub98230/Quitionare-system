@@ -15,9 +15,9 @@ export interface Category {
   oneTimeConsultationDurationMinutes: number;
   isMostPopular: boolean;
   isTrending: boolean;
-  createdAt: string;
-  updatedAt: string;
-  deletedAt?: string;
+  createdDate: string;
+  updatedDate: string;
+  deletedDate?: string;
   hasQuestionnaireTemplate: boolean;
 }
 

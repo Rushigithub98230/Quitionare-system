@@ -2,12 +2,12 @@ using System.ComponentModel.DataAnnotations;
 
 namespace QuestionnaireSystem.Core.Models;
 
-public class UserQuestionResponse
+public class UserQuestionResponse : BaseEntity
 {
     public Guid Id { get; set; } = Guid.NewGuid();
     
     [Required]
-    public Guid UserId { get; set; }
+    public int UserId { get; set; }
     
     [Required]
     public Guid QuestionnaireId { get; set; }
@@ -26,10 +26,6 @@ public class UserQuestionResponse
     public string? UserAgent { get; set; }
     
     public int? TimeTaken { get; set; } // in seconds
-    
-    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-    
-    public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
     
     // Navigation properties
     [System.Text.Json.Serialization.JsonIgnore]

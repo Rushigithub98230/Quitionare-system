@@ -2,7 +2,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace QuestionnaireSystem.Core.Models;
 
-public class QuestionOptionResponse
+public class QuestionOptionResponse : BaseEntity
 {
     public Guid Id { get; set; } = Guid.NewGuid();
     
@@ -14,8 +14,6 @@ public class QuestionOptionResponse
     
     [MaxLength(1000)]
     public string? CustomText { get; set; }
-    
-    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     
     // Navigation properties
     [System.Text.Json.Serialization.JsonIgnore]

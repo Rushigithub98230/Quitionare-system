@@ -294,7 +294,7 @@ export class QuestionnaireDialogComponent implements OnInit {
           isActive: formValue.isActive,
           isMandatory: formValue.isMandatory
           // TODO: Re-enable authentication for production
-          // createdBy: '00000000-0000-0000-0000-000000000001' // Hardcoded admin user ID
+          // createdBy: 1 // Hardcoded admin user ID
         };
         this.dialogRef.close({ action: 'create', data: createDto });
       } else {

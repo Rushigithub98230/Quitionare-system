@@ -1,11 +1,11 @@
 export interface User {
-  id: string;
+  id: number;
   firstName: string;
   lastName: string;
   email: string;
   role: string;
   category?: string;
-  createdAt: string;
+  createdDate: string;
 }
 
 export interface LoginDto {

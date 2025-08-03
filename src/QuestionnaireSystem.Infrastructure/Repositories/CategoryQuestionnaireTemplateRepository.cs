@@ -19,7 +19,7 @@ public class CategoryQuestionnaireTemplateRepository : ICategoryQuestionnaireTem
     {
         return await _context.CategoryQuestionnaireTemplates
             .Include(q => q.Category)
-            .FirstOrDefaultAsync(q => q.Id == id && q.DeletedAt == null);
+            .FirstOrDefaultAsync(q => q.Id == id && q.DeletedDate == null);
     }
 
     public async Task<CategoryQuestionnaireTemplate?> GetByIdWithQuestionsAsync(Guid id)
@@ -29,7 +29,7 @@ public class CategoryQuestionnaireTemplateRepository : ICategoryQuestionnaireTem
                 .ThenInclude(question => question.QuestionType)
             .Include(q => q.Questions.OrderBy(question => question.DisplayOrder))
                 .ThenInclude(question => question.Options.OrderBy(option => option.DisplayOrder))
-            .FirstOrDefaultAsync(q => q.Id == id && q.DeletedAt == null);
+            .FirstOrDefaultAsync(q => q.Id == id && q.DeletedDate == null);
     }
 
     public async Task<CategoryQuestionnaireTemplate?> GetByIdWithCategoryAsync(Guid id)
@@ -41,7 +41,7 @@ public class CategoryQuestionnaireTemplateRepository : ICategoryQuestionnaireTem
                 .ThenInclude(question => question.QuestionType)
             .Include(q => q.Questions.OrderBy(question => question.DisplayOrder))
                 .ThenInclude(question => question.Options.OrderBy(option => option.DisplayOrder))
-            .FirstOrDefaultAsync(q => q.Id == id && q.DeletedAt == null);
+            .FirstOrDefaultAsync(q => q.Id == id && q.DeletedDate == null);
     }
 
     public async Task<CategoryQuestionnaireTemplate?> GetByIdWithResponsesAsync(Guid id)
@@ -61,7 +61,7 @@ public class CategoryQuestionnaireTemplateRepository : ICategoryQuestionnaireTem
             .Include(q => q.UserResponses)
                 .ThenInclude(response => response.QuestionResponses.OrderBy(r => r.Question.DisplayOrder))
                 .ThenInclude(response => response.OptionResponses)
-            .FirstOrDefaultAsync(q => q.Id == id && q.DeletedAt == null);
+            .FirstOrDefaultAsync(q => q.Id == id && q.DeletedDate == null);
     }
 
     public async Task<IEnumerable<CategoryQuestionnaireTemplate>> GetAllAsync()
@@ -69,7 +69,7 @@ public class CategoryQuestionnaireTemplateRepository : ICategoryQuestionnaireTem
         return await _context.CategoryQuestionnaireTemplates
             .Include(q => q.Category)
             .Include(q => q.CreatedByUser)
-            .Where(q => q.DeletedAt == null)
+            .Where(q => q.DeletedDate == null)
             .OrderBy(q => q.DisplayOrder)
             .ThenBy(q => q.Title)
             .ToListAsync();
@@ -80,7 +80,7 @@ public class CategoryQuestionnaireTemplateRepository : ICategoryQuestionnaireTem
         return await _context.CategoryQuestionnaireTemplates
             .Include(q => q.Category)
             .Include(q => q.CreatedByUser)
-            .Where(q => q.CategoryId == categoryId && q.DeletedAt == null)
+            .Where(q => q.CategoryId == categoryId && q.DeletedDate == null)
             .OrderBy(q => q.DisplayOrder)
             .ThenBy(q => q.Title)
             .ToListAsync();
@@ -91,18 +91,18 @@ public class CategoryQuestionnaireTemplateRepository : ICategoryQuestionnaireTem
         return await _context.CategoryQuestionnaireTemplates
             .Include(q => q.Category)
             .Include(q => q.CreatedByUser)
-            .Where(q => q.IsActive && q.DeletedAt == null)
+            .Where(q => q.IsActive && q.DeletedDate == null)
             .OrderBy(q => q.DisplayOrder)
             .ThenBy(q => q.Title)
             .ToListAsync();
     }
 
-    public async Task<IEnumerable<CategoryQuestionnaireTemplate>> GetByUserIdAsync(Guid userId)
+    public async Task<IEnumerable<CategoryQuestionnaireTemplate>> GetByUserIdAsync(int userId)
     {
         return await _context.CategoryQuestionnaireTemplates
             .Include(q => q.Category)
             .Include(q => q.CreatedByUser)
-            .Where(q => q.CreatedBy == userId && q.DeletedAt == null)
+            .Where(q => q.CreatedBy == userId && q.DeletedDate == null)
             .OrderBy(q => q.DisplayOrder)
             .ThenBy(q => q.Title)
             .ToListAsync();
@@ -110,9 +110,6 @@ public class CategoryQuestionnaireTemplateRepository : ICategoryQuestionnaireTem
 
     public async Task<CategoryQuestionnaireTemplate> CreateAsync(CategoryQuestionnaireTemplate questionnaire)
     {
-        questionnaire.CreatedAt = DateTime.UtcNow;
-        questionnaire.UpdatedAt = DateTime.UtcNow;
-        
         _context.CategoryQuestionnaireTemplates.Add(questionnaire);
         await _context.SaveChangesAsync();
         
@@ -121,8 +118,6 @@ public class CategoryQuestionnaireTemplateRepository : ICategoryQuestionnaireTem
 
     public async Task<CategoryQuestionnaireTemplate> UpdateAsync(CategoryQuestionnaireTemplate questionnaire)
     {
-        questionnaire.UpdatedAt = DateTime.UtcNow;
-        
         _context.CategoryQuestionnaireTemplates.Update(questionnaire);
         await _context.SaveChangesAsync();
         
@@ -135,8 +130,8 @@ public class CategoryQuestionnaireTemplateRepository : ICategoryQuestionnaireTem
         if (questionnaire == null)
             return false;
 
-        questionnaire.DeletedAt = DateTime.UtcNow;
-        questionnaire.UpdatedAt = DateTime.UtcNow;
+        questionnaire.DeletedDate = DateTime.UtcNow;
+        questionnaire.IsDeleted = true;
         
         await _context.SaveChangesAsync();
         return true;
@@ -145,7 +140,7 @@ public class CategoryQuestionnaireTemplateRepository : ICategoryQuestionnaireTem
     public async Task<bool> ExistsAsync(Guid id)
     {
         return await _context.CategoryQuestionnaireTemplates
-            .AnyAsync(q => q.Id == id && q.DeletedAt == null);
+            .AnyAsync(q => q.Id == id && q.DeletedDate == null);
     }
 
     public async Task<int> GetCountByCategoryIdAsync(Guid categoryId)
@@ -163,7 +158,7 @@ public class CategoryQuestionnaireTemplateRepository : ICategoryQuestionnaireTem
     public async Task<bool> TitleExistsAsync(string title, Guid? excludeId = null)
     {
         var query = _context.CategoryQuestionnaireTemplates
-            .Where(q => q.Title == title && q.DeletedAt == null);
+            .Where(q => q.Title == title && q.DeletedDate == null);
         
         if (excludeId.HasValue)
         {
@@ -180,7 +175,7 @@ public class CategoryQuestionnaireTemplateRepository : ICategoryQuestionnaireTem
             .Include(q => q.CreatedByUser)
             .Include(q => q.Questions)
             .Include(q => q.UserResponses)
-            .Where(q => q.DeletedAt == null)
+            .Where(q => q.DeletedDate == null)
             .OrderBy(q => q.DisplayOrder)
             .ThenBy(q => q.Title)
             .Select(q => new CategoryQuestionnaireTemplateSummaryDto
@@ -194,9 +189,9 @@ public class CategoryQuestionnaireTemplateRepository : ICategoryQuestionnaireTem
                 DisplayOrder = q.DisplayOrder,
                 Version = q.Version,
                 CreatedBy = q.CreatedBy,
-                CreatedAt = q.CreatedAt,
-                UpdatedAt = q.UpdatedAt,
-                DeletedAt = q.DeletedAt,
+                CreatedDate = q.CreatedDate,
+                UpdatedDate = q.UpdatedDate,
+                DeletedDate = q.DeletedDate,
                 Category = q.Category != null ? new CategoryDto
                 {
                     Id = q.Category.Id,
@@ -215,8 +210,8 @@ public class CategoryQuestionnaireTemplateRepository : ICategoryQuestionnaireTem
                     OneTimeConsultationDurationMinutes = q.Category.OneTimeConsultationDurationMinutes,
                     IsMostPopular = q.Category.IsMostPopular,
                     IsTrending = q.Category.IsTrending,
-                    CreatedAt = q.Category.CreatedAt,
-                    UpdatedAt = q.Category.UpdatedAt
+                    CreatedDate = q.Category.CreatedDate,
+                    UpdatedDate = q.Category.UpdatedDate
                 } : null,
                 CreatedByUser = q.CreatedByUser != null ? new UserDto
                 {
@@ -226,9 +221,9 @@ public class CategoryQuestionnaireTemplateRepository : ICategoryQuestionnaireTem
                     LastName = q.CreatedByUser.LastName,
                     Role = q.CreatedByUser.Role,
                     Category = q.CreatedByUser.Category,
-                    CreatedAt = q.CreatedByUser.CreatedAt
+                    CreatedDate = q.CreatedByUser.CreatedDate
                 } : null,
-                QuestionCount = q.Questions.Count(question => question.DeletedAt == null),
+                QuestionCount = q.Questions.Count(question => question.DeletedDate == null),
                 ResponseCount = q.UserResponses.Count()
             })
             .ToListAsync();

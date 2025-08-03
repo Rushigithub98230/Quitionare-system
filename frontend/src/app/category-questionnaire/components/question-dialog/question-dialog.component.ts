@@ -429,8 +429,8 @@ export class QuestionDialogComponent implements OnInit {
           displayOrder: 1,
           isCorrect: false,
           isActive: true,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString()
+          createdDate: new Date().toISOString(),
+          updatedDate: new Date().toISOString()
         });
         // Add "No" option
         this.addOption({
@@ -441,8 +441,8 @@ export class QuestionDialogComponent implements OnInit {
           displayOrder: 2,
           isCorrect: false,
           isActive: true,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString()
+          createdDate: new Date().toISOString(),
+          updatedDate: new Date().toISOString()
         });
       } else if (this.optionsArray.length === 0) {
         // Add a default option for other question types that need options

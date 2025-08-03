@@ -201,7 +201,7 @@
               </mat-card-header>
               
               <mat-card-content>
-                <p><strong>Deleted At:</strong> {{ category.deletedAt | date:'medium' }}</p>
+                <p><strong>Deleted At:</strong> {{ category.deletedDate | date:'medium' }}</p>
                 <p><strong>Display Order:</strong> {{ category.displayOrder }}</p>
                 <p><strong>Questionnaires:</strong> {{ getCategoryQuestionnaireCount(category.id) }}</p>
                 <p><strong>Status:</strong> {{ category.isActive ? 'Active' : 'Inactive' }}</p>
@@ -259,7 +259,7 @@
               </mat-card-header>
               
               <mat-card-content>
-                <p><strong>Deactivated At:</strong> {{ category.updatedAt | date:'medium' }}</p>
+                <p><strong>Deactivated At:</strong> {{ category.updatedDate | date:'medium' }}</p>
                 <p><strong>Display Order:</strong> {{ category.displayOrder }}</p>
                 <p><strong>Questionnaires:</strong> {{ getCategoryQuestionnaireCount(category.id) }}</p>
                 <p><strong>Status:</strong> {{ category.isActive ? 'Active' : 'Inactive' }}</p>
@@ -644,7 +644,7 @@
                         <mat-card-title>{{ getQuestionnaireName(response.questionnaireId) }}</mat-card-title>
                         <mat-card-subtitle>
                           <mat-icon>schedule</mat-icon>
-                          {{ getFormattedDate(response.completedAt || response.createdAt) }}
+                          {{ getFormattedDate(response.completedAt || response.createdDate) }}
                         </mat-card-subtitle>
                       </div>
                       <div class="response-status">

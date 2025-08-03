@@ -10,11 +10,11 @@ public static class TokenHelper
         var user = httpContext.User;
         
         var userIdClaim = user.FindFirst("UserId")?.Value;
-        Guid userId;
+        int userId;
         
-        if (string.IsNullOrEmpty(userIdClaim) || !Guid.TryParse(userIdClaim, out userId))
+        if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out userId))
         {
-            userId = Guid.Empty;
+            userId = 0;
         }
         
         return new TokenModel

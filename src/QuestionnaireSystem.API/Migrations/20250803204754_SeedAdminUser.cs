@@ -1,5 +1,4 @@
-﻿using System;
-using Microsoft.EntityFrameworkCore.Migrations;
+﻿using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
@@ -13,8 +12,8 @@ namespace QuestionnaireSystem.API.Migrations
         {
             migrationBuilder.InsertData(
                 table: "Users",
-                columns: new[] { "Id", "Category", "CreatedAt", "Email", "FirstName", "IsActive", "LastLoginAt", "LastName", "PasswordHash", "Role", "UpdatedAt" },
-                values: new object[] { new Guid("00000000-0000-0000-0000-000000000001"), null, new DateTime(2025, 8, 2, 15, 3, 35, 398, DateTimeKind.Utc).AddTicks(6525), "admin@questionnaire.com", "Admin", true, null, "User", "admin123", "Admin", null });
+                columns: new[] { "Id", "FirstName", "LastName", "Email", "PasswordHash", "Role", "IsActive", "IsDeleted", "CreatedBy", "CreatedDate" },
+                values: new object[] { 1, "Admin", "User", "admin@questionnaire.com", "admin123", "Admin", true, false, null, DateTime.UtcNow });
         }
 
         /// <inheritdoc />
@@ -23,7 +22,7 @@ namespace QuestionnaireSystem.API.Migrations
             migrationBuilder.DeleteData(
                 table: "Users",
                 keyColumn: "Id",
-                keyValue: new Guid("00000000-0000-0000-0000-000000000001"));
+                keyValue: 1);
         }
     }
 }

@@ -12,8 +12,8 @@ using QuestionnaireSystem.Infrastructure.Data;
 namespace QuestionnaireSystem.API.Migrations
 {
     [DbContext(typeof(QuestionnaireDbContext))]
-    [Migration("20250801103539_AddMissingQuestionOptionColumns")]
-    partial class AddMissingQuestionOptionColumns
+    [Migration("20250803210307_AddBaseEntityRelationships")]
+    partial class AddBaseEntityRelationships
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -48,10 +48,16 @@ namespace QuestionnaireSystem.API.Migrations
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
 
-                    b.Property<DateTime>("CreatedAt")
+                    b.Property<int?>("CreatedBy")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("CreatedDate")
                         .HasColumnType("datetime2");
 
-                    b.Property<DateTime?>("DeletedAt")
+                    b.Property<int?>("DeletedBy")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("DeletedDate")
                         .HasColumnType("datetime2");
 
                     b.Property<string>("Description")
@@ -72,6 +78,9 @@ namespace QuestionnaireSystem.API.Migrations
                     b.Property<bool>("IsActive")
                         .HasColumnType("bit");
 
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
                     b.Property<bool>("IsMostPopular")
                         .HasColumnType("bit");
 
@@ -89,15 +98,24 @@ namespace QuestionnaireSystem.API.Migrations
                     b.Property<bool>("RequiresQuestionnaireAssessment")
                         .HasColumnType("bit");
 
-                    b.Property<DateTime>("UpdatedAt")
+                    b.Property<int?>("UpdatedBy")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("UpdatedDate")
                         .HasColumnType("datetime2");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("CreatedBy");
+
+                    b.HasIndex("DeletedBy");
 
                     b.HasIndex("IsActive");
 
                     b.HasIndex("Name")
                         .IsUnique();
+
+                    b.HasIndex("UpdatedBy");
 
                     b.ToTable("Categories");
                 });
@@ -111,10 +129,16 @@ namespace QuestionnaireSystem.API.Migrations
                     b.Property<string>("ConditionalLogic")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<DateTime>("CreatedAt")
+                    b.Property<int?>("CreatedBy")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("CreatedDate")
                         .HasColumnType("datetime2");
 
-                    b.Property<DateTime?>("DeletedAt")
+                    b.Property<int?>("DeletedBy")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("DeletedDate")
                         .HasColumnType("datetime2");
 
                     b.Property<int>("DisplayOrder")
@@ -128,6 +152,12 @@ namespace QuestionnaireSystem.API.Migrations
 
                     b.Property<string>("ImageUrl")
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
 
                     b.Property<bool>("IsRequired")
                         .HasColumnType("bit");
@@ -165,7 +195,10 @@ namespace QuestionnaireSystem.API.Migrations
                     b.Property<string>("Settings")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<DateTime>("UpdatedAt")
+                    b.Property<int?>("UpdatedBy")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("UpdatedDate")
                         .HasColumnType("datetime2");
 
                     b.Property<string>("ValidationRules")
@@ -173,9 +206,15 @@ namespace QuestionnaireSystem.API.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("CreatedBy");
+
+                    b.HasIndex("DeletedBy");
+
                     b.HasIndex("QuestionTypeId");
 
                     b.HasIndex("QuestionnaireId");
+
+                    b.HasIndex("UpdatedBy");
 
                     b.ToTable("Questions", (string)null);
                 });
@@ -189,13 +228,16 @@ namespace QuestionnaireSystem.API.Migrations
                     b.Property<Guid>("CategoryId")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<DateTime>("CreatedAt")
+                    b.Property<int?>("CreatedBy")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("CreatedDate")
                         .HasColumnType("datetime2");
 
-                    b.Property<Guid?>("CreatedBy")
-                        .HasColumnType("uniqueidentifier");
+                    b.Property<int?>("DeletedBy")
+                        .HasColumnType("int");
 
-                    b.Property<DateTime?>("DeletedAt")
+                    b.Property<DateTime?>("DeletedDate")
                         .HasColumnType("datetime2");
 
                     b.Property<string>("Description")
@@ -207,6 +249,9 @@ namespace QuestionnaireSystem.API.Migrations
                     b.Property<bool>("IsActive")
                         .HasColumnType("bit");
 
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
                     b.Property<bool>("IsMandatory")
                         .HasColumnType("bit");
 
@@ -215,7 +260,10 @@ namespace QuestionnaireSystem.API.Migrations
                         .HasMaxLength(255)
                         .HasColumnType("nvarchar(255)");
 
-                    b.Property<DateTime>("UpdatedAt")
+                    b.Property<int?>("UpdatedBy")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("UpdatedDate")
                         .HasColumnType("datetime2");
 
                     b.Property<int>("Version")
@@ -228,7 +276,11 @@ namespace QuestionnaireSystem.API.Migrations
 
                     b.HasIndex("CreatedBy");
 
+                    b.HasIndex("DeletedBy");
+
                     b.HasIndex("IsActive");
+
+                    b.HasIndex("UpdatedBy");
 
                     b.ToTable("QuestionnaireTemplates", (string)null);
                 });
@@ -239,7 +291,16 @@ namespace QuestionnaireSystem.API.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<DateTime>("CreatedAt")
+                    b.Property<int?>("CreatedBy")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("CreatedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("DeletedBy")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("DeletedDate")
                         .HasColumnType("datetime2");
 
                     b.Property<int>("DisplayOrder")
@@ -252,6 +313,9 @@ namespace QuestionnaireSystem.API.Migrations
                         .HasColumnType("bit");
 
                     b.Property<bool>("IsCorrect")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
 
                     b.Property<string>("OptionText")
@@ -267,10 +331,19 @@ namespace QuestionnaireSystem.API.Migrations
                     b.Property<Guid>("QuestionId")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<DateTime>("UpdatedAt")
+                    b.Property<int?>("UpdatedBy")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("UpdatedDate")
                         .HasColumnType("datetime2");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("CreatedBy");
+
+                    b.HasIndex("DeletedBy");
+
+                    b.HasIndex("UpdatedBy");
 
                     b.HasIndex("QuestionId", "DisplayOrder");
 
@@ -283,12 +356,27 @@ namespace QuestionnaireSystem.API.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<DateTime>("CreatedAt")
+                    b.Property<int?>("CreatedBy")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("CreatedDate")
                         .HasColumnType("datetime2");
 
                     b.Property<string>("CustomText")
                         .HasMaxLength(1000)
                         .HasColumnType("nvarchar(1000)");
+
+                    b.Property<int?>("DeletedBy")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("DeletedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
 
                     b.Property<Guid>("OptionId")
                         .HasColumnType("uniqueidentifier");
@@ -296,11 +384,23 @@ namespace QuestionnaireSystem.API.Migrations
                     b.Property<Guid>("QuestionResponseId")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<int?>("UpdatedBy")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("UpdatedDate")
+                        .HasColumnType("datetime2");
+
                     b.HasKey("Id");
+
+                    b.HasIndex("CreatedBy");
+
+                    b.HasIndex("DeletedBy");
 
                     b.HasIndex("OptionId");
 
                     b.HasIndex("QuestionResponseId");
+
+                    b.HasIndex("UpdatedBy");
 
                     b.ToTable("QuestionOptionResponses");
                 });
@@ -314,13 +414,22 @@ namespace QuestionnaireSystem.API.Migrations
                     b.Property<bool?>("BooleanResponse")
                         .HasColumnType("bit");
 
-                    b.Property<DateTime>("CreatedAt")
+                    b.Property<int?>("CreatedBy")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("CreatedDate")
                         .HasColumnType("datetime2");
 
                     b.Property<DateTime?>("DateResponse")
                         .HasColumnType("datetime2");
 
                     b.Property<DateTime?>("DatetimeResponse")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("DeletedBy")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("DeletedDate")
                         .HasColumnType("datetime2");
 
                     b.Property<string>("FileName")
@@ -338,6 +447,12 @@ namespace QuestionnaireSystem.API.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
 
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
                     b.Property<string>("JsonResponse")
                         .HasColumnType("nvarchar(max)");
 
@@ -353,14 +468,23 @@ namespace QuestionnaireSystem.API.Migrations
                     b.Property<string>("TextResponse")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<DateTime>("UpdatedAt")
+                    b.Property<int?>("UpdatedBy")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("UpdatedDate")
                         .HasColumnType("datetime2");
 
                     b.HasKey("Id");
 
+                    b.HasIndex("CreatedBy");
+
+                    b.HasIndex("DeletedBy");
+
                     b.HasIndex("QuestionId");
 
                     b.HasIndex("ResponseId");
+
+                    b.HasIndex("UpdatedBy");
 
                     b.ToTable("QuestionResponses");
                 });
@@ -370,6 +494,18 @@ namespace QuestionnaireSystem.API.Migrations
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
+
+                    b.Property<int?>("CreatedBy")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("CreatedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("DeletedBy")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("DeletedDate")
+                        .HasColumnType("datetime2");
 
                     b.Property<string>("Description")
                         .HasColumnType("nvarchar(max)");
@@ -385,6 +521,9 @@ namespace QuestionnaireSystem.API.Migrations
                     b.Property<bool>("IsActive")
                         .HasColumnType("bit");
 
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
                     b.Property<bool>("SupportsFileUpload")
                         .HasColumnType("bit");
 
@@ -396,10 +535,22 @@ namespace QuestionnaireSystem.API.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
 
+                    b.Property<int?>("UpdatedBy")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("UpdatedDate")
+                        .HasColumnType("datetime2");
+
                     b.Property<string>("ValidationRules")
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("CreatedBy");
+
+                    b.HasIndex("DeletedBy");
+
+                    b.HasIndex("UpdatedBy");
 
                     b.ToTable("QuestionTypes");
 
@@ -410,6 +561,7 @@ namespace QuestionnaireSystem.API.Migrations
                             DisplayName = "Text Input",
                             HasOptions = false,
                             IsActive = true,
+                            IsDeleted = false,
                             SupportsFileUpload = false,
                             SupportsImage = true,
                             TypeName = "text"
@@ -420,6 +572,7 @@ namespace QuestionnaireSystem.API.Migrations
                             DisplayName = "Text Area",
                             HasOptions = false,
                             IsActive = true,
+                            IsDeleted = false,
                             SupportsFileUpload = false,
                             SupportsImage = true,
                             TypeName = "textarea"
@@ -430,6 +583,7 @@ namespace QuestionnaireSystem.API.Migrations
                             DisplayName = "Radio Button",
                             HasOptions = true,
                             IsActive = true,
+                            IsDeleted = false,
                             SupportsFileUpload = false,
                             SupportsImage = true,
                             TypeName = "radio"
@@ -440,6 +594,7 @@ namespace QuestionnaireSystem.API.Migrations
                             DisplayName = "Checkbox",
                             HasOptions = true,
                             IsActive = true,
+                            IsDeleted = false,
                             SupportsFileUpload = false,
                             SupportsImage = true,
                             TypeName = "checkbox"
@@ -450,6 +605,7 @@ namespace QuestionnaireSystem.API.Migrations
                             DisplayName = "Dropdown",
                             HasOptions = true,
                             IsActive = true,
+                            IsDeleted = false,
                             SupportsFileUpload = false,
                             SupportsImage = true,
                             TypeName = "select"
@@ -460,6 +616,7 @@ namespace QuestionnaireSystem.API.Migrations
                             DisplayName = "Multi-Select",
                             HasOptions = true,
                             IsActive = true,
+                            IsDeleted = false,
                             SupportsFileUpload = false,
                             SupportsImage = true,
                             TypeName = "multiselect"
@@ -470,6 +627,7 @@ namespace QuestionnaireSystem.API.Migrations
                             DisplayName = "Number",
                             HasOptions = false,
                             IsActive = true,
+                            IsDeleted = false,
                             SupportsFileUpload = false,
                             SupportsImage = true,
                             TypeName = "number"
@@ -480,6 +638,7 @@ namespace QuestionnaireSystem.API.Migrations
                             DisplayName = "Date",
                             HasOptions = false,
                             IsActive = true,
+                            IsDeleted = false,
                             SupportsFileUpload = false,
                             SupportsImage = true,
                             TypeName = "date"
@@ -490,6 +649,7 @@ namespace QuestionnaireSystem.API.Migrations
                             DisplayName = "Email",
                             HasOptions = false,
                             IsActive = true,
+                            IsDeleted = false,
                             SupportsFileUpload = false,
                             SupportsImage = true,
                             TypeName = "email"
@@ -500,6 +660,7 @@ namespace QuestionnaireSystem.API.Migrations
                             DisplayName = "Phone",
                             HasOptions = false,
                             IsActive = true,
+                            IsDeleted = false,
                             SupportsFileUpload = false,
                             SupportsImage = true,
                             TypeName = "phone"
@@ -510,6 +671,7 @@ namespace QuestionnaireSystem.API.Migrations
                             DisplayName = "File Upload",
                             HasOptions = false,
                             IsActive = true,
+                            IsDeleted = false,
                             SupportsFileUpload = true,
                             SupportsImage = true,
                             TypeName = "file"
@@ -520,6 +682,7 @@ namespace QuestionnaireSystem.API.Migrations
                             DisplayName = "Rating Scale",
                             HasOptions = false,
                             IsActive = true,
+                            IsDeleted = false,
                             SupportsFileUpload = false,
                             SupportsImage = true,
                             TypeName = "rating"
@@ -530,6 +693,7 @@ namespace QuestionnaireSystem.API.Migrations
                             DisplayName = "Slider",
                             HasOptions = false,
                             IsActive = true,
+                            IsDeleted = false,
                             SupportsFileUpload = false,
                             SupportsImage = true,
                             TypeName = "slider"
@@ -540,6 +704,7 @@ namespace QuestionnaireSystem.API.Migrations
                             DisplayName = "Yes/No",
                             HasOptions = true,
                             IsActive = true,
+                            IsDeleted = false,
                             SupportsFileUpload = false,
                             SupportsImage = true,
                             TypeName = "yes_no"
@@ -548,14 +713,25 @@ namespace QuestionnaireSystem.API.Migrations
 
             modelBuilder.Entity("QuestionnaireSystem.Core.Models.User", b =>
                 {
-                    b.Property<Guid>("Id")
+                    b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<string>("Category")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<DateTime>("CreatedAt")
+                    b.Property<int?>("CreatedBy")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("CreatedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("DeletedBy")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("DeletedDate")
                         .HasColumnType("datetime2");
 
                     b.Property<string>("Email")
@@ -568,6 +744,9 @@ namespace QuestionnaireSystem.API.Migrations
                         .HasColumnType("nvarchar(100)");
 
                     b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
 
                     b.Property<DateTime?>("LastLoginAt")
@@ -586,10 +765,19 @@ namespace QuestionnaireSystem.API.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<DateTime?>("UpdatedAt")
+                    b.Property<int?>("UpdatedBy")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("UpdatedDate")
                         .HasColumnType("datetime2");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("CreatedBy");
+
+                    b.HasIndex("DeletedBy");
+
+                    b.HasIndex("UpdatedBy");
 
                     b.ToTable("Users");
                 });
@@ -603,10 +791,25 @@ namespace QuestionnaireSystem.API.Migrations
                     b.Property<DateTime?>("CompletedAt")
                         .HasColumnType("datetime2");
 
-                    b.Property<DateTime>("CreatedAt")
+                    b.Property<int?>("CreatedBy")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("CreatedDate")
                         .HasColumnType("datetime2");
 
+                    b.Property<int?>("DeletedBy")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("DeletedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
                     b.Property<bool>("IsCompleted")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
 
                     b.Property<bool>("IsDraft")
@@ -625,26 +828,69 @@ namespace QuestionnaireSystem.API.Migrations
                     b.Property<int?>("TimeTaken")
                         .HasColumnType("int");
 
-                    b.Property<DateTime>("UpdatedAt")
+                    b.Property<int?>("UpdatedBy")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("UpdatedDate")
                         .HasColumnType("datetime2");
 
                     b.Property<string>("UserAgent")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<Guid>("UserId")
-                        .HasColumnType("uniqueidentifier");
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
 
                     b.HasKey("Id");
 
+                    b.HasIndex("CreatedBy");
+
+                    b.HasIndex("DeletedBy");
+
                     b.HasIndex("QuestionnaireId");
+
+                    b.HasIndex("UpdatedBy");
 
                     b.HasIndex("UserId");
 
                     b.ToTable("UserQuestionResponses");
                 });
 
+            modelBuilder.Entity("QuestionnaireSystem.Core.Models.Category", b =>
+                {
+                    b.HasOne("QuestionnaireSystem.Core.Models.User", "CreatedByUser")
+                        .WithMany()
+                        .HasForeignKey("CreatedBy")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("QuestionnaireSystem.Core.Models.User", "DeletedByUser")
+                        .WithMany()
+                        .HasForeignKey("DeletedBy")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("QuestionnaireSystem.Core.Models.User", "UpdatedByUser")
+                        .WithMany()
+                        .HasForeignKey("UpdatedBy")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("CreatedByUser");
+
+                    b.Navigation("DeletedByUser");
+
+                    b.Navigation("UpdatedByUser");
+                });
+
             modelBuilder.Entity("QuestionnaireSystem.Core.Models.CategoryQuestion", b =>
                 {
+                    b.HasOne("QuestionnaireSystem.Core.Models.User", "CreatedByUser")
+                        .WithMany()
+                        .HasForeignKey("CreatedBy")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("QuestionnaireSystem.Core.Models.User", "DeletedByUser")
+                        .WithMany()
+                        .HasForeignKey("DeletedBy")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("QuestionnaireSystem.Core.Models.QuestionType", "QuestionType")
                         .WithMany("Questions")
                         .HasForeignKey("QuestionTypeId")
@@ -657,9 +903,20 @@ namespace QuestionnaireSystem.API.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("QuestionnaireSystem.Core.Models.User", "UpdatedByUser")
+                        .WithMany()
+                        .HasForeignKey("UpdatedBy")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("CreatedByUser");
+
+                    b.Navigation("DeletedByUser");
+
                     b.Navigation("QuestionType");
 
                     b.Navigation("Questionnaire");
+
+                    b.Navigation("UpdatedByUser");
                 });
 
             modelBuilder.Entity("QuestionnaireSystem.Core.Models.CategoryQuestionnaireTemplate", b =>
@@ -671,28 +928,73 @@ namespace QuestionnaireSystem.API.Migrations
                         .IsRequired();
 
                     b.HasOne("QuestionnaireSystem.Core.Models.User", "CreatedByUser")
-                        .WithMany("CreatedQuestionnaires")
+                        .WithMany()
                         .HasForeignKey("CreatedBy")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("QuestionnaireSystem.Core.Models.User", "DeletedByUser")
+                        .WithMany()
+                        .HasForeignKey("DeletedBy")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("QuestionnaireSystem.Core.Models.User", "UpdatedByUser")
+                        .WithMany()
+                        .HasForeignKey("UpdatedBy")
                         .OnDelete(DeleteBehavior.Restrict);
 
                     b.Navigation("Category");
 
                     b.Navigation("CreatedByUser");
+
+                    b.Navigation("DeletedByUser");
+
+                    b.Navigation("UpdatedByUser");
                 });
 
             modelBuilder.Entity("QuestionnaireSystem.Core.Models.QuestionOption", b =>
                 {
+                    b.HasOne("QuestionnaireSystem.Core.Models.User", "CreatedByUser")
+                        .WithMany()
+                        .HasForeignKey("CreatedBy")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("QuestionnaireSystem.Core.Models.User", "DeletedByUser")
+                        .WithMany()
+                        .HasForeignKey("DeletedBy")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("QuestionnaireSystem.Core.Models.CategoryQuestion", "Question")
                         .WithMany("Options")
                         .HasForeignKey("QuestionId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("QuestionnaireSystem.Core.Models.User", "UpdatedByUser")
+                        .WithMany()
+                        .HasForeignKey("UpdatedBy")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("CreatedByUser");
+
+                    b.Navigation("DeletedByUser");
+
                     b.Navigation("Question");
+
+                    b.Navigation("UpdatedByUser");
                 });
 
             modelBuilder.Entity("QuestionnaireSystem.Core.Models.QuestionOptionResponse", b =>
                 {
+                    b.HasOne("QuestionnaireSystem.Core.Models.User", "CreatedByUser")
+                        .WithMany()
+                        .HasForeignKey("CreatedBy")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("QuestionnaireSystem.Core.Models.User", "DeletedByUser")
+                        .WithMany()
+                        .HasForeignKey("DeletedBy")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("QuestionnaireSystem.Core.Models.QuestionOption", "Option")
                         .WithMany("OptionResponses")
                         .HasForeignKey("OptionId")
@@ -705,13 +1007,34 @@ namespace QuestionnaireSystem.API.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("QuestionnaireSystem.Core.Models.User", "UpdatedByUser")
+                        .WithMany()
+                        .HasForeignKey("UpdatedBy")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("CreatedByUser");
+
+                    b.Navigation("DeletedByUser");
+
                     b.Navigation("Option");
 
                     b.Navigation("QuestionResponse");
+
+                    b.Navigation("UpdatedByUser");
                 });
 
             modelBuilder.Entity("QuestionnaireSystem.Core.Models.QuestionResponse", b =>
                 {
+                    b.HasOne("QuestionnaireSystem.Core.Models.User", "CreatedByUser")
+                        .WithMany()
+                        .HasForeignKey("CreatedBy")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("QuestionnaireSystem.Core.Models.User", "DeletedByUser")
+                        .WithMany()
+                        .HasForeignKey("DeletedBy")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("QuestionnaireSystem.Core.Models.CategoryQuestion", "Question")
                         .WithMany("Responses")
                         .HasForeignKey("QuestionId")
@@ -724,18 +1047,92 @@ namespace QuestionnaireSystem.API.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("QuestionnaireSystem.Core.Models.User", "UpdatedByUser")
+                        .WithMany()
+                        .HasForeignKey("UpdatedBy")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("CreatedByUser");
+
+                    b.Navigation("DeletedByUser");
+
                     b.Navigation("Question");
 
                     b.Navigation("Response");
+
+                    b.Navigation("UpdatedByUser");
+                });
+
+            modelBuilder.Entity("QuestionnaireSystem.Core.Models.QuestionType", b =>
+                {
+                    b.HasOne("QuestionnaireSystem.Core.Models.User", "CreatedByUser")
+                        .WithMany()
+                        .HasForeignKey("CreatedBy")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("QuestionnaireSystem.Core.Models.User", "DeletedByUser")
+                        .WithMany()
+                        .HasForeignKey("DeletedBy")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("QuestionnaireSystem.Core.Models.User", "UpdatedByUser")
+                        .WithMany()
+                        .HasForeignKey("UpdatedBy")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("CreatedByUser");
+
+                    b.Navigation("DeletedByUser");
+
+                    b.Navigation("UpdatedByUser");
+                });
+
+            modelBuilder.Entity("QuestionnaireSystem.Core.Models.User", b =>
+                {
+                    b.HasOne("QuestionnaireSystem.Core.Models.User", "CreatedByUser")
+                        .WithMany()
+                        .HasForeignKey("CreatedBy")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("QuestionnaireSystem.Core.Models.User", "DeletedByUser")
+                        .WithMany()
+                        .HasForeignKey("DeletedBy")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("QuestionnaireSystem.Core.Models.User", "UpdatedByUser")
+                        .WithMany()
+                        .HasForeignKey("UpdatedBy")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("CreatedByUser");
+
+                    b.Navigation("DeletedByUser");
+
+                    b.Navigation("UpdatedByUser");
                 });
 
             modelBuilder.Entity("QuestionnaireSystem.Core.Models.UserQuestionResponse", b =>
                 {
+                    b.HasOne("QuestionnaireSystem.Core.Models.User", "CreatedByUser")
+                        .WithMany()
+                        .HasForeignKey("CreatedBy")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("QuestionnaireSystem.Core.Models.User", "DeletedByUser")
+                        .WithMany()
+                        .HasForeignKey("DeletedBy")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("QuestionnaireSystem.Core.Models.CategoryQuestionnaireTemplate", "Questionnaire")
                         .WithMany("UserResponses")
                         .HasForeignKey("QuestionnaireId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+
+                    b.HasOne("QuestionnaireSystem.Core.Models.User", "UpdatedByUser")
+                        .WithMany()
+                        .HasForeignKey("UpdatedBy")
+                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.HasOne("QuestionnaireSystem.Core.Models.User", "User")
                         .WithMany("Responses")
@@ -743,7 +1140,13 @@ namespace QuestionnaireSystem.API.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.Navigation("CreatedByUser");
+
+                    b.Navigation("DeletedByUser");
+
                     b.Navigation("Questionnaire");
+
+                    b.Navigation("UpdatedByUser");
 
                     b.Navigation("User");
                 });
@@ -784,8 +1187,6 @@ namespace QuestionnaireSystem.API.Migrations
 
             modelBuilder.Entity("QuestionnaireSystem.Core.Models.User", b =>
                 {
-                    b.Navigation("CreatedQuestionnaires");
-
                     b.Navigation("Responses");
                 });
 

@@ -45,7 +45,7 @@ import { User } from '../../models/user.model';
             </div>
             <div class="info-row">
               <strong>Member Since:</strong>
-              <span>{{ currentUser.createdAt | date:'mediumDate' }}</span>
+              <span>{{ currentUser.createdDate | date:'mediumDate' }}</span>
             </div>
           </div>
         </mat-card-content>

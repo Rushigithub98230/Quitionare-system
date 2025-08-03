@@ -247,7 +247,7 @@ export class AnalyticsService {
   }
 
   // Get user-specific analytics
-  getUserAnalytics(userId: string): Observable<ApiResponse<{
+  getUserAnalytics(userId: number): Observable<ApiResponse<{
     totalResponses: number;
     completedResponses: number;
     averageCompletionTime: number;

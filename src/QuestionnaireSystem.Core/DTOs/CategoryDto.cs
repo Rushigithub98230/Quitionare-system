@@ -107,7 +107,7 @@ public class CategoryDto
     public int OneTimeConsultationDurationMinutes { get; set; }
     public bool IsMostPopular { get; set; }
     public bool IsTrending { get; set; }
-    public DateTime CreatedAt { get; set; }
-    public DateTime UpdatedAt { get; set; }
+    public DateTime? CreatedDate { get; set; }
+    public DateTime? UpdatedDate { get; set; }
     public bool HasQuestionnaireTemplate { get; set; }
 } 

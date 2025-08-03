@@ -20,7 +20,7 @@ public class CategoryQuestionRepository : ICategoryQuestionRepository
         return await _context.CategoryQuestions
             .Include(q => q.QuestionType)
             .Include(q => q.Options.OrderBy(option => option.DisplayOrder))
-            .FirstOrDefaultAsync(q => q.Id == id && q.DeletedAt == null);
+            .FirstOrDefaultAsync(q => q.Id == id && q.DeletedDate == null);
     }
 
     public async Task<IEnumerable<CategoryQuestion>> GetByQuestionnaireIdAsync(Guid questionnaireId)
@@ -28,7 +28,7 @@ public class CategoryQuestionRepository : ICategoryQuestionRepository
         return await _context.CategoryQuestions
             .Include(q => q.QuestionType)
             .Include(q => q.Options.OrderBy(option => option.DisplayOrder))
-            .Where(q => q.QuestionnaireId == questionnaireId && q.DeletedAt == null)
+            .Where(q => q.QuestionnaireId == questionnaireId && q.DeletedDate == null)
             .OrderBy(q => q.DisplayOrder)
             .ToListAsync();
     }
@@ -38,16 +38,13 @@ public class CategoryQuestionRepository : ICategoryQuestionRepository
         return await _context.CategoryQuestions
             .Include(q => q.QuestionType)
             .Include(q => q.Options.OrderBy(option => option.DisplayOrder))
-            .Where(q => q.DeletedAt == null)
+            .Where(q => q.DeletedDate == null)
             .OrderBy(q => q.DisplayOrder)
             .ToListAsync();
     }
 
     public async Task<CategoryQuestion> CreateAsync(CategoryQuestion question)
     {
-        question.CreatedAt = DateTime.UtcNow;
-        question.UpdatedAt = DateTime.UtcNow;
-        
         // Add the question (without options to avoid duplication)
         _context.CategoryQuestions.Add(question);
         await _context.SaveChangesAsync();
@@ -57,8 +54,6 @@ public class CategoryQuestionRepository : ICategoryQuestionRepository
 
     public async Task<CategoryQuestion> UpdateAsync(CategoryQuestion question)
     {
-        question.UpdatedAt = DateTime.UtcNow;
-        
         // Detach any existing tracked entity to avoid concurrency issues
         var existingEntity = _context.CategoryQuestions.Local.FirstOrDefault(e => e.Id == question.Id);
         if (existingEntity != null)
@@ -80,8 +75,8 @@ public class CategoryQuestionRepository : ICategoryQuestionRepository
         if (question == null)
             return false;
 
-        question.DeletedAt = DateTime.UtcNow;
-        question.UpdatedAt = DateTime.UtcNow;
+        question.DeletedDate = DateTime.UtcNow;
+        question.IsDeleted = true;
         
         await _context.SaveChangesAsync();
         return true;
@@ -90,7 +85,7 @@ public class CategoryQuestionRepository : ICategoryQuestionRepository
     public async Task<bool> ExistsAsync(Guid id)
     {
         return await _context.CategoryQuestions
-            .AnyAsync(q => q.Id == id && q.DeletedAt == null);
+            .AnyAsync(q => q.Id == id && q.DeletedDate == null);
     }
 
     public async Task<bool> HasResponsesAsync(Guid questionId)
@@ -108,7 +103,7 @@ public class CategoryQuestionRepository : ICategoryQuestionRepository
     public async Task<int> GetMaxDisplayOrderAsync(Guid questionnaireId)
     {
         var maxOrder = await _context.CategoryQuestions
-            .Where(q => q.QuestionnaireId == questionnaireId && q.DeletedAt == null)
+            .Where(q => q.QuestionnaireId == questionnaireId && q.DeletedDate == null)
             .MaxAsync(q => (int?)q.DisplayOrder);
         
         return maxOrder ?? 0;
@@ -142,9 +137,7 @@ public class CategoryQuestionRepository : ICategoryQuestionRepository
                 OptionValue = optionDto.OptionValue,
                 DisplayOrder = optionDto.DisplayOrder,
                 IsCorrect = optionDto.IsCorrect,
-                IsActive = optionDto.IsActive,
-                CreatedAt = DateTime.UtcNow,
-                UpdatedAt = DateTime.UtcNow
+                IsActive = optionDto.IsActive
             };
             
             _context.QuestionOptions.Add(option);
@@ -178,9 +171,6 @@ public class CategoryQuestionRepository : ICategoryQuestionRepository
             return existingOption; // Return existing option instead of creating duplicate
         }
         
-        option.CreatedAt = DateTime.UtcNow;
-        option.UpdatedAt = DateTime.UtcNow;
-        
         _context.QuestionOptions.Add(option);
         await _context.SaveChangesAsync();
         
@@ -203,8 +193,6 @@ public class CategoryQuestionRepository : ICategoryQuestionRepository
 
     public async Task<QuestionOption> UpdateOptionAsync(QuestionOption option)
     {
-        option.UpdatedAt = DateTime.UtcNow;
-        
         // Check if the entity is already being tracked
         var existingEntity = _context.QuestionOptions.Local.FirstOrDefault(e => e.Id == option.Id);
         if (existingEntity != null)

@@ -12,7 +12,7 @@ public class QuestionOptionResponseDto
 public class ResponseSummaryDto
 {
     public Guid Id { get; set; }
-    public Guid UserId { get; set; }
+    public int UserId { get; set; }
     public Guid QuestionnaireId { get; set; }
     public string QuestionnaireTitle { get; set; } = string.Empty;
     public string CategoryName { get; set; } = string.Empty;
@@ -21,7 +21,7 @@ public class ResponseSummaryDto
     public bool IsCompleted { get; set; }
     public bool IsDraft { get; set; }
     public int? TimeTaken { get; set; }
-    public DateTime CreatedAt { get; set; }
+    public DateTime CreatedDate { get; set; }
     public int QuestionCount { get; set; }
 }
 

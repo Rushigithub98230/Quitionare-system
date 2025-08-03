@@ -5,7 +5,7 @@ import { ApiResponse } from '../models/api-response.model';
 
 export interface ResponseSummary {
   id: string;
-  userId: string;
+  userId: number;
   questionnaireId: string;
   questionnaireTitle: string;
   categoryName: string;
@@ -146,7 +146,7 @@ export class ResponseService {
   }
 
   // Get responses for a specific user
-  getResponsesByUser(userId: string): Observable<ApiResponse<ResponseSummary[]>> {
+  getResponsesByUser(userId: number): Observable<ApiResponse<ResponseSummary[]>> {
     return this.apiService.get<ResponseSummary[]>(`/responses/user/${userId}`);
   }
 
