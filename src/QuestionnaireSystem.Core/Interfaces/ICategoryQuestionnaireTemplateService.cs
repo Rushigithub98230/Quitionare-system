@@ -3,6 +3,7 @@ using QuestionnaireSystem.Core.Models;
 
 namespace QuestionnaireSystem.Core.Interfaces;
 
+
 public interface ICategoryQuestionnaireTemplateService
 {
     Task<JsonModel> GetByIdAsync(Guid id);
