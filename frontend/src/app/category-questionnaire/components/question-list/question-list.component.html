@@ -1,0 +1,147 @@
+<mat-card>
+  <mat-card-header>
+    <mat-card-title>
+      <mat-icon>quiz</mat-icon>
+      Questions for "{{ questionnaire.title || 'Loading...' }}"
+    </mat-card-title>
+    <mat-card-subtitle>
+      {{ questions.length }} question(s) • {{ getRequiredCount() }} required
+    </mat-card-subtitle>
+    <button *ngIf="isDialogMode()" mat-icon-button (click)="closeDialog()" class="close-button">
+      <mat-icon>close</mat-icon>
+    </button>
+  </mat-card-header>
+
+  <mat-card-content>
+    <div class="actions-bar">
+      <button mat-raised-button color="primary" (click)="addQuestion()">
+        <mat-icon>add</mat-icon>
+        Add Question
+      </button>
+      <button mat-raised-button color="accent" (click)="toggleQuestionOrderManager()">
+        <mat-icon>sort</mat-icon>
+        {{ showQuestionOrderManager ? 'Hide' : 'Manage' }} Order
+      </button>
+      <button mat-button (click)="refreshQuestions()" [disabled]="loading">
+        <mat-icon>refresh</mat-icon>
+        Refresh
+      </button>
+    </div>
+
+    <!-- Question Order Manager -->
+    <div *ngIf="showQuestionOrderManager" class="order-manager-section">
+      <app-order-manager 
+        [items]="questionOrderItems"
+        [title]="'Question Order Management'"
+        (orderChanged)="onQuestionOrderChanged($event)">
+      </app-order-manager>
+      
+      <div class="order-actions">
+        <button mat-raised-button color="primary" (click)="saveQuestionOrder()">
+          <mat-icon>save</mat-icon>
+          Save Order
+        </button>
+        <button mat-button (click)="toggleQuestionOrderManager()">
+          <mat-icon>close</mat-icon>
+          Cancel
+        </button>
+      </div>
+    </div>
+
+    <div *ngIf="loading" class="loading">
+      <mat-icon>hourglass_empty</mat-icon>
+      Loading questions...
+    </div>
+
+    <div *ngIf="!loading && questions.length === 0" class="no-questions">
+      <mat-icon>quiz</mat-icon>
+      <p>No questions found for this questionnaire.</p>
+      <button mat-raised-button color="primary" (click)="addQuestion()">
+        <mat-icon>add</mat-icon>
+        Add First Question
+      </button>
+    </div>
+
+    <mat-accordion *ngIf="!loading && questions.length > 0">
+      <mat-expansion-panel *ngFor="let question of questions; trackBy: trackByQuestionId" class="question-panel">
+        <mat-expansion-panel-header>
+          <mat-panel-title>
+            <div class="question-header">
+              <span class="question-number">{{ question.displayOrder }}</span>
+              <span class="question-text">{{ question.questionText }}</span>
+              <mat-chip-set>
+                <mat-chip [color]="question.isRequired ? 'warn' : 'primary'" selected>
+                  {{ question.isRequired ? 'Required' : 'Optional' }}
+                </mat-chip>
+                <mat-chip color="accent" selected>
+                  {{ getQuestionTypeName(question.questionTypeId) }}
+                </mat-chip>
+                <mat-chip *ngIf="question.options && question.options.length > 0" color="primary" selected>
+                  {{ question.options.length }} option(s)
+                </mat-chip>
+              </mat-chip-set>
+            </div>
+          </mat-panel-title>
+          <mat-panel-description>
+            <div class="question-actions">
+              <button mat-icon-button (click)="editQuestion(question); $event.stopPropagation()" 
+                      matTooltip="Edit Question">
+                <mat-icon>edit</mat-icon>
+              </button>
+              <button mat-icon-button color="warn" (click)="deleteQuestion(question); $event.stopPropagation()" 
+                      matTooltip="Delete Question">
+                <mat-icon>delete</mat-icon>
+              </button>
+            </div>
+          </mat-panel-description>
+        </mat-expansion-panel-header>
+
+        <div class="question-details">
+          <div class="detail-row" *ngIf="question.sectionName">
+            <strong>Section:</strong> {{ question.sectionName }}
+          </div>
+          <div class="detail-row" *ngIf="question.helpText">
+            <strong>Help Text:</strong> {{ question.helpText }}
+          </div>
+          <div class="detail-row" *ngIf="question.placeholder">
+            <strong>Placeholder:</strong> {{ question.placeholder }}
+          </div>
+          
+          <div class="validation-details" *ngIf="hasValidation(question)">
+            <h4>Validation Rules:</h4>
+            <div class="validation-grid">
+              <div *ngIf="question.minLength" class="validation-item">
+                <strong>Min Length:</strong> {{ question.minLength }}
+              </div>
+              <div *ngIf="question.maxLength" class="validation-item">
+                <strong>Max Length:</strong> {{ question.maxLength }}
+              </div>
+              <div *ngIf="question.minValue" class="validation-item">
+                <strong>Min Value:</strong> {{ question.minValue }}
+              </div>
+              <div *ngIf="question.maxValue" class="validation-item">
+                <strong>Max Value:</strong> {{ question.maxValue }}
+              </div>
+            </div>
+          </div>
+
+          <div class="options-section" *ngIf="question.options && question.options.length > 0">
+            <h4>Options:</h4>
+            <mat-list>
+              <mat-list-item *ngFor="let option of question.options; trackBy: trackByOptionId">
+                <div class="option-item">
+                  <span class="option-text">{{ option.optionText }}</span>
+                  <span class="option-value">({{ option.optionValue }})</span>
+                  <mat-chip-set>
+                    <mat-chip *ngIf="option.isCorrect" color="accent" selected>Correct</mat-chip>
+                    <mat-chip *ngIf="!option.isActive" color="warn" selected>Inactive</mat-chip>
+                  </mat-chip-set>
+                </div>
+              </mat-list-item>
+            </mat-list>
+          </div>
+        </div>
+      </mat-expansion-panel>
+    </mat-accordion>
+  </mat-card-content>
+</mat-card> 

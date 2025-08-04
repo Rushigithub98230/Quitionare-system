@@ -1,0 +1,281 @@
+<div class="preview-container">
+  <div class="preview-header">
+    <h2 mat-dialog-title>
+      <mat-icon>{{ data.isAdminSolve ? 'assignment' : 'preview' }}</mat-icon>
+      {{ data.isAdminSolve ? 'Solve as Admin' : 'Preview & Test' }}: {{ questionnaire?.title }}
+    </h2>
+    <button mat-icon-button (click)="closeDialog()" class="close-button">
+      <mat-icon>close</mat-icon>
+    </button>
+  </div>
+
+  <mat-dialog-content class="preview-content">
+    <div class="questionnaire-info">
+      <mat-card>
+        <mat-card-content>
+          <p><strong>Description:</strong> {{ questionnaire?.description || 'No description' }}</p>
+          <p><strong>Category:</strong> {{ getCategoryName(questionnaire?.categoryId) }}</p>
+          <p><strong>Total Questions:</strong> {{ questions.length }}</p>
+          <p><strong>Required Questions:</strong> {{ getRequiredCount() }}</p>
+        </mat-card-content>
+      </mat-card>
+    </div>
+
+    <div *ngIf="loading" class="loading">
+      <mat-spinner></mat-spinner>
+      <p>Loading questionnaire...</p>
+    </div>
+
+    <div *ngIf="!loading && questions.length === 0" class="no-questions">
+      <mat-icon>quiz</mat-icon>
+      <p>No questions found for this questionnaire.</p>
+    </div>
+
+    <div *ngIf="!loading && questions.length > 0" class="stepper-container">
+      <mat-stepper #stepper [linear]="false" class="preview-stepper">
+        <mat-step *ngFor="let question of questions; let i = index" 
+                  [label]="'Question ' + (i + 1)"
+                  [state]="getStepState(i)">
+          
+          <div class="question-step">
+            <div class="question-header">
+              <div class="question-number">
+                <span>{{ i + 1 }}</span>
+              </div>
+              <div class="question-content">
+                <h3>{{ question.questionText }}</h3>
+                <div class="question-meta">
+                  <mat-chip-set>
+                    <mat-chip [color]="question.isRequired ? 'warn' : 'primary'" selected>
+                      {{ question.isRequired ? 'Required' : 'Optional' }}
+                    </mat-chip>
+                    <mat-chip color="accent" selected>
+                      {{ getQuestionTypeName(question.questionTypeId) }} ({{ question.questionTypeName }})
+                    </mat-chip>
+                  </mat-chip-set>
+                </div>
+                <p *ngIf="question.helpText" class="help-text">{{ question.helpText }}</p>
+              </div>
+            </div>
+
+            <div class="question-form">
+              <form [formGroup]="getQuestionForm(i)">
+                <!-- Text Input -->
+                <mat-form-field *ngIf="question.questionTypeName === 'text'" appearance="outline" class="full-width">
+                  <mat-label>{{ question.placeholder || 'Enter your answer' }}</mat-label>
+                  <input matInput 
+                         [formControlName]="'response'"
+                         [placeholder]="question.placeholder || ''"
+                         [maxlength]="question.maxLength && question.maxLength > 0 ? question.maxLength : null">
+                  <mat-hint *ngIf="question.maxLength && question.maxLength > 0">
+                    {{ getQuestionForm(i).get('response')?.value?.length || 0 }}/{{ question.maxLength }}
+                  </mat-hint>
+                </mat-form-field>
+
+                <!-- Number Input -->
+                <mat-form-field *ngIf="question.questionTypeName === 'number'" appearance="outline" class="full-width">
+                  <mat-label>{{ question.placeholder || 'Enter a number' }}</mat-label>
+                  <input matInput 
+                         type="number"
+                         [formControlName]="'response'"
+                         [placeholder]="question.placeholder || ''"
+                         [min]="question.minValue && question.minValue > 0 ? question.minValue : null"
+                         [max]="question.maxValue && question.maxValue > 0 ? question.maxValue : null">
+                  <mat-hint *ngIf="(question.minValue && question.minValue > 0) || (question.maxValue && question.maxValue > 0)">
+                    {{ question.minValue && question.minValue > 0 ? 'Min: ' + question.minValue : '' }}
+                    {{ question.maxValue && question.maxValue > 0 ? 'Max: ' + question.maxValue : '' }}
+                  </mat-hint>
+                </mat-form-field>
+
+                <!-- Email Input -->
+                <mat-form-field *ngIf="question.questionTypeName === 'email'" appearance="outline" class="full-width">
+                  <mat-label>{{ question.placeholder || 'Enter email address' }}</mat-label>
+                  <input matInput 
+                         type="email"
+                         [formControlName]="'response'"
+                         [placeholder]="question.placeholder || ''">
+                </mat-form-field>
+
+                <!-- Date Input -->
+                <mat-form-field *ngIf="question.questionTypeName === 'date'" appearance="outline" class="full-width">
+                  <mat-label>{{ question.placeholder || 'Select date' }}</mat-label>
+                  <input matInput 
+                         [matDatepicker]="picker"
+                         [formControlName]="'response'"
+                         [placeholder]="question.placeholder || ''"
+                         readonly>
+                  <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
+                  <mat-datepicker #picker [touchUi]="false"></mat-datepicker>
+                </mat-form-field>
+
+                <!-- File Upload -->
+                <div *ngIf="question.questionTypeName === 'file'" class="file-upload-group">
+                  <div class="file-input-container">
+                    <label class="file-input-label">{{ question.placeholder || 'Choose file' }}</label>
+                    <input type="file"
+                           class="file-input"
+                           (change)="onFileSelected($event, i)"
+                           accept="*/*">
+                  </div>
+                  <div *ngIf="getQuestionForm(i).get('response')?.value" class="file-info">
+                    <mat-icon>attach_file</mat-icon>
+                    <span>{{ getSelectedFileName(i) }}</span>
+                  </div>
+                </div>
+
+                <!-- Phone Input -->
+                <mat-form-field *ngIf="question.questionTypeName === 'phone'" appearance="outline" class="full-width">
+                  <mat-label>{{ question.placeholder || 'Enter phone number' }}</mat-label>
+                  <input matInput 
+                         type="tel"
+                         [formControlName]="'response'"
+                         [placeholder]="question.placeholder || ''">
+                </mat-form-field>
+
+                <!-- Radio Buttons -->
+                <div *ngIf="question.questionTypeName === 'radio'" class="radio-group">
+                  <mat-radio-group [formControlName]="'response'">
+                    <mat-radio-button *ngFor="let option of question.options" 
+                                     [value]="option.optionValue"
+                                     class="radio-option">
+                      {{ option.optionText }}
+                    </mat-radio-button>
+                  </mat-radio-group>
+                </div>
+
+                <!-- Checkboxes -->
+                <div *ngIf="question.questionTypeName === 'checkbox'" class="checkbox-group">
+                  <div *ngFor="let option of question.options" class="checkbox-option">
+                    <mat-checkbox [value]="option.id"
+                                 (change)="onCheckboxChange($event, i, option.id)">
+                      {{ option.optionText }}
+                    </mat-checkbox>
+                  </div>
+                </div>
+
+                <!-- Dropdown/Select -->
+                <mat-form-field *ngIf="question.questionTypeName === 'select'" appearance="outline" class="full-width">
+                  <mat-label>{{ question.placeholder || 'Select an option' }}</mat-label>
+                  <mat-select [formControlName]="'response'">
+                    <mat-option *ngFor="let option of question.options" [value]="option.id">
+                      {{ option.optionText }}
+                    </mat-option>
+                  </mat-select>
+                </mat-form-field>
+
+                <!-- Multi-Select -->
+                <mat-form-field *ngIf="question.questionTypeName === 'multiselect'" appearance="outline" class="full-width">
+                  <mat-label>{{ question.placeholder || 'Select options' }}</mat-label>
+                  <mat-select [formControlName]="'response'" multiple>
+                    <mat-option *ngFor="let option of question.options" [value]="option.id">
+                      {{ option.optionText }}
+                    </mat-option>
+                  </mat-select>
+                </mat-form-field>
+
+                <!-- Rating Scale -->
+                <div *ngIf="question.questionTypeName === 'rating'" class="rating-group">
+                  <mat-form-field appearance="outline" class="full-width">
+                    <mat-label>{{ question.placeholder || 'Select rating' }}</mat-label>
+                    <mat-select [formControlName]="'response'">
+                      <mat-option *ngFor="let i of getRatingOptions(question)" [value]="i">
+                        {{ i }} {{ i === 1 ? 'star' : 'stars' }}
+                      </mat-option>
+                    </mat-select>
+                  </mat-form-field>
+                </div>
+
+                <!-- Slider -->
+                <div *ngIf="question.questionTypeName === 'slider'" class="scale-group">
+                  <mat-slider [formControlName]="'response'"
+                             [min]="question.minValue && question.minValue > 0 ? question.minValue : 1"
+                             [max]="question.maxValue && question.maxValue > 0 ? question.maxValue : 10"
+                             [step]="1"
+                             (change)="onSliderChange($event, i)"
+                             (input)="onSliderChange($event, i)"
+                             class="full-width">
+                  </mat-slider>
+                  <div class="scale-labels">
+                    <span>{{ question.minValue && question.minValue > 0 ? question.minValue : 1 }}</span>
+                    <span>{{ question.maxValue && question.maxValue > 0 ? question.maxValue : 10 }}</span>
+                  </div>
+                  <p class="scale-value">Selected: {{ getQuestionForm(i).get('response')?.value || 'None' }}</p>
+                </div>
+
+                <!-- Yes/No -->
+                <div *ngIf="question.questionTypeName === 'yes_no'" class="radio-group">
+                  <mat-radio-group [formControlName]="'response'">
+                    <mat-radio-button value="yes" class="radio-option">Yes</mat-radio-button>
+                    <mat-radio-button value="no" class="radio-option">No</mat-radio-button>
+                  </mat-radio-group>
+                </div>
+
+                <!-- Textarea -->
+                <mat-form-field *ngIf="question.questionTypeName === 'textarea'" appearance="outline" class="full-width">
+                  <mat-label>{{ question.placeholder || 'Enter your answer' }}</mat-label>
+                  <textarea matInput 
+                            [formControlName]="'response'"
+                            [placeholder]="question.placeholder || ''"
+                            [maxlength]="question.maxLength && question.maxLength > 0 ? question.maxLength : null"
+                            rows="4"></textarea>
+                  <mat-hint *ngIf="question.maxLength && question.maxLength > 0">
+                    {{ getQuestionForm(i).get('response')?.value?.length || 0 }}/{{ question.maxLength }}
+                  </mat-hint>
+                </mat-form-field>
+
+                <!-- Validation Messages -->
+                <div *ngIf="getQuestionForm(i).get('response')?.invalid && getQuestionForm(i).get('response')?.touched" 
+                     class="validation-error">
+                  <mat-icon>error</mat-icon>
+                  <span>{{ getValidationMessage(i) }}</span>
+                </div>
+              </form>
+            </div>
+          </div>
+
+          <div class="step-actions">
+            <button mat-button (click)="stepper.previous()" *ngIf="i > 0">
+              <mat-icon>arrow_back</mat-icon>
+              Previous
+            </button>
+            <button mat-raised-button 
+                    color="primary" 
+                    (click)="stepper.next()" 
+                    *ngIf="i < questions.length - 1"
+                    [disabled]="getQuestionForm(i).invalid">
+              <mat-icon>arrow_forward</mat-icon>
+              Next
+            </button>
+            <!-- Response Toggle for Database Saving -->
+            <div *ngIf="i === questions.length - 1" class="response-toggle-section">
+              <mat-checkbox 
+                [(ngModel)]="saveToDatabase" 
+                color="primary"
+                class="save-toggle">
+                <mat-icon>save</mat-icon>
+                Save Response to Database
+              </mat-checkbox>
+              <p class="toggle-hint" *ngIf="saveToDatabase">
+                <mat-icon>info</mat-icon>
+                Your response will be saved to the database for review.
+              </p>
+            </div>
+
+            <button mat-raised-button 
+                    color="accent" 
+                    (click)="submitPreview()" 
+                    *ngIf="i === questions.length - 1"
+                    [disabled]="!isFormValid()">
+              <mat-icon>send</mat-icon>
+              {{ data.isAdminSolve ? 'Submit Admin Response' : (saveToDatabase ? 'Submit & Save' : 'Submit Preview') }}
+            </button>
+          </div>
+        </mat-step>
+      </mat-stepper>
+    </div>
+  </mat-dialog-content>
+
+  <mat-dialog-actions align="end">
+    <button mat-button (click)="closeDialog()">Cancel</button>
+  </mat-dialog-actions>
+</div> 

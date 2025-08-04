@@ -1,0 +1,91 @@
+<mat-card class="order-manager-card">
+  <mat-card-header>
+    <mat-card-title>
+      <mat-icon>sort</mat-icon>
+      Order Management
+    </mat-card-title>
+    <mat-card-subtitle>
+      Drag and drop to reorder items
+    </mat-card-subtitle>
+  </mat-card-header>
+
+  <mat-card-content>
+    <!-- Order Status Indicator -->
+    <div class="order-status">
+      <mat-chip [color]="orderStatus.status" selected>
+        <mat-icon>{{ getStatusIcon(orderStatus.status) }}</mat-icon>
+        {{ orderStatus.message }}
+      </mat-chip>
+    </div>
+
+    <!-- Order Actions -->
+    <div class="order-actions">
+      <button mat-button color="primary" (click)="autoReorder()" 
+              [disabled]="items.length === 0">
+        <mat-icon>auto_fix_high</mat-icon>
+        Auto Reorder
+      </button>
+      <button mat-button color="accent" (click)="validateOrder()" 
+              [disabled]="items.length === 0">
+        <mat-icon>check_circle</mat-icon>
+        Validate Order
+      </button>
+      <button mat-button color="warn" (click)="showOrderInfo()" 
+              [disabled]="items.length === 0">
+        <mat-icon>info</mat-icon>
+        Order Info
+      </button>
+    </div>
+
+    <!-- Drag and Drop List -->
+    <div class="drag-list" cdkDropList (cdkDropListDropped)="onDrop($event)">
+      <div class="drag-item" 
+           *ngFor="let item of items; trackBy: trackByItemId" 
+           cdkDrag
+           [class.dragging]="isDragging(item.id)">
+        <div class="drag-handle" cdkDragHandle>
+          <mat-icon>drag_indicator</mat-icon>
+        </div>
+        
+        <div class="item-content">
+          <div class="item-header">
+            <span class="order-badge" [class]="getOrderBadgeClass(item.displayOrder)">
+              {{ formatDisplayOrder(item.displayOrder) }}
+            </span>
+            <span class="item-name">{{ item.name }}</span>
+            <span class="item-type">{{ item.type }}</span>
+          </div>
+          
+          <div class="item-actions">
+            <button mat-icon-button (click)="moveUp(item.id)" 
+                    [disabled]="isFirst(item.id)"
+                    matTooltip="Move Up">
+              <mat-icon>keyboard_arrow_up</mat-icon>
+            </button>
+            <button mat-icon-button (click)="moveDown(item.id)" 
+                    [disabled]="isLast(item.id)"
+                    matTooltip="Move Down">
+              <mat-icon>keyboard_arrow_down</mat-icon>
+            </button>
+            <button mat-icon-button (click)="moveToTop(item.id)" 
+                    [disabled]="isFirst(item.id)"
+                    matTooltip="Move to Top">
+              <mat-icon>vertical_align_top</mat-icon>
+            </button>
+            <button mat-icon-button (click)="moveToBottom(item.id)" 
+                    [disabled]="isLast(item.id)"
+                    matTooltip="Move to Bottom">
+              <mat-icon>vertical_align_bottom</mat-icon>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Empty State -->
+    <div *ngIf="items.length === 0" class="empty-state">
+      <mat-icon>sort</mat-icon>
+      <p>No items to order</p>
+    </div>
+  </mat-card-content>
+</mat-card> 

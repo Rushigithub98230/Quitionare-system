@@ -1,0 +1,159 @@
+.actions-bar {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 16px;
+  align-items: center;
+}
+
+.loading, .no-questions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 32px;
+  text-align: center;
+  color: #666;
+}
+
+.loading mat-icon, .no-questions mat-icon {
+  font-size: 48px;
+  width: 48px;
+  height: 48px;
+  margin-bottom: 16px;
+  color: #ccc;
+}
+
+.question-panel {
+  margin-bottom: 8px;
+}
+
+.question-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+}
+
+.question-number {
+  background: #3f51b5;
+  color: white;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: bold;
+}
+
+.question-text {
+  flex: 1;
+  font-weight: 500;
+  max-width: 400px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.question-actions {
+  display: flex;
+  gap: 4px;
+}
+
+.question-details {
+  padding: 16px 0;
+}
+
+.detail-row {
+  margin-bottom: 8px;
+  padding: 8px;
+  background: #f5f5f5;
+  border-radius: 4px;
+}
+
+.validation-details {
+  margin: 16px 0;
+  padding: 16px;
+  background: #e3f2fd;
+  border-radius: 4px;
+}
+
+.validation-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.validation-item {
+  padding: 4px 8px;
+  background: white;
+  border-radius: 4px;
+  font-size: 12px;
+}
+
+.options-section {
+  margin-top: 16px;
+  padding: 16px;
+  background: #f9f9f9;
+  border-radius: 4px;
+}
+
+.options-section h4 {
+  margin: 0 0 12px 0;
+  color: #333;
+}
+
+.option-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+}
+
+.option-text {
+  flex: 1;
+  font-weight: 500;
+}
+
+.option-value {
+  color: #666;
+  font-size: 12px;
+}
+
+mat-card-header {
+  background: #f5f5f5;
+  margin: -16px -16px 16px -16px;
+  padding: 16px;
+}
+
+mat-card-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.close-button {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+}
+
+mat-card-header {
+  position: relative;
+}
+
+.order-manager-section {
+  margin-bottom: 24px;
+  padding: 16px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border: 1px solid #e9ecef;
+
+  .order-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 16px;
+    justify-content: flex-end;
+  }
+} 

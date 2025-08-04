@@ -1,0 +1,117 @@
+<div class="results-container">
+  <div class="results-header">
+    <h2 mat-dialog-title>
+      <mat-icon>assessment</mat-icon>
+      Preview Results: {{ questionnaire?.title }}
+    </h2>
+    <button mat-icon-button (click)="closeDialog()" class="close-button">
+      <mat-icon>close</mat-icon>
+    </button>
+  </div>
+
+  <mat-dialog-content class="results-content">
+    <div class="summary-section">
+      <mat-card>
+        <mat-card-content>
+          <div class="summary-grid">
+            <div class="summary-item">
+              <span class="summary-label">Total Questions:</span>
+              <span class="summary-value">{{ responses.length }}</span>
+            </div>
+            <div class="summary-item">
+              <span class="summary-label">Answered:</span>
+              <span class="summary-value">{{ getAnsweredCount() }}</span>
+            </div>
+            <div class="summary-item">
+              <span class="summary-label">Required:</span>
+              <span class="summary-value">{{ getRequiredCount() }}</span>
+            </div>
+            <div class="summary-item">
+              <span class="summary-label">Valid Responses:</span>
+              <span class="summary-value">{{ getValidCount() }}</span>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+
+    <div class="responses-section">
+      <h3>Question Responses</h3>
+      
+      <mat-accordion>
+        <mat-expansion-panel *ngFor="let response of responses; let i = index" class="response-panel">
+          <mat-expansion-panel-header>
+            <mat-panel-title>
+              <div class="response-header">
+                <span class="question-number">{{ i + 1 }}</span>
+                <span class="question-text">{{ response.questionText }}</span>
+                <mat-chip-set>
+                  <mat-chip [color]="response.isRequired ? 'warn' : 'primary'" selected>
+                    {{ response.isRequired ? 'Required' : 'Optional' }}
+                  </mat-chip>
+                  <mat-chip color="accent" selected>
+                    {{ getQuestionTypeName(response.questionType) }}
+                  </mat-chip>
+                  <mat-chip [color]="response.isValid ? 'primary' : 'warn'" selected>
+                    {{ response.isValid ? 'Valid' : 'Invalid' }}
+                  </mat-chip>
+                </mat-chip-set>
+              </div>
+            </mat-panel-title>
+          </mat-expansion-panel-header>
+
+          <div class="response-details">
+            <div class="response-content">
+              <div class="response-item">
+                <strong>Question Type:</strong>
+                <span>{{ getQuestionTypeName(response.questionType) }}</span>
+              </div>
+              
+              <div class="response-item">
+                <strong>Response:</strong>
+                <div class="response-value">
+                  <span *ngIf="response.response !== null && response.response !== undefined && response.response !== ''">
+                    {{ formatResponse(response.response, response.questionType) }}
+                  </span>
+                  <span *ngIf="!response.response || response.response === ''" class="no-response">
+                    <em>No response provided</em>
+                  </span>
+                </div>
+              </div>
+
+              <div class="response-item" *ngIf="response.validationMessage">
+                <strong>Validation:</strong>
+                <span class="validation-error">{{ response.validationMessage }}</span>
+              </div>
+
+              <div class="response-item">
+                <strong>Status:</strong>
+                <mat-chip [color]="response.isValid ? 'primary' : 'warn'" selected>
+                  {{ response.isValid ? 'Valid' : 'Invalid' }}
+                </mat-chip>
+              </div>
+            </div>
+          </div>
+        </mat-expansion-panel>
+      </mat-accordion>
+    </div>
+
+    <div class="export-section" *ngIf="responses.length > 0">
+      <mat-divider></mat-divider>
+      <div class="export-actions">
+        <button mat-raised-button color="primary" (click)="exportToCSV()">
+          <mat-icon>download</mat-icon>
+          Export to CSV
+        </button>
+        <button mat-raised-button color="accent" (click)="exportToJSON()">
+          <mat-icon>code</mat-icon>
+          Export to JSON
+        </button>
+      </div>
+    </div>
+  </mat-dialog-content>
+
+  <mat-dialog-actions align="end">
+    <button mat-button (click)="closeDialog()">Close</button>
+  </mat-dialog-actions>
+</div> 

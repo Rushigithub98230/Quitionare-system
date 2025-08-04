@@ -1,0 +1,185 @@
+<h2 mat-dialog-title>{{ data.mode === 'create' ? 'Create Question' : 'Edit Question' }}</h2>
+
+<form [formGroup]="questionForm" (ngSubmit)="onSubmit()">
+  <mat-dialog-content>
+    <div class="form-row">
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Question Text</mat-label>
+        <textarea matInput formControlName="questionText" placeholder="Enter your question" rows="3" (input)="validateQuestionText()"></textarea>
+        <mat-error *ngIf="questionForm.get('questionText')?.hasError('required')">
+          Question text is required
+        </mat-error>
+        <mat-error *ngIf="questionForm.get('questionText')?.hasError('maxLength')">
+          Question text cannot exceed 1000 characters
+        </mat-error>
+      </mat-form-field>
+    </div>
+
+    <div class="form-row">
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Question Type</mat-label>
+        <mat-select formControlName="questionTypeId" (selectionChange)="onQuestionTypeChange()" [disabled]="data.questionTypes.length === 0">
+          <mat-option *ngFor="let type of data.questionTypes" [value]="type.id">
+            {{ type.displayName }}
+          </mat-option>
+          <mat-option *ngIf="data.questionTypes.length === 0" disabled>
+            Loading question types...
+          </mat-option>
+        </mat-select>
+        <mat-error *ngIf="questionForm.get('questionTypeId')?.hasError('required')">
+          Question type is required
+        </mat-error>
+        <mat-error *ngIf="questionForm.get('questionTypeId')?.hasError('inactiveType')">
+          Only active question types can be used
+        </mat-error>
+      </mat-form-field>
+    </div>
+
+    <div class="form-row">
+      <mat-form-field appearance="outline">
+        <mat-label>Section Name (Optional)</mat-label>
+        <input matInput formControlName="sectionName" placeholder="e.g., Personal Information">
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Help Text (Optional)</mat-label>
+        <input matInput formControlName="helpText" placeholder="Additional guidance for users">
+      </mat-form-field>
+    </div>
+
+    <div class="form-row">
+      <mat-form-field appearance="outline">
+        <mat-label>Placeholder (Optional)</mat-label>
+        <input matInput formControlName="placeholder" placeholder="Placeholder text">
+      </mat-form-field>
+
+      <mat-checkbox formControlName="isRequired">Required Question</mat-checkbox>
+    </div>
+
+    <!-- Validation Settings -->
+    <mat-divider></mat-divider>
+    <div class="validation-header">
+      <h4>Validation Settings</h4>
+      <button type="button" mat-button color="primary" (click)="toggleValidationSettings()">
+        <mat-icon>{{ showValidationSettings ? 'visibility_off' : 'visibility' }}</mat-icon>
+        {{ showValidationSettings ? 'Hide' : 'Show' }} Validation
+      </button>
+    </div>
+    
+    <div *ngIf="showValidationSettings" class="validation-fields">
+      <div class="form-row">
+        <mat-form-field appearance="outline">
+          <mat-label>Minimum Length</mat-label>
+          <input matInput type="number" formControlName="minLength" placeholder="0" (input)="validateMinMaxLength()">
+          <mat-error *ngIf="questionForm.get('minLength')?.hasError('invalidRange')">
+            MinLength cannot be greater than MaxLength
+          </mat-error>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Maximum Length</mat-label>
+          <input matInput type="number" formControlName="maxLength" placeholder="255" (input)="validateMinMaxLength()">
+          <mat-error *ngIf="questionForm.get('maxLength')?.hasError('invalidRange')">
+            MinLength cannot be greater than MaxLength
+          </mat-error>
+        </mat-form-field>
+      </div>
+
+      <div class="form-row">
+        <mat-form-field appearance="outline">
+          <mat-label>Minimum Value</mat-label>
+          <input matInput type="number" formControlName="minValue" placeholder="0" (input)="validateMinMaxValues()">
+          <mat-error *ngIf="questionForm.get('minValue')?.hasError('invalidRange')">
+            MinValue cannot be greater than MaxValue
+          </mat-error>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Maximum Value</mat-label>
+          <input matInput type="number" formControlName="maxValue" placeholder="100" (input)="validateMinMaxValues()">
+          <mat-error *ngIf="questionForm.get('maxValue')?.hasError('invalidRange')">
+            MinValue cannot be greater than MaxValue
+          </mat-error>
+        </mat-form-field>
+      </div>
+    </div>
+
+    <!-- Question Options for Multiple Choice Questions -->
+    <div *ngIf="showOptionsSection()">
+      <mat-divider></mat-divider>
+      <div class="options-header">
+        <h4>Question Options</h4>
+        <button type="button" mat-mini-fab color="primary" (click)="addOption()">
+          <mat-icon>add</mat-icon>
+        </button>
+      </div>
+
+      <div formArrayName="options">
+        <div *ngFor="let option of optionsArray.controls; let i = index" [formGroupName]="i" class="option-row">
+          <mat-form-field appearance="outline">
+            <mat-label>Option {{ i + 1 }}</mat-label>
+            <input matInput formControlName="optionText" placeholder="Enter option text" 
+                   (input)="validateOptionTextLength()"
+                   [readonly]="isYesNoQuestion()">
+            <mat-error *ngIf="option.get('optionText')?.hasError('required')">
+              Option text is required
+            </mat-error>
+            <mat-error *ngIf="option.get('optionText')?.hasError('maxLength')">
+              Option text cannot exceed 500 characters
+            </mat-error>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Value</mat-label>
+            <input matInput formControlName="optionValue" placeholder="Option value" 
+                   (input)="validateOptionUniqueness()"
+                   [readonly]="isYesNoQuestion()">
+            <mat-error *ngIf="option.get('optionValue')?.hasError('required')">
+              Option value is required
+            </mat-error>
+            <mat-error *ngIf="option.get('optionValue')?.hasError('duplicate')">
+              Duplicate option values are not allowed
+            </mat-error>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Order</mat-label>
+            <input matInput type="number" formControlName="displayOrder" placeholder="{{ i }}" 
+                   (input)="validateOptionOrders()"
+                   [readonly]="isYesNoQuestion()">
+            <mat-error *ngIf="option.get('displayOrder')?.hasError('duplicate')">
+              Duplicate order number
+            </mat-error>
+            <mat-error *ngIf="option.get('displayOrder')?.hasError('invalidRange')">
+              Order must be between 1 and {{ optionsArray.length }}
+            </mat-error>
+            <mat-error *ngIf="option.get('displayOrder')?.hasError('missing')">
+              Order is required
+            </mat-error>
+          </mat-form-field>
+
+          <div class="checkbox-group">
+            <mat-checkbox formControlName="isCorrect" (change)="validateOptionUniqueness()">Correct Answer</mat-checkbox>
+            <mat-error *ngIf="option.get('isCorrect')?.hasError('multipleCorrect')" class="checkbox-error">
+              Radio questions can only have one correct answer
+            </mat-error>
+          </div>
+          <mat-checkbox formControlName="isActive">Active</mat-checkbox>
+
+          <button type="button" mat-icon-button color="warn" (click)="removeOption(i)" 
+                  [disabled]="optionsArray.length <= 1 || isYesNoQuestion()">
+            <mat-icon>delete</mat-icon>
+          </button>
+        </div>
+      </div>
+    </div>
+  </mat-dialog-content>
+
+  <mat-dialog-actions align="end">
+    <button mat-button type="button" (click)="onCancel()">Cancel</button>
+    <button mat-raised-button color="primary" type="submit" [disabled]="questionForm.invalid || loading">
+      <mat-icon *ngIf="loading">hourglass_empty</mat-icon>
+      {{ data.mode === 'create' ? 'Create' : 'Update' }}
+    </button>
+  </mat-dialog-actions>
+</form> 

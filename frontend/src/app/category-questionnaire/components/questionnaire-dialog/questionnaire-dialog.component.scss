@@ -1,0 +1,48 @@
+.form-row {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.full-width {
+  width: 100%;
+}
+
+.checkbox-row {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+mat-form-field {
+  flex: 1;
+}
+
+mat-dialog-content {
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
+.checking-hint {
+  color: #ff9800;
+  font-size: 12px;
+}
+
+.checking-hint mat-icon {
+  font-size: 16px;
+  width: 16px;
+  height: 16px;
+  vertical-align: middle;
+}
+
+.available-hint {
+  color: #4caf50;
+  font-size: 12px;
+}
+
+.available-hint mat-icon {
+  font-size: 16px;
+  width: 16px;
+  height: 16px;
+  vertical-align: middle;
+} 
